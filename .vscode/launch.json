@@ -19,6 +19,14 @@
             "program": "${workspaceFolder}/src/crumb/test2.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
+        },
+        {
+            "name": "crumb/test3",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/crumb/test3.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
         }
     ]
 }
