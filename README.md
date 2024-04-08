@@ -72,9 +72,6 @@ pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation -
 
 
 bash fetch_demo_data.sh
-python demo.py --video examples/IMG_9732.mov --visualize
-
-
-
+python demo.py --video examples/IMG_9732.mov --visualize --save_pkl --run_smplify
 
 ```
