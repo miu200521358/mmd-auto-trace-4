@@ -52,6 +52,15 @@ pip install -v -e WHAM/third-party/ViTPose
 (mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4$ pip install -r requirements.txt
 ```
 
+```
+(mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4/src/WHAM/third-party/DPVO$
+wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
+unzip eigen-3.4.0.zip -d thirdparty && rm -rf eigen-3.4.0.zip
+conda install pytorch-scatter=2.0.9 -c rusty1s -y
+pip install ninja
+pip install .
+```
+
 ## データ配置
 
 - checkpoints
@@ -140,6 +149,7 @@ git clone https://github.com/NVIDIA/apex
 cd apex
 pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation --config-settings "--build-option=--cpp_ext" --config-settings "--build-option=--cuda_ext" ./
 
+pip install apex pyramid
 
 bash fetch_demo_data.sh
 python demo.py --video examples/IMG_9732.mov --visualize --save_pkl --run_smplify

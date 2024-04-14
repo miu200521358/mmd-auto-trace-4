@@ -12,7 +12,6 @@ from mlib.core.collection import BaseHashModel
 from mlib.core.exception import MParseException
 from mlib.core.logger import MLogger
 from mlib.core.math import MQuaternion, MVector2D, MVector3D, MVector4D
-from mlib.service.base_worker import verify_thread
 
 TBaseModel = TypeVar("TBaseModel", bound=BaseModel)
 TBaseHashModel = TypeVar("TBaseHashModel", bound=BaseHashModel)
@@ -509,7 +508,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
             dtype=np.double,
         )[0]
 
-    @verify_thread
+    
     def unpack_text(self, format_size: int):
         """
         バイナリを解凍
@@ -533,7 +532,7 @@ class BaseReader(Generic[TBaseHashModel], BaseModel, metaclass=ABCMeta):
 
         return None
 
-    @verify_thread
+    
     def unpack(
         self,
         unpack: Callable,

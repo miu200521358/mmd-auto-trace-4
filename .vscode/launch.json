@@ -5,19 +5,67 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "exec wham side_walk",
+            "name": "exec wham",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/executor_wham.py",
+            "program": "${workspaceFolder}/src/demo_wham.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--video",
                 "inputs/side_walk.mp4",
-                "--output_pth",
+                // "inputs/snobbism_1080-1380.mp4",
+                // "--calib",
+                // "confis/WHAM/calib.txt",
+                "--output_dir",
+                "outputs",
+                "--estimate_local_only",
+                "--run_smplify",
+            ]
+        },
+        {
+            "name": "exec mediapipe",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_mediapipe.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--video",
+                // "inputs/snobbism_1080-1380.mp4",
+                "inputs/side_walk.mp4",
+                // "--calib",
+                // "confis/WHAM/calib.txt",
+                "--output_dir",
                 "outputs",
                 // "--estimate_local_only",
-                "--run_smplify",
+                // "--run_smplify",
+            ]
+        },
+        {
+            "name": "exec motion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_motion2.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--target_dir",
+                "outputs/snobbism_1080-1380",
+                // "outputs/side_walk",
+            ]
+        },
+        {
+            "name": "reduce motion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_motion4.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--target_dir",
+                "outputs/snobbism_1080-1380",
+                // "outputs/side_walk",
             ]
         }
     ]

@@ -39,7 +39,6 @@ from mlib.pmx.pmx_part import (
     VertexMorphOffset,
 )
 from mlib.pmx.shader import MShader
-from mlib.service.base_worker import verify_thread
 from mlib.vmd.vmd_part import (
     VmdBoneFrame,
     VmdCameraFrame,
@@ -157,7 +156,6 @@ class VmdBoneNameFrames(BaseIndexNameDictModel[VmdBoneFrame]):
 
         return replaced_map
 
-    @verify_thread
     def calc(self, prev_index: int, index: int, next_index: int) -> VmdBoneFrame:
         if index in self.data:
             bf = self.data[index]

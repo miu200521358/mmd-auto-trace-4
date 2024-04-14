@@ -8,7 +8,7 @@ FLIP_EVAL: True
 
 TRAIN:
   STAGE: 'stage2'
-  CHECKPOINT: 'WHAM/checkpoints/wham_vit_bedlam_w_3dpw.pth.tar'
+  CHECKPOINT: 'checkpoints/wham_vit_bedlam_w_3dpw.pth.tar'
 
 MODEL:
   BACKBONE: 'vit'

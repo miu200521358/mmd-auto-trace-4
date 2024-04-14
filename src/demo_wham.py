@@ -36,18 +36,18 @@ except:
 def run(
     cfg,
     video,
-    output_pth,
+    output_dir,
     network,
     calib=None,
     run_global=True,
 ):
-
     cap = cv2.VideoCapture(video)
     assert cap.isOpened(), f"Faild to load video file {video}"
     fps = cap.get(cv2.CAP_PROP_FPS)
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    width, height = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(
-        cv2.CAP_PROP_FRAME_HEIGHT
+    width, height = (
+        cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+        cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     )
 
     # Whether or not estimating motion in global coordinates
@@ -59,7 +59,7 @@ def run(
         extractor = FeatureExtractor(cfg.DEVICE.lower(), cfg.FLIP_EVAL)
 
         if run_global:
-            slam = SLAMModel(video, output_pth, width, height, calib)
+            slam = SLAMModel(video, output_dir, width, height, calib)
         else:
             slam = None
 
@@ -92,9 +92,9 @@ def run(
         logger.info("Complete Data preprocessing!")
 
         # Save the processed data
-        joblib.dump(tracking_results, osp.join(output_pth, "tracking_results.pth"))
-        joblib.dump(slam_results, osp.join(output_pth, "slam_results.pth"))
-        logger.info(f"Save processed data at {output_pth}")
+        joblib.dump(tracking_results, osp.join(output_dir, "tracking_results.pth"))
+        joblib.dump(slam_results, osp.join(output_dir, "slam_results.pth"))
+        logger.info(f"Save processed data at {output_dir}")
 
     # Build dataset
     dataset = CustomDataset(cfg, tracking_results, slam_results, width, height, fps)
@@ -104,7 +104,6 @@ def run(
 
     n_subjs = len(dataset)
     for subj in range(n_subjs):
-
         with torch.no_grad():
             if cfg.FLIP_EVAL:
                 # Forward pass with flipped input
@@ -156,12 +155,14 @@ def run(
                 )
 
                 # Merge two predictions
-                flipped_pose, flipped_shape = flipped_pred["pose"].squeeze(
-                    0
-                ), flipped_pred["betas"].squeeze(0)
+                flipped_pose, flipped_shape = (
+                    flipped_pred["pose"].squeeze(0),
+                    flipped_pred["betas"].squeeze(0),
+                )
                 pose, shape = pred["pose"].squeeze(0), pred["betas"].squeeze(0)
-                flipped_pose, pose = flipped_pose.reshape(-1, 24, 6), pose.reshape(
-                    -1, 24, 6
+                flipped_pose, pose = (
+                    flipped_pose.reshape(-1, 24, 6),
+                    pose.reshape(-1, 24, 6),
                 )
                 avg_pose, avg_shape = avg_preds(
                     pose, shape, flipped_pose, flipped_shape
@@ -251,23 +252,25 @@ def run(
         results[_id]["poses_root_cam"] = pred["poses_root_cam"].cpu().numpy()
         results[_id]["poses_root_world"] = pred["poses_root_world"].cpu().numpy()
 
-    joblib.dump(results, osp.join(output_pth, "wham_output.pkl"))
+    joblib.dump(results, osp.join(output_dir, "wham_output.pkl"))
 
     # Visualize
     with torch.no_grad():
         run_vis_on_demo(
-            cfg, video, results, output_pth, network.smpl, vis_global=run_global
+            cfg, video, results, output_dir, network.smpl, vis_global=run_global
         )
 
-def run_vis_on_demo(cfg, video, results, output_pth, smpl, vis_global=True):
+
+def run_vis_on_demo(cfg, video, results, output_dir, smpl, vis_global=True):
     outputs = defaultdict(dict)
 
     # to torch tensor
     tt = lambda x: torch.from_numpy(x).float().to(cfg.DEVICE)
 
     cap = cv2.VideoCapture(video)
-    width, height = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(
-        cv2.CAP_PROP_FRAME_HEIGHT
+    width, height = (
+        cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+        cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
     )
 
     # create renderer with cliff focal length estimation
@@ -277,34 +280,36 @@ def run_vis_on_demo(cfg, video, results, output_pth, smpl, vis_global=True):
     # setup global coordinate subject
     # current implementation only visualize the subject appeared longest
     n_frames = {k: len(results[k]["frame_ids"]) for k in results.keys()}
-    sid = max(n_frames, key=n_frames.get)
-    global_output = smpl.get_output(
-        body_pose=tt(results[sid]["pose_world"][:, 3:]),
-        global_orient=tt(results[sid]["pose_world"][:, :3]),
-        betas=tt(results[sid]["betas"]),
-        transl=tt(results[sid]["trans_world"]),
-    )
-    verts_glob = global_output.vertices.cpu()
-    verts_glob[..., 1] = verts_glob[..., 1] - verts_glob[..., 1].min()
-    cx, cz = (verts_glob.mean(1).max(0)[0] + verts_glob.mean(1).min(0)[0])[
-        [0, 2]
-    ] / 2.0
-    sx, sz = (verts_glob.mean(1).max(0)[0] - verts_glob.mean(1).min(0)[0])[[0, 2]]
-    scale = max(sx.item(), sz.item()) * 1.5
 
-    # set default ground
-    renderer.set_ground(scale, cx.item(), cz.item())
+    for k in n_frames.keys():
+        global_output = smpl.get_output(
+            body_pose=tt(results[k]["pose_world"][:, 3:]),
+            global_orient=tt(results[k]["pose_world"][:, :3]),
+            betas=tt(results[k]["betas"]),
+            transl=tt(results[k]["trans_world"]),
+        )
+        verts_glob = global_output.vertices.cpu()
+        verts_glob[..., 1] = verts_glob[..., 1] - verts_glob[..., 1].min()
+        cx, cz = (verts_glob.mean(1).max(0)[0] + verts_glob.mean(1).min(0)[0])[
+            [0, 2]
+        ] / 2.0
+        sx, sz = (verts_glob.mean(1).max(0)[0] - verts_glob.mean(1).min(0)[0])[[0, 2]]
+        scale = max(sx.item(), sz.item()) * 1.5
 
-    # build global camera
-    global_R, global_T, global_lights = get_global_cameras(verts_glob, cfg.DEVICE)
+        # set default ground
+        renderer.set_ground(scale, cx.item(), cz.item())
 
-    outputs["frames"] = n_frames
-    outputs["joints"] = global_output.joints.cpu().numpy()
-    outputs["betas"] = global_output.betas.cpu().numpy()
-    outputs["global_R"] = global_R.cpu().numpy()
-    outputs["global_T"] = global_T.cpu().numpy()
+        # build global camera
+        global_R, global_T, global_lights = get_global_cameras(verts_glob, cfg.DEVICE)
 
-    joblib.dump(outputs, osp.join(output_pth, "wham_output_vis.pkl"))
+        outputs[k] = {}
+        outputs[k]["joints"] = global_output.joints.cpu().numpy()
+        outputs[k]["betas"] = global_output.betas.cpu().numpy()
+        outputs[k]["global_R"] = global_R.cpu().numpy()
+        outputs[k]["global_T"] = global_T.cpu().numpy()
+
+    joblib.dump(outputs, osp.join(output_dir, "wham_output_vis.pkl"))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -317,7 +322,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--output_pth",
+        "--output_dir",
         type=str,
         default="output/demo",
         help="output folder to write results",
@@ -363,13 +368,13 @@ if __name__ == "__main__":
 
     # Output folder
     sequence = ".".join(args.video.split("/")[-1].split(".")[:-1])
-    output_pth = osp.join(args.output_pth, sequence)
-    os.makedirs(output_pth, exist_ok=True)
+    output_dir = osp.join(args.output_dir, sequence)
+    os.makedirs(output_dir, exist_ok=True)
 
     run(
         cfg,
         args.video,
-        output_pth,
+        output_dir,
         network,
         args.calib,
         run_global=not args.estimate_local_only,

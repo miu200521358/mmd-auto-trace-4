@@ -4,7 +4,6 @@ from typing import Generic, Iterator, Optional, TypeVar, Union
 
 from mlib.core.base import BaseModel, Encoding
 from mlib.core.part import BaseIndexModel, BaseIndexNameModel
-from mlib.service.base_worker import verify_thread
 
 TBaseIndexModel = TypeVar("TBaseIndexModel", bound=BaseIndexModel)
 TBaseIndexNameModel = TypeVar("TBaseIndexNameModel", bound=BaseIndexNameModel)
@@ -50,7 +49,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
     def __setitem__(self, index: int, v: TBaseIndexModel) -> None:
         self.data[index] = v
 
-    @verify_thread
+    
     def append(self, value: TBaseIndexModel, is_sort: bool = False) -> None:
         if 0 > value.index:
             value.index = len(self.data)
@@ -60,7 +59,7 @@ class BaseIndexDictModel(Generic[TBaseIndexModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
-    @verify_thread
+    
     def sort_indexes(self) -> None:
         self.indexes = sorted(self.data.keys()) if self.data else []
 
@@ -132,7 +131,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __setitem__(self, index: int, v: TBaseIndexNameModel) -> None:
         self.data[index] = v
 
-    @verify_thread
+    
     def append(
         self,
         value: TBaseIndexNameModel,
@@ -152,7 +151,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         else:
             self.indexes.append(value.index)
 
-    @verify_thread
+    
     def remove(
         self, value: TBaseIndexNameModel, is_sort: bool = True
     ) -> dict[int, int]:
@@ -200,7 +199,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
 
         return replaced_map
 
-    @verify_thread
+    
     def insert(
         self,
         value: TBaseIndexNameModel,
@@ -264,7 +263,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
             stop = len(self.data) + stop + 1
         return [self.data[self.indexes[n]] for n in range(start, stop, step)]
 
-    @verify_thread
+    
     def get_by_index(self, index: int) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
@@ -286,7 +285,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
         index = len(self.data) + index
         return self.data[self.indexes[index]]
 
-    @verify_thread
+    
     def get_by_name(self, name: str) -> TBaseIndexNameModel:
         """
         リストから要素を取得する
@@ -324,7 +323,7 @@ class BaseIndexNameDictModel(Generic[TBaseIndexNameModel], BaseModel):
     def __bool__(self) -> bool:
         return 0 < len(self.data)
 
-    @verify_thread
+    
     def range_indexes(
         self, index: int, off_flg: bool = False, indexes: Optional[list[int]] = None
     ) -> tuple[int, int, int]:
@@ -419,7 +418,7 @@ class BaseIndexNameDictWrapperModel(Generic[TBaseIndexNameDictModel], BaseModel)
     def __setitem__(self, v: TBaseIndexNameDictModel) -> None:
         self.data[v.name] = v
 
-    @verify_thread
+    
     def append(
         self, value: TBaseIndexNameDictModel, name: Optional[str] = None
     ) -> None:
@@ -474,7 +473,7 @@ class BaseHashModel(BaseModel):
         """モデル内の名前に相当する値を返す"""
         raise NotImplementedError()
 
-    @verify_thread
+    
     def update_digest(self) -> None:
         sha1 = hashlib.sha1()
 
@@ -489,7 +488,7 @@ class BaseHashModel(BaseModel):
 
         self.digest = sha1.hexdigest()
 
-    @verify_thread
+    
     def delete(self) -> None:
         """削除する準備"""
         pass
