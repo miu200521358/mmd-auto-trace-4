@@ -1,5 +1,70 @@
 # mmd-auto-trace-4
 
+## 環境構築
+
+```
+(base) miu@garnet:~$ nvcc --version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Jun__8_16:49:14_PDT_2022
+Cuda compilation tools, release 11.7, V11.7.99
+Build cuda_11.7.r11.7/compiler.31442593_0
+```
+
+```
+export PATH=/home/miu/anaconda3/envs/mat4/bin:$PATH
+```
+
+```
+conda create -n mat4 python=3.10 -y
+conda activate mat4
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
+```
+
+```
+import sys
+import torch
+pyt_version_str=torch.__version__.split("+")[0].replace(".", "")
+version_str="".join([
+    f"py3{sys.version_info.minor}_cu",
+    torch.version.cuda.replace(".",""),
+    f"_pyt{pyt_version_str}"
+])
+
+>>> version_str
+'py310_cu117_pyt1131'
+```
+
+```
+pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu117_pyt1131/download.html
+```
+
+```
+(mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4/src$
+
+git submodule add https://github.com/miu200521358/WHAM.git WHAM
+git submodule update --init --recursive
+```
+
+```
+pip install -r WHAM/requirements.txt
+pip install -v -e WHAM/third-party/ViTPose
+(mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4$ pip install -r requirements.txt
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## submodule
 
 ```
@@ -75,3 +140,22 @@ bash fetch_demo_data.sh
 python demo.py --video examples/IMG_9732.mov --visualize --save_pkl --run_smplify
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
