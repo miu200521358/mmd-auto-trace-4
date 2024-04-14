@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 from enum import Enum, IntEnum
 from functools import wraps
-from logging import Formatter, Handler, LogRecord, StreamHandler
+from logging import Formatter, StreamHandler
 from typing import Optional
 
 import numpy as np
@@ -83,7 +83,6 @@ class MLogger:
     # バージョン番号
     version_name = ""
 
-    console_handler: Optional["ConsoleHandler"] = None
     re_break = re.compile(r"\n")
 
     def __init__(
@@ -409,11 +408,6 @@ def add_mlogger_handler(logger: MLogger) -> None:
     logger.stream_err_handler.setFormatter(Formatter(logger.STREAM_FORMAT))
     logger.logger.addHandler(logger.stream_err_handler)
 
-    if MLogger.console_handler:
-        if logger.is_out_log:
-            MLogger.console_handler.setFormatter(Formatter(logger.STREAM_FORMAT))
-        logger.logger.addHandler(MLogger.console_handler)
-
 
 def parse2str(obj: object) -> str:
     """オブジェクトの変数の名前と値の一覧を文字列で返す
@@ -469,18 +463,3 @@ def get_file_encoding(file_path):
             pass
 
     raise MLibException("unknown encoding!")
-
-
-# class ConsoleHandler(Handler):
-#     def __init__(self, text_ctrl: wx.TextCtrl):
-#         super().__init__()
-#         self.text_ctrl = text_ctrl
-
-#     def emit(self, record: LogRecord):
-#         try:
-#             msg = self.format(record)
-#             wx.CallAfter(self.text_ctrl.AppendText, msg + "\n")
-#         except (KeyboardInterrupt, SystemExit):
-#             raise
-#         except Exception:
-#             self.handleError(record)

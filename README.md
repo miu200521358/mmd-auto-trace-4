@@ -52,6 +52,11 @@ pip install -v -e WHAM/third-party/ViTPose
 (mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4$ pip install -r requirements.txt
 ```
 
+## データ配置
+
+- checkpoints
+- dataset
+
 
 
 
