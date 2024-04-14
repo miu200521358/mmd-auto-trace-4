@@ -1,7 +1,0 @@
-[submodule "WHAM"]
-	path = WHAM
-	url = https://github.com/miu200521358/WHAM.git
-[submodule "mmd_base"]
-	path = mmd_base
-	url = https://github.com/miu200521358/mmd_base.git
-	branch = develop
