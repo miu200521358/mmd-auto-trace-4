@@ -66,7 +66,9 @@ pip install .
 - checkpoints
 - dataset
 
-
+```
+C:\MMD\mmd-auto-trace-4\src\WHAM\third-party\DPVO\dpvo\dpvo.py
+```
 
 
 

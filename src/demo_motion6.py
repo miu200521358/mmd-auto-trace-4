@@ -1,55 +1,57 @@
 import argparse
-import json
 import os
-
 import joblib
+import numpy as np
 from tqdm import tqdm
 
 from mlib.vmd.vmd_collection import VmdMotion, VmdBoneFrame
 from mlib.vmd.vmd_writer import VmdWriter
 from mlib.pmx.pmx_reader import PmxReader
+from mlib.pmx.pmx_collection import PmxModel
 from mlib.core.math import MVector3D, MQuaternion
 from loguru import logger
+
+np.set_printoptions(suppress=True, precision=6, threshold=30, linewidth=200)
 
 # 身長158cmプラグインより
 MIKU_CM = 0.1259496 * 0.3
 
-
 JOINT_NAMES = [
-    "nose",
-    "left eye (inner)",
-    "left eye",
-    "left eye (outer)",
-    "right eye (inner)",
-    "right eye",
-    "right eye (outer)",
-    "left ear",
-    "right ear",
-    "mouth (left)",
-    "mouth (right)",
-    "left shoulder",
-    "right shoulder",
-    "left elbow",
-    "right elbow",
-    "left wrist",
-    "right wrist",
-    "left pinky",
-    "right pinky",
-    "left index",
-    "right index",
-    "left thumb",
-    "right thumb",
-    "left hip",
-    "right hip",
-    "left knee",
-    "right knee",
-    "left ankle",
-    "right ankle",
-    "left heel",
-    "right heel",
-    "left foot index",
-    "right foot index",
+    "nose",  # 0
+    "left eye",  # 1
+    "right eye",  # 2
+    "left ear",  # 3
+    "right ear",  # 4
+    "left shoulder",  # 5
+    "right shoulder",  # 6
+    "left elbow",  # 7
+    "right elbow",  # 8
+    "left wrist",  # 9
+    "right wrist",  # 10
+    "left hip",  # 11
+    "right hip",  # 12
+    "left knee",  # 13
+    "right knee",  # 14
+    "left ankle",  # 15
+    "right ankle",  # 16
+    "",  # 17
+    "",  # 18
+    "",  # 19
+    "",  # 20
+    "",  # 21
+    "",  # 22
+    "",  # 23
+    "",  # 24
+    "",  # 25
+    "",  # 26
+    "",  # 27
+    "",  # 28
+    "neck",  # 29
+    "head tail",  # 30
+    "",  # 31
+    "",  # 32
 ]
+
 
 PMX_CONNECTIONS = {
     "nose": "鼻",
@@ -112,7 +114,7 @@ VMD_CONNECTIONS = {
         },
     },
     "頭": {
-        "direction": ("頭", "頭先"),
+        "direction": ("首", "頭先"),
         "up": ("左目", "右目"),
         "cancel": (
             "上半身",
@@ -126,7 +128,7 @@ VMD_CONNECTIONS = {
     "左肩": {
         "direction": ("左肩", "左腕"),
         "up": ("上半身", "首"),
-        "cancel": ("上半身", "上半身"),
+        "cancel": ("上半身",),
         "invert": {
             "before": MVector3D(),
             "after": MVector3D(),
@@ -289,125 +291,117 @@ VMD_CONNECTIONS = {
     },
 }
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="HMR2 demo code")
     parser.add_argument("--target_dir", type=str)
 
     args = parser.parse_args()
-
     logger.info(f"target_dir: {args.target_dir} ---------------------------")
 
     poses_mov_motion = VmdMotion()
     poses_rot_motion = VmdMotion()
+
+    all_vis_results = joblib.load(os.path.join(args.target_dir, "wham_output_vis.pkl"))
+    all_wham_results = joblib.load(os.path.join(args.target_dir, "wham_output.pkl"))
+    start_pos = MVector3D()
 
     pmx_reader = PmxReader()
     trace_model = pmx_reader.read_by_filepath(
         "/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/trace_model.pmx"
     )
 
-    all_wham_results = joblib.load(os.path.join(args.target_dir, "wham_output.pkl"))
-    all_viz_results = joblib.load(os.path.join(args.target_dir, "wham_output_vis.pkl"))
-    n_frames = {
-        k: len(all_wham_results[k]["frame_ids"]) for k in all_wham_results.keys()
-    }
-    keys = list(n_frames.keys())
-    start_root_pos = MVector3D(
-        -float(all_wham_results[0]["poses_root_cam"][0][0][1][0]),
-        float(all_wham_results[0]["poses_root_cam"][0][0][1][1]),
-        float(all_wham_results[0]["poses_root_cam"][0][0][1][2]),
-    ) / MIKU_CM
-
-    with open(os.path.join(args.target_dir, "mediapipe.json"), "r") as f:
-        all_joints = json.load(f)
-
-    for ii, joints in tqdm(all_joints.items(), desc="Motion Output"):
-        i = int(ii)
-
-        n = 0
-        m = 0
-        s = 0
-        while s < i:
-            s = sum([n_frames[keys[k]] for k in keys[: n + 1]])
-            if s >= i:
-                m = i - sum([n_frames[keys[k]] for k in keys[:n]]) - 1
-                break
-            n += 1
-
-        joint_root = (
-            all_viz_results[n]["joints"][m][11] + all_viz_results[n]["joints"][m][12]
-        ) / 2
-        root_pos = MVector3D(
-            -float(all_wham_results[n]["poses_root_cam"][m][0][1][0]),
-            float(all_wham_results[n]["poses_root_cam"][m][0][1][1]),
-            float(all_wham_results[n]["poses_root_cam"][m][0][1][2]),
-        ) / MIKU_CM - start_root_pos
-
-        for jname, joint in joints.items():
-            if jname not in PMX_CONNECTIONS:
-                pose_bf = VmdBoneFrame(i, jname, register=True)
-            else:
-                pose_bf = VmdBoneFrame(i, PMX_CONNECTIONS[jname], register=True)
-            pose_bf.position = MVector3D(
-                float(joint["x"]), float(-joint["y"]), float(joint["z"])
+    i = 0
+    for (wham_idx, wham_results), (vis_idx, vis_results) in zip(
+        all_wham_results.items(), all_vis_results.items()
+    ):
+        for j, (
+            poses_root_cam,
+            joints,
+        ) in enumerate(
+            tqdm(
+                zip(
+                    wham_results["poses_root_cam"],
+                    vis_results["joints"],
+                ),
+                desc=f"WHAM Center {wham_idx} {vis_idx}",
             )
-            pose_bf.position /= MIKU_CM
-            pose_bf.position += root_pos
+        ):
+            for j, joint in enumerate(joints):
+                if not JOINT_NAMES[j]:
+                    continue
+                joint_pos = (
+                    MVector3D(float(joint[0]), float(joint[1]), -float(joint[2]))
+                    / MIKU_CM
+                )
+                bf = VmdBoneFrame(
+                    name=PMX_CONNECTIONS[JOINT_NAMES[j]], index=i, register=True
+                )
+                bf.position = joint_pos
+                poses_mov_motion.append_bone_frame(bf)
 
-            poses_mov_motion.append_bone_frame(pose_bf)
+            spine_bf = VmdBoneFrame(i, "上半身", register=True)
+            spine_bf.position = (
+                poses_mov_motion.bones["左足"][i].position
+                + poses_mov_motion.bones["右足"][i].position
+            ) / 2
+            poses_mov_motion.append_bone_frame(spine_bf)
 
-        spine_bf = VmdBoneFrame(i, "上半身", register=True)
-        spine_bf.position = (
-            poses_mov_motion.bones["左足"][i].position
-            + poses_mov_motion.bones["右足"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(spine_bf)
+            left_shoulder_bf = VmdBoneFrame(i, "左肩", register=True)
+            left_shoulder_bf.position = (
+                poses_mov_motion.bones["左腕"][i].position
+                + poses_mov_motion.bones["首"][i].position
+            ) / 2
+            poses_mov_motion.append_bone_frame(left_shoulder_bf)
 
-        neck_bf = VmdBoneFrame(i, "首", register=True)
-        neck_bf.position = (
-            poses_mov_motion.bones["左腕"][i].position
-            + poses_mov_motion.bones["右腕"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(neck_bf)
+            right_shoulder_bf = VmdBoneFrame(i, "右肩", register=True)
+            right_shoulder_bf.position = (
+                poses_mov_motion.bones["右腕"][i].position
+                + poses_mov_motion.bones["首"][i].position
+            ) / 2
+            poses_mov_motion.append_bone_frame(right_shoulder_bf)
 
-        left_shoulder_bf = VmdBoneFrame(i, "左肩", register=True)
-        left_shoulder_bf.position = (
-            poses_mov_motion.bones["左腕"][i].position
-            + poses_mov_motion.bones["首"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(left_shoulder_bf)
+            pelvis_bf = VmdBoneFrame(i, "下半身", register=True)
+            pelvis_bf.position = (
+                poses_mov_motion.bones["左足"][i].position
+                + poses_mov_motion.bones["右足"][i].position
+            ) / 2
+            poses_mov_motion.append_bone_frame(pelvis_bf)
 
-        right_shoulder_bf = VmdBoneFrame(i, "右肩", register=True)
-        right_shoulder_bf.position = (
-            poses_mov_motion.bones["右腕"][i].position
-            + poses_mov_motion.bones["首"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(right_shoulder_bf)
+            pelvis2_bf = VmdBoneFrame(i, "下半身2", register=True)
+            pelvis2_bf.position = (
+                poses_mov_motion.bones["左ひざ"][i].position
+                + poses_mov_motion.bones["右ひざ"][i].position
+            ) / 2
+            poses_mov_motion.append_bone_frame(pelvis2_bf)
 
-        pelvis_bf = VmdBoneFrame(i, "下半身", register=True)
-        pelvis_bf.position = (
-            poses_mov_motion.bones["左足"][i].position
-            + poses_mov_motion.bones["右足"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(pelvis_bf)
+            if i == 0:
+                start_pos = (
+                    MVector3D(
+                        float(poses_root_cam[0][1][0]),
+                        float(poses_root_cam[0][1][1]),
+                        float(poses_root_cam[0][1][2]),
+                    )
+                    / MIKU_CM
+                )
+                start_pos.x = 0
 
-        pelvis2_bf = VmdBoneFrame(i, "下半身2", register=True)
-        pelvis2_bf.position = (
-            poses_mov_motion.bones["左ひざ"][i].position
-            + poses_mov_motion.bones["右ひざ"][i].position
-        ) / 2
-        poses_mov_motion.append_bone_frame(pelvis2_bf)
+            center_bf = VmdBoneFrame(name="センター", index=i, register=True)
+            center_bf.position = (
+                MVector3D(
+                    float(poses_root_cam[0][1][0]),
+                    float(poses_root_cam[0][1][1]),
+                    float(poses_root_cam[0][1][2]),
+                )
+                / MIKU_CM
+            ) - start_pos
+            poses_rot_motion.append_bone_frame(center_bf)
 
-        center_bf = VmdBoneFrame(i, "センター", register=True)
-        center_bf.position = root_pos
-        poses_rot_motion.append_bone_frame(center_bf)
-
-    os.makedirs(args.target_dir, exist_ok=True)
+            i += 1
 
     VmdWriter(
         poses_mov_motion,
-        os.path.join(args.target_dir, "output_poses_mp_mov.vmd"),
-        "VirtualMarker",
+        os.path.join(args.target_dir, "wham_mov.vmd"),
+        "WHAM",
     ).save()
 
     for target_bone_name, vmd_params in VMD_CONNECTIONS.items():
@@ -428,7 +422,9 @@ if __name__ == "__main__":
         cancel_names = vmd_params["cancel"]
         invert_qq = MQuaternion.from_euler_degrees(vmd_params["invert"]["before"])
 
-        for mov_bf in tqdm(poses_mov_motion.bones[direction_from_name], desc=target_bone_name):
+        for mov_bf in tqdm(
+            poses_mov_motion.bones[direction_from_name], desc=target_bone_name
+        ):
             if (
                 mov_bf.index not in poses_mov_motion.bones[direction_from_name]
                 or mov_bf.index not in poses_mov_motion.bones[direction_to_name]
@@ -493,6 +489,6 @@ if __name__ == "__main__":
 
     VmdWriter(
         poses_rot_motion,
-        os.path.join(args.target_dir, "output_poses_mp_rot.vmd"),
-        "VirtualMarker",
+        os.path.join(args.target_dir, "wham_rot.vmd"),
+        "WHAM",
     ).save()

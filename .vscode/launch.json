@@ -45,7 +45,20 @@
             ]
         },
         {
-            "name": "exec motion",
+            "name": "exec motion center",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_motion_center.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--target_dir",
+                "outputs/snobbism_1080-1380",
+                // "outputs/side_walk",
+            ]
+        },
+        {
+            "name": "exec motion with mediapipe",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/demo_motion2.py",
@@ -53,7 +66,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--target_dir",
-                "outputs/snobbism_1080-1380",
+                "outputs/snobbism_300-2300",
                 // "outputs/side_walk",
             ]
         },
@@ -80,6 +93,20 @@
             "args": [
                 "--target_dir",
                 "outputs/snobbism_1080-1380",
+                // "outputs/side_walk",
+            ]
+        },
+        {
+            "name": "wham motion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_motion6.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--target_dir",
+                "outputs/heart_3039-4838",
+                // "outputs/snobbism_1080-1380",
                 // "outputs/side_walk",
             ]
         }

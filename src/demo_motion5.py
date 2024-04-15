@@ -55,38 +55,38 @@ if __name__ == "__main__":
         description="事前計算",
     )
 
-    # 上半身
-    for fno in tqdm(range(mp_rot_motion.bones.max_fno), desc="上半身準備"):
-        upper_ik_bf = VmdBoneFrame(name="上半身IK", index=fno, register=True)
-        upper_ik_bf.position = matrixes["首", fno].position
-        ik_bake_motion.append_bone_frame(upper_ik_bf)
+    # # 上半身
+    # for fno in tqdm(range(mp_rot_motion.bones.max_fno), desc="上半身準備"):
+    #     upper_ik_bf = VmdBoneFrame(name="上半身IK", index=fno, register=True)
+    #     upper_ik_bf.position = matrixes["首", fno].position
+    #     ik_bake_motion.append_bone_frame(upper_ik_bf)
 
-        upper_bf = VmdBoneFrame(name="上半身", index=fno, register=True)
-        x_qq, y_qq, z_qq, xz_qq = matrixes[
-            "上半身", fno
-        ].frame_fk_rotation.separate_by_axis(
-            trace_ik_model.bones["上半身"].corrected_local_y_vector
-        )
-        upper_bf.rotation = x_qq
-        ik_bake_motion.append_bone_frame(upper_bf)
+    #     upper_bf = VmdBoneFrame(name="上半身", index=fno, register=True)
+    #     x_qq, y_qq, z_qq, xz_qq = matrixes[
+    #         "上半身", fno
+    #     ].frame_fk_rotation.separate_by_axis(
+    #         trace_ik_model.bones["上半身"].corrected_local_y_vector
+    #     )
+    #     upper_bf.rotation = x_qq
+    #     ik_bake_motion.append_bone_frame(upper_bf)
 
-    upper_matrixes = ik_bake_motion.animate_bone(
-        list(range(mp_rot_motion.bones.max_fno)),
-        trace_ik_model,
-        bone_names=["首先"],
-        is_calc_ik=True,
-        out_fno_log=True,
-        description="上半身計算",
-    )
+    # upper_matrixes = ik_bake_motion.animate_bone(
+    #     list(range(mp_rot_motion.bones.max_fno)),
+    #     trace_ik_model,
+    #     bone_names=["首先"],
+    #     is_calc_ik=True,
+    #     out_fno_log=True,
+    #     description="上半身計算",
+    # )
 
-    for fno in tqdm(range(mp_rot_motion.bones.max_fno), desc="上半身結果"):
-        upper_bf = VmdBoneFrame(name="上半身", index=fno, register=True)
-        upper_bf.rotation = upper_matrixes["上半身捩", fno].frame_fk_rotation * upper_matrixes["上半身", fno].frame_fk_rotation
-        ik_motion.append_bone_frame(upper_bf)
+    # for fno in tqdm(range(mp_rot_motion.bones.max_fno), desc="上半身結果"):
+    #     upper_bf = VmdBoneFrame(name="上半身", index=fno, register=True)
+    #     upper_bf.rotation = upper_matrixes["上半身捩", fno].frame_fk_rotation * upper_matrixes["上半身", fno].frame_fk_rotation
+    #     ik_motion.append_bone_frame(upper_bf)
 
-        upper2_bf = VmdBoneFrame(name="上半身2", index=fno, register=True)
-        upper2_bf.rotation = upper_matrixes["上半身2捩", fno].frame_fk_rotation * upper_matrixes["上半身2", fno].frame_fk_rotation
-        ik_motion.append_bone_frame(upper2_bf)
+    #     upper2_bf = VmdBoneFrame(name="上半身2", index=fno, register=True)
+    #     upper2_bf.rotation = upper_matrixes["上半身2捩", fno].frame_fk_rotation * upper_matrixes["上半身2", fno].frame_fk_rotation
+    #     ik_motion.append_bone_frame(upper2_bf)
 
     # 足IKの設定
     for direction in ["左", "右"]:
