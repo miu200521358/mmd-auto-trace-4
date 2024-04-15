@@ -357,6 +357,8 @@ if __name__ == "__main__":
     cfg = get_cfg_defaults()
     cfg.merge_from_file("configs/WHAM/yamls/mat4.yaml")
 
+    logger.info("-----------------------------------------------")
+    logger.info(f"Vide -> {args.video}")
     logger.info(f"GPU name -> {torch.cuda.get_device_name()}")
     logger.info(f'GPU feat -> {torch.cuda.get_device_properties("cuda")}')
 

@@ -3,11 +3,13 @@ import json
 import os
 
 import joblib
+from tqdm import tqdm
 
 from mlib.vmd.vmd_collection import VmdMotion, VmdBoneFrame
 from mlib.vmd.vmd_writer import VmdWriter
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.core.math import MVector3D, MQuaternion
+from loguru import logger
 
 # 身長158cmプラグインより
 MIKU_CM = 0.1259496
@@ -292,6 +294,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    logger.info(f"target_dir: {args.target_dir} ---------------------------")
+
     poses_mov_motion = VmdMotion()
     poses_rot_motion = VmdMotion()
 
@@ -335,7 +339,7 @@ if __name__ == "__main__":
             float(-joint_root[2]),
         )
 
-        for jname, joint in joints.items():
+        for jname, joint in tqdm(joints.items(), desc=f"Motion Output {i}"):
             if jname not in PMX_CONNECTIONS:
                 pose_bf = VmdBoneFrame(i, jname, register=True)
             else:

@@ -2,12 +2,14 @@ import argparse
 import os
 import joblib
 import numpy as np
+from tqdm import tqdm
 
 from mlib.vmd.vmd_collection import VmdMotion, VmdBoneFrame
 from mlib.vmd.vmd_writer import VmdWriter
 from mlib.pmx.pmx_reader import PmxReader
 from mlib.pmx.pmx_collection import PmxModel
 from mlib.core.math import MVector3D, MQuaternion
+from loguru import logger
 
 np.set_printoptions(suppress=True, precision=6, threshold=30, linewidth=200)
 
@@ -19,6 +21,8 @@ if __name__ == "__main__":
     parser.add_argument("--target_dir", type=str)
 
     args = parser.parse_args()
+    logger.info(f"target_dir: {args.target_dir} ---------------------------")
+
     wham_center_motion = VmdMotion()
     wham_mov1_motion = VmdMotion()
     wham_mov2_motion = VmdMotion()
@@ -42,16 +46,19 @@ if __name__ == "__main__":
             global_R,
             global_T,
         ) in enumerate(
-            zip(
-                wham_results["poses_root_world"][0],
-                wham_results["poses_root_cam"],
-                wham_results["trans_world"],
-                wham_results["pred_root_world"],
-                wham_results["pose_world"],
-                wham_results["pose"],
-                vis_results["joints"],
-                vis_results["global_R"],
-                vis_results["global_T"],
+            tqdm(
+                zip(
+                    wham_results["poses_root_world"][0],
+                    wham_results["poses_root_cam"],
+                    wham_results["trans_world"],
+                    wham_results["pred_root_world"],
+                    wham_results["pose_world"],
+                    wham_results["pose"],
+                    vis_results["joints"],
+                    vis_results["global_R"],
+                    vis_results["global_T"],
+                ),
+                desc=f"WHAM Center {wham_idx} {vis_idx}",
             )
         ):
             bf1 = VmdBoneFrame(name="1", index=i, register=True)

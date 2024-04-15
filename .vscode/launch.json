@@ -13,7 +13,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--video",
-                "inputs/side_walk.mp4",
+                "inputs/heart_3039-4838.mp4",
+                // "inputs/side_walk.mp4",
                 // "inputs/snobbism_1080-1380.mp4",
                 // "--calib",
                 // "confis/WHAM/calib.txt",
@@ -32,8 +33,9 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--video",
+                "inputs/heart_3039-4838.mp4",
                 // "inputs/snobbism_1080-1380.mp4",
-                "inputs/side_walk.mp4",
+                // "inputs/side_walk.mp4",
                 // "--calib",
                 // "confis/WHAM/calib.txt",
                 "--output_dir",
@@ -60,6 +62,19 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/demo_motion4.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--target_dir",
+                "outputs/snobbism_1080-1380",
+                // "outputs/side_walk",
+            ]
+        },
+        {
+            "name": "ik motion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/demo_motion5.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [

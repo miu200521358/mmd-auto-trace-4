@@ -42,6 +42,30 @@ JOINT_NAMES = [
     "right foot index",
 ]
 
+HAND_JOINT_NAMES = [
+    "wrist",
+    "thumb_cmc",
+    "thumb_mcp",
+    "thumb_ip",
+    "thumb_tip",
+    "index_finger_mcp",
+    "index_finger_pip",
+    "index_finger_dip",
+    "index_finger_tip",
+    "middle_finger_mcp",
+    "middle_finger_pip",
+    "middle_finger_dip",
+    "middle_finger_tip",
+    "ring_finger_mcp",
+    "ring_finger_pip",
+    "ring_finger_dip",
+    "ring_finger_tip",
+    "pinky_finger_mcp",
+    "pinky_finger_pip",
+    "pinky_finger_dip",
+    "pinky_finger_tip",
+]
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", type=str)
@@ -54,18 +78,42 @@ if __name__ == "__main__":
     PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
     VisionRunningMode = mp.tasks.vision.RunningMode
 
-    options = PoseLandmarkerOptions(
+    HandLandmarker = mp.tasks.vision.HandLandmarker
+    HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+
+    pose_options = PoseLandmarkerOptions(
         base_options=BaseOptions(
             model_asset_path="checkpoints/mediapipe/pose_landmarker_full.task"
         ),
         running_mode=VisionRunningMode.VIDEO,
     )
 
-    os.makedirs(os.path.join(args.output_dir, os.path.basename(args.video).split(".")[0]), exist_ok=True)
+    # Create a hand landmarker instance with the video mode:
+    hand_options = HandLandmarkerOptions(
+        base_options=BaseOptions(
+            model_asset_path="checkpoints/mediapipe/hand_landmarker.task"
+        ),
+        running_mode=VisionRunningMode.VIDEO,
+        num_hands=2,
+        min_hand_detection_confidence=0.4,
+    )
 
-    with PoseLandmarker.create_from_options(options) as landmarker:
+    os.makedirs(
+        os.path.join(args.output_dir, os.path.basename(args.video).split(".")[0]),
+        exist_ok=True,
+    )
+
+    with HandLandmarker.create_from_options(
+        hand_options
+    ) as hand_landmarker, PoseLandmarker.create_from_options(
+        pose_options
+    ) as pose_landmarker:
         # json file
-        joint_fn = os.path.join(args.output_dir, os.path.basename(args.video).split(".")[0], "mediapipe.json")
+        joint_fn = os.path.join(
+            args.output_dir,
+            os.path.basename(args.video).split(".")[0],
+            "mediapipe.json",
+        )
         joints_dict = {}
 
         video = cv2.VideoCapture(args.video)
@@ -84,7 +132,7 @@ if __name__ == "__main__":
         for i in tqdm(range(count)):
             # 動画から1枚キャプチャして読み込む
             flag, org_img = video.read()
-            
+
             if not flag:
                 break
 
@@ -94,14 +142,14 @@ if __name__ == "__main__":
             ts += 1 / fps * 1000
 
             # STEP 4: Detect pose landmarks from the input image.
-            detection_result = landmarker.detect_for_video(image, int(ts))
+            pose_detection = pose_landmarker.detect_for_video(image, int(ts))
 
-            if not detection_result.pose_world_landmarks:
+            if not pose_detection.pose_world_landmarks:
                 continue
 
             joints_dict[i] = {}
             for jname, joint in zip(
-                JOINT_NAMES, detection_result.pose_world_landmarks[0]
+                JOINT_NAMES, pose_detection.pose_world_landmarks[0]
             ):
                 joints_dict[i][jname] = {
                     "x": float(joint.x),
@@ -110,6 +158,24 @@ if __name__ == "__main__":
                     "visibility": float(joint.visibility),
                     "presence": float(joint.presence),
                 }
+
+            # STEP 4: Detect hand landmarks from the input image.
+            hand_detection = hand_landmarker.detect_for_video(image, int(ts))
+
+            if not hand_detection.hand_world_landmarks:
+                continue
+
+            for handedness, hand_world_landmarks in zip(
+                hand_detection.handedness[0], hand_detection.hand_world_landmarks
+            ):
+                display_name = handedness.display_name.lower()
+
+                for jname, joint in zip(JOINT_NAMES, hand_world_landmarks):
+                    joints_dict[i][f"{display_name} {jname}"] = {
+                        "x": float(joint.x),
+                        "y": float(joint.y),
+                        "z": float(joint.z),
+                    }
 
         with open(joint_fn, "w") as f:
             json.dump(joints_dict, f, ensure_ascii=False, indent=4)

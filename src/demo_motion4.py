@@ -24,7 +24,7 @@ if __name__ == "__main__":
     zs = []
 
     for fno in range(mp_rot_motion.bones.max_fno):
-        xs.append(mp_rot_motion.bones["センター"][fno].position.x)
+        xs.append(mp_rot_motion.bones["センター"][fno].position.x * 1.5)
         ys.append(mp_rot_motion.bones["センター"][fno].position.y)
         zs.append(mp_rot_motion.bones["センター"][fno].position.z)
 
