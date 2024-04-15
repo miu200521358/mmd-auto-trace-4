@@ -79,7 +79,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--target_dir",
-                "outputs/snobbism_1080-1380",
+                "outputs/snobbism_300-2300",
+                // "outputs/snobbism_1080-1380",
                 // "outputs/side_walk",
             ]
         },
@@ -92,7 +93,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--target_dir",
-                "outputs/snobbism_1080-1380",
+                "outputs/snobbism_300-2300",
+                // "outputs/snobbism_1080-1380",
                 // "outputs/side_walk",
             ]
         },

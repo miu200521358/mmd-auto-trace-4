@@ -103,6 +103,31 @@ def split_interpolation(
     return before_bz, after_bz
 
 
+def get_infections3(values: list[float], threshold: float) -> np.ndarray:
+    # Calculate the first derivative
+    ys_prime = np.gradient(values)
+
+    # Calculate the second derivative
+    ys_double_prime = np.gradient(ys_prime)
+
+    # Find the inflection points
+    inflection_points = np.where(np.abs(ys_double_prime) >= threshold)[0]
+
+    # Sign the second derivative with tolerance
+    ys_double_prime_sign = np.sign(ys_double_prime)
+
+    # Calculate the difference between each element
+    ys_double_prime_diff = np.diff(ys_double_prime_sign)
+
+    # Find the indices where the difference is not 0 (i.e., the sign has changed)
+    sign_change_indices = np.where(ys_double_prime_diff != 0)[0]
+
+    inflections = np.array(list(set(inflection_points.tolist()) | set(sign_change_indices.tolist()) | {0, len(values) - 1}))
+    inflections.sort()
+
+    return inflections
+
+
 def get_infections2(values: list[float], threshold: float, tolerance: float) -> np.ndarray:
     # Calculate the first derivative
     ys_prime = np.gradient(values)

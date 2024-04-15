@@ -1,9 +1,11 @@
 import argparse
 import json
 import os
+import numpy as np
 
 import joblib
 from tqdm import tqdm
+from pykalman import UnscentedKalmanFilter
 
 from mlib.vmd.vmd_collection import VmdMotion, VmdBoneFrame
 from mlib.vmd.vmd_writer import VmdWriter
@@ -12,8 +14,23 @@ from mlib.core.math import MVector3D, MQuaternion
 from loguru import logger
 
 # 身長158cmプラグインより
-MIKU_CM = 0.1259496 * 0.3
+MIKU_CM = MVector3D(1, 1, 1) * 0.1259496
 
+LOWER_BONE_NAMES = [
+    "左足",
+    "右足",
+    "左ひざ",
+    "右ひざ",
+    "左足首",
+    "右足首",
+    "左かかと",
+    "右かかと",
+    "左つま先",
+    "右つま先",
+    "下半身",
+    "下半身2",
+    "センター",
+]
 
 JOINT_NAMES = [
     "nose",
@@ -300,6 +317,7 @@ if __name__ == "__main__":
 
     poses_mov_motion = VmdMotion()
     poses_rot_motion = VmdMotion()
+    smooth_rot_motion = VmdMotion()
 
     pmx_reader = PmxReader()
     trace_model = pmx_reader.read_by_filepath(
@@ -312,11 +330,14 @@ if __name__ == "__main__":
         k: len(all_wham_results[k]["frame_ids"]) for k in all_wham_results.keys()
     }
     keys = list(n_frames.keys())
-    start_root_pos = MVector3D(
-        -float(all_wham_results[0]["poses_root_cam"][0][0][1][0]),
-        float(all_wham_results[0]["poses_root_cam"][0][0][1][1]),
-        float(all_wham_results[0]["poses_root_cam"][0][0][1][2]),
-    ) / MIKU_CM
+    start_root_pos = (
+        MVector3D(
+            -float(all_wham_results[0]["poses_root_cam"][0][0][1][0]),
+            float(all_wham_results[0]["poses_root_cam"][0][0][1][1]),
+            float(all_wham_results[0]["poses_root_cam"][0][0][1][2]),
+        )
+        / MIKU_CM
+    )
 
     with open(os.path.join(args.target_dir, "mediapipe.json"), "r") as f:
         all_joints = json.load(f)
@@ -327,7 +348,7 @@ if __name__ == "__main__":
         n = 0
         m = 0
         s = 0
-        while s < i:
+        while s <= i:
             s = sum([n_frames[keys[k]] for k in keys[: n + 1]])
             if s >= i:
                 m = i - sum([n_frames[keys[k]] for k in keys[:n]]) - 1
@@ -337,11 +358,15 @@ if __name__ == "__main__":
         joint_root = (
             all_viz_results[n]["joints"][m][11] + all_viz_results[n]["joints"][m][12]
         ) / 2
-        root_pos = MVector3D(
-            -float(all_wham_results[n]["poses_root_cam"][m][0][1][0]),
-            float(all_wham_results[n]["poses_root_cam"][m][0][1][1]),
-            float(all_wham_results[n]["poses_root_cam"][m][0][1][2]),
-        ) / MIKU_CM - start_root_pos
+        root_pos = (
+            MVector3D(
+                -float(all_wham_results[n]["poses_root_cam"][m][0][1][0]),
+                float(all_wham_results[n]["poses_root_cam"][m][0][1][1]),
+                float(all_wham_results[n]["poses_root_cam"][m][0][1][2]),
+            )
+            / MIKU_CM
+            - start_root_pos
+        )
 
         for jname, joint in joints.items():
             if jname not in PMX_CONNECTIONS:
@@ -407,10 +432,76 @@ if __name__ == "__main__":
     VmdWriter(
         poses_mov_motion,
         os.path.join(args.target_dir, "output_poses_mp_mov.vmd"),
-        "VirtualMarker",
+        "WHAM_mediapipe",
     ).save()
 
-    for target_bone_name, vmd_params in VMD_CONNECTIONS.items():
+    joint_positions = {}
+
+    smooth_mov_motion = VmdMotion()
+
+    for bone_name in tqdm(poses_mov_motion.bones.names, desc="平滑化準備"):
+        joint_positions[bone_name] = []
+        for bf in poses_mov_motion.bones[bone_name]:
+            if bf.index > len(joint_positions[bone_name]):
+                for _ in range(bf.index - len(joint_positions[bone_name])):
+                    # キーフレの抜けがあるところは埋める
+                    joint_positions[bone_name].append(joint_positions[bone_name][-1])
+            joint_positions[bone_name].append(bf.position.vector)
+
+    joint_positions["センター"] = []
+    for bf in poses_rot_motion.bones["センター"]:
+        joint_positions["センター"].append(bf.position.vector)
+
+    def tf(state, noise):
+        # 加速度を考慮した動的モデル
+        pos = state[:3] + state[3:6] + 0.5 * state[6:9]
+        vel = state[3:6] + state[6:9]
+        acc = state[6:9] + noise[6:9]
+        return np.concatenate([pos, vel, acc])
+
+    def of(state, noise):
+        return state[:3] + noise
+
+    for bone_name, joint_poses in tqdm(joint_positions.items(), desc="平滑化"):
+        # プロセスノイズの標準偏差
+        process_noise_sd = 0.5 if bone_name in LOWER_BONE_NAMES else 0.7
+
+        # 観測ノイズの標準偏差を計算
+        observation_noise_sd = np.std(np.array(joint_poses))
+
+        initial_state = np.concatenate(
+            [joint_poses[0], [0, 0, 0], [0, 0, 0]]
+        )  # 初期状態に速度0、加速度0を追加
+
+        ukf = UnscentedKalmanFilter(
+            transition_functions=tf,
+            observation_functions=of,
+            transition_covariance=process_noise_sd**2
+            * np.eye(9),  # 状態は位置、速度、加速度を含む
+            observation_covariance=observation_noise_sd**2 * np.eye(3),
+            initial_state_mean=initial_state,
+            initial_state_covariance=process_noise_sd * np.eye(9),
+            random_state=0,
+        )
+
+        # 平滑化
+        smoothed_state_means, _ = ukf.smooth(np.array(joint_poses))
+
+        for i, pos in enumerate(smoothed_state_means[:, :3]):
+            bf = VmdBoneFrame(i, bone_name, register=True)
+            bf.position = MVector3D(pos[0], pos[1], pos[2])
+            if bone_name == "センター":
+                smooth_rot_motion.append_bone_frame(bf)
+            else:
+                smooth_mov_motion.append_bone_frame(bf)
+
+    VmdWriter(
+        smooth_mov_motion,
+        os.path.join(args.target_dir, "output_poses_mp_mov_smooth.vmd"),
+        "WHAM_mediapipe",
+    ).save()
+
+    for target_bone_name, vmd_params in tqdm(VMD_CONNECTIONS.items(), desc="回転"):
         direction_from_name = vmd_params["direction"][0]
         direction_to_name = vmd_params["direction"][1]
         up_from_name = vmd_params["up"][0]
@@ -428,71 +519,81 @@ if __name__ == "__main__":
         cancel_names = vmd_params["cancel"]
         invert_qq = MQuaternion.from_euler_degrees(vmd_params["invert"]["before"])
 
-        for mov_bf in tqdm(poses_mov_motion.bones[direction_from_name], desc=target_bone_name):
-            if (
-                mov_bf.index not in poses_mov_motion.bones[direction_from_name]
-                or mov_bf.index not in poses_mov_motion.bones[direction_to_name]
-            ):
-                # キーがない場合、スルーする
-                continue
+        for mov_motion, rot_motion in [
+            (poses_mov_motion, poses_rot_motion),
+            (smooth_mov_motion, smooth_rot_motion),
+        ]:
+            for mov_bf in mov_motion.bones[direction_from_name]:
+                if (
+                    mov_bf.index not in mov_motion.bones[direction_from_name]
+                    or mov_bf.index not in mov_motion.bones[direction_to_name]
+                ):
+                    # キーがない場合、スルーする
+                    continue
 
-            bone_direction = (
-                trace_model.bones[direction_to_name].position
-                - trace_model.bones[direction_from_name].position
-            ).normalized()
+                bone_direction = (
+                    trace_model.bones[direction_to_name].position
+                    - trace_model.bones[direction_from_name].position
+                ).normalized()
 
-            bone_up = (
-                trace_model.bones[up_to_name].position
-                - trace_model.bones[up_from_name].position
-            ).normalized()
-            bone_cross = (
-                trace_model.bones[cross_to_name].position
-                - trace_model.bones[cross_from_name].position
-            ).normalized()
-            bone_cross_vec: MVector3D = bone_up.cross(bone_cross).normalized()
+                bone_up = (
+                    trace_model.bones[up_to_name].position
+                    - trace_model.bones[up_from_name].position
+                ).normalized()
+                bone_cross = (
+                    trace_model.bones[cross_to_name].position
+                    - trace_model.bones[cross_from_name].position
+                ).normalized()
+                bone_cross_vec: MVector3D = bone_up.cross(bone_cross).normalized()
 
-            initial_qq = MQuaternion.from_direction(bone_direction, bone_cross_vec)
+                initial_qq = MQuaternion.from_direction(bone_direction, bone_cross_vec)
 
-            direction_from_abs_pos = poses_mov_motion.bones[direction_from_name][
-                mov_bf.index
-            ].position
-            direction_to_abs_pos = poses_mov_motion.bones[direction_to_name][
-                mov_bf.index
-            ].position
-            direction: MVector3D = (
-                direction_to_abs_pos - direction_from_abs_pos
-            ).normalized()
+                direction_from_abs_pos = mov_motion.bones[direction_from_name][
+                    mov_bf.index
+                ].position
+                direction_to_abs_pos = mov_motion.bones[direction_to_name][
+                    mov_bf.index
+                ].position
+                direction: MVector3D = (
+                    direction_to_abs_pos - direction_from_abs_pos
+                ).normalized()
 
-            up_from_abs_pos = poses_mov_motion.bones[up_from_name][
-                mov_bf.index
-            ].position
-            up_to_abs_pos = poses_mov_motion.bones[up_to_name][mov_bf.index].position
-            up: MVector3D = (up_to_abs_pos - up_from_abs_pos).normalized()
+                up_from_abs_pos = mov_motion.bones[up_from_name][mov_bf.index].position
+                up_to_abs_pos = mov_motion.bones[up_to_name][mov_bf.index].position
+                up: MVector3D = (up_to_abs_pos - up_from_abs_pos).normalized()
 
-            cross_from_abs_pos = poses_mov_motion.bones[cross_from_name][
-                mov_bf.index
-            ].position
-            cross_to_abs_pos = poses_mov_motion.bones[cross_to_name][
-                mov_bf.index
-            ].position
-            cross: MVector3D = (cross_to_abs_pos - cross_from_abs_pos).normalized()
+                cross_from_abs_pos = mov_motion.bones[cross_from_name][
+                    mov_bf.index
+                ].position
+                cross_to_abs_pos = mov_motion.bones[cross_to_name][
+                    mov_bf.index
+                ].position
+                cross: MVector3D = (cross_to_abs_pos - cross_from_abs_pos).normalized()
 
-            motion_cross_vec: MVector3D = up.cross(cross).normalized()
-            motion_qq = MQuaternion.from_direction(direction, motion_cross_vec)
+                motion_cross_vec: MVector3D = up.cross(cross).normalized()
+                motion_qq = MQuaternion.from_direction(direction, motion_cross_vec)
 
-            cancel_qq = MQuaternion()
-            for cancel_name in cancel_names:
-                cancel_qq *= poses_rot_motion.bones[cancel_name][mov_bf.index].rotation
+                cancel_qq = MQuaternion()
+                for cancel_name in cancel_names:
+                    cancel_qq *= rot_motion.bones[cancel_name][mov_bf.index].rotation
 
-            bf = VmdBoneFrame(name=target_bone_name, index=mov_bf.index, register=True)
-            bf.rotation = (
-                cancel_qq.inverse() * motion_qq * initial_qq.inverse() * invert_qq
-            )
+                bf = VmdBoneFrame(
+                    name=target_bone_name, index=mov_bf.index, register=True
+                )
+                bf.rotation = (
+                    cancel_qq.inverse() * motion_qq * initial_qq.inverse() * invert_qq
+                )
 
-            poses_rot_motion.append_bone_frame(bf)
+                rot_motion.append_bone_frame(bf)
 
     VmdWriter(
         poses_rot_motion,
         os.path.join(args.target_dir, "output_poses_mp_rot.vmd"),
-        "VirtualMarker",
+        "WHAM_mediapipe",
+    ).save()
+
+    VmdWriter(
+        smooth_rot_motion,
+        os.path.join(args.target_dir, "output_poses_mp_rot_smooth.vmd"),
+        "WHAM_mediapipe",
     ).save()

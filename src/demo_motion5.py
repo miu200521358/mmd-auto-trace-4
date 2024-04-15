@@ -16,7 +16,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     mp_rot_motion = VmdReader().read_by_filepath(
-        os.path.join(args.target_dir, "output_poses_mp_rot.vmd")
+        os.path.join(args.target_dir, "output_poses_mp_rot_smooth.vmd")
     )
     ik_bake_motion = mp_rot_motion.copy()
     ik_motion = mp_rot_motion.copy()
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     matrixes = mp_rot_motion.animate_bone(
         list(range(mp_rot_motion.bones.max_fno)),
         trace_model,
+        bone_names=["右つま先", "左つま先"],
         is_calc_ik=False,
         out_fno_log=True,
         description="事前計算",
@@ -90,6 +91,7 @@ if __name__ == "__main__":
 
     # 足IKの設定
     for direction in ["左", "右"]:
+        leg_ik_parent_name = f"{direction}足IK親"
         leg_name = f"{direction}足"
         knee_name = f"{direction}ひざ"
         ankle_name = f"{direction}足首"
@@ -102,7 +104,7 @@ if __name__ == "__main__":
 
         for fno in tqdm(range(mp_rot_motion.bones.max_fno), desc=f"{direction}足"):
             leg_ik_bf = VmdBoneFrame(name=leg_ik_name, index=fno, register=True)
-            leg_ik_bf.position = matrixes[ankle_name, fno].position
+            leg_ik_bf.position = matrixes[ankle_name, fno].position - trace_model.bones[leg_ik_name].position
             leg_ik_bf.rotation = matrixes[ankle_name, fno].local_matrix.to_quaternion()
             ik_motion.append_bone_frame(leg_ik_bf)
 
@@ -110,16 +112,15 @@ if __name__ == "__main__":
             leg_bf.rotation = matrixes[leg_name, fno].frame_fk_rotation
             ik_motion.append_bone_frame(leg_bf)
 
-            knee_bf = VmdBoneFrame(name=knee_name, index=fno, register=True)
-            knee_bf.rotation = matrixes[knee_name, fno].frame_fk_rotation
-            ik_motion.append_bone_frame(knee_bf)
-
             ankle_bf = VmdBoneFrame(name=ankle_name, index=fno, register=True)
             ankle_bf.rotation = matrixes[ankle_name, fno].frame_fk_rotation
             ik_motion.append_bone_frame(ankle_bf)
 
+    del ik_motion.bones["左ひざ"]
+    del ik_motion.bones["右ひざ"]
+
     VmdWriter(
         ik_motion,
-        os.path.join(args.target_dir, "output_poses_mp_rot_ik.vmd"),
+        os.path.join(args.target_dir, "output_poses_mp_rot_ik_leg.vmd"),
         "WHAM_MP",
     ).save()

@@ -6,7 +6,7 @@ from mlib.vmd.vmd_collection import VmdMotion
 from mlib.vmd.vmd_reader import VmdReader
 from mlib.vmd.vmd_writer import VmdWriter
 from mlib.core.math import MVector3D, MQuaternion
-from mlib.core.interpolation import create_interpolation, get_infections2
+from mlib.core.interpolation import create_interpolation, get_infections3
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="HMR2 demo code")
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     mp_rot_motion = VmdReader().read_by_filepath(
-        os.path.join(args.target_dir, "output_poses_mp_rot.vmd")
+        os.path.join(args.target_dir, "output_poses_mp_rot_smooth.vmd")
     )
     reduce_motion = VmdMotion()
 
@@ -28,9 +28,9 @@ if __name__ == "__main__":
         ys.append(mp_rot_motion.bones["センター"][fno].position.y)
         zs.append(mp_rot_motion.bones["センター"][fno].position.z)
 
-    x_infections = get_infections2(xs, 0.5, 0.05)
-    y_infections = get_infections2(ys, 0.5, 0.05)
-    z_infections = get_infections2(zs, 0.8, 0.3)
+    x_infections = get_infections3(xs, 0.07)
+    y_infections = get_infections3(ys, 0.07)
+    z_infections = get_infections3(zs, 0.07)
 
     print("x_infections:")
     print(x_infections)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             )
             rs.append(mp_rot_motion.bones[bone_name][fno].rotation)
 
-        d_infections = get_infections2(ds, 0.02, 0.001)
+        d_infections = get_infections3(ds, 0.0004)
 
         print("d_infections:")
         print(d_infections)
