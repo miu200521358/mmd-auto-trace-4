@@ -171,6 +171,5 @@ inputs/
 outputs/
 outputs_global/
 
-*.sh
 /data
 /cache
