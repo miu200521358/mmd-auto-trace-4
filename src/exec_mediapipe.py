@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     pose_options = PoseLandmarkerOptions(
         base_options=BaseOptions(
-            model_asset_path="checkpoints/mediapipe/pose_landmarker_full.task"
+            model_asset_path="data/pose_landmarker_full.task"
         ),
         running_mode=VisionRunningMode.VIDEO,
     )
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     # Create a hand landmarker instance with the video mode:
     hand_options = HandLandmarkerOptions(
         base_options=BaseOptions(
-            model_asset_path="checkpoints/mediapipe/hand_landmarker.task"
+            model_asset_path="data/hand_landmarker.task"
         ),
         running_mode=VisionRunningMode.VIDEO,
         num_hands=2,
