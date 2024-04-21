@@ -12,6 +12,21 @@ Build cuda_11.7.r11.7/compiler.31442593_0
 ```
 
 ```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```
 export PATH=/home/miu/anaconda3/envs/mat4/bin:$PATH
 ```
 

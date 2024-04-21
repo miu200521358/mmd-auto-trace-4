@@ -1,9 +1,5 @@
 mediapipe==0.10.0
 Babel==2.12.1
-numpy-quaternion==2023.0.3
-bezier==2023.7.28
-PyOpenGL==3.1.7
-Pillow==10.0.0
 pykalman==0.9.7
 
 
