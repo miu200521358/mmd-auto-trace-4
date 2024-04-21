@@ -11,8 +11,9 @@ einops
 timm
 dill
 pandas
-git+https://github.com/brjathu/PHALP.git
+git+https://github.com/miu200521358/PHALP.git
 git+https://github.com/mattloper/chumpy
+git+https://github.com/miu200521358/4D-Humans.git
 
 # mlib
 Babel==2.12.1

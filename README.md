@@ -22,12 +22,6 @@ conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=
 
 export PATH=/home/miu/anaconda3/envs/mat4/bin:$PATH
 pip install -r requirements.txt
-
-(mat4) miu@garnet:/mnt/c/MMD/mmd-auto-trace-4/src$
-git submodule add https://github.com/miu200521358/4D-Humans.git 4D-Humans
-git submodule update --init --recursive
-cd 4D-Humans
-pip install -e .
 ```
 
 ### データ配置
@@ -38,6 +32,7 @@ mmd-auto-trace-4/data/basicModel_neutral_lbs_10_207_0_v1.0.0.pkl
 
 
 
+conda remove -n mat4 --all
 
 
 

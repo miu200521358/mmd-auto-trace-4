@@ -5,23 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "exec wham",
+            "name": "exec 4d-humans-track",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/demo_wham.py",
+            "program": "${workspaceFolder}/src/demo_track.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "--video",
-                "inputs/heart_3039-4838.mp4",
-                // "inputs/side_walk.mp4",
-                // "inputs/snobbism_1080-1380.mp4",
-                // "--calib",
-                // "confis/WHAM/calib.txt",
-                "--output_dir",
-                "outputs",
-                "--estimate_local_only",
-                "--run_smplify",
+                "video.source=inputs/snobbism_1080-1380.mp4",
+                "video.output_dir=outputs",
             ]
         },
         {
@@ -32,85 +24,11 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "--video",
+                "--video.source",
                 "inputs/heart_3039-4838.mp4",
-                // "inputs/snobbism_1080-1380.mp4",
-                // "inputs/side_walk.mp4",
-                // "--calib",
-                // "confis/WHAM/calib.txt",
-                "--output_dir",
+                "--video.output_dir",
                 "outputs",
-                // "--estimate_local_only",
-                // "--run_smplify",
             ]
         },
-        {
-            "name": "exec motion center",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/demo_motion_center.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--target_dir",
-                "outputs/snobbism_1080-1380",
-                // "outputs/side_walk",
-            ]
-        },
-        {
-            "name": "exec motion with mediapipe",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/demo_motion2.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--target_dir",
-                "outputs/snobbism_300-2300",
-                // "outputs/side_walk",
-            ]
-        },
-        {
-            "name": "reduce motion",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/demo_motion4.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--target_dir",
-                "outputs/snobbism_300-2300",
-                // "outputs/snobbism_1080-1380",
-                // "outputs/side_walk",
-            ]
-        },
-        {
-            "name": "ik motion",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/demo_motion5.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--target_dir",
-                "outputs/snobbism_300-2300",
-                // "outputs/snobbism_1080-1380",
-                // "outputs/side_walk",
-            ]
-        },
-        {
-            "name": "wham motion",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/demo_motion6.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--target_dir",
-                "outputs/heart_3039-4838",
-                // "outputs/snobbism_1080-1380",
-                // "outputs/side_walk",
-            ]
-        }
     ]
 }
