@@ -1,11 +1,11 @@
 clear
 
-names=("buster_1167-1267" "snobbism_1080-1380" "snobbism" "buster" "night")
+names=("buster" "night" "snobbism")
 
 for name in ${names[@]}; do
     echo "=================================="
     echo $name
-    # 姿勢推定+追跡
-    python src/demo_track.py video.source=inputs/$name.mp4 video.output_dir=outputs
+    # 姿勢推定+追跡+json出力
+    python src/exec_track.py video.source=inputs/$name.mp4 video.output_dir=outputs
 done
 

@@ -84,12 +84,21 @@ def convert_pkl2json(pkl_path):
             )
 
             joints = v1["3d_joints"][tracked_id - 1].astype(np.float64).tolist()
+
             all_data[tracked_id][time]["3d_joints"] = {}
             for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                 all_data[tracked_id][time]["3d_joints"][jname] = {
                     "x": joint[0],
                     "y": joint[1],
                     "z": joint[2],
+                }
+
+            all_data[tracked_id][time]["global_3d_joints"] = {}
+            for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
+                all_data[tracked_id][time]["global_3d_joints"][jname] = {
+                    "x": joint[0] + all_data[tracked_id][time]["camera"][0],
+                    "y": joint[1] + all_data[tracked_id][time]["camera"][1],
+                    "z": joint[2] + all_data[tracked_id][time]["camera"][2],
                 }
 
             joints = v1["2d_joints"][tracked_id - 1].reshape(-1, 2).astype(np.float64).tolist()
@@ -100,13 +109,15 @@ def convert_pkl2json(pkl_path):
                     "y": joint[1],
                 }
 
+    if not all_data:
+        log.error("No data to convert!")
+        return
+
     for tracked_id in sorted(all_data.keys()):
         json_path = pkl_path.replace(".pkl", f"_{tracked_id:02d}.json")
         with open(json_path, "w") as f:
             json.dump(all_data[tracked_id], f, indent=4)
         log.info(f"Saved: {json_path}")
-
-    return json_path
 
 
 if __name__ == "__main__":

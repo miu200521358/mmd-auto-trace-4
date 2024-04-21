@@ -25,8 +25,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
+                "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
-                "outputs/results/demo_buster_1167-1267.pkl"
+                // "outputs/results/demo_buster_1167-1267.pkl"
             ]
         },
         {
