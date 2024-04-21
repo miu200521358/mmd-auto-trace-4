@@ -65,6 +65,7 @@ def convert_pkl2json(pkl_path):
     with open(pkl_path, "rb") as f:
         lib_data = joblib.load(f)
 
+    start_z = lib_data[list(sorted(lib_data.keys()))[0]]["camera"][0][2]
     all_data = {}
     for k1 in sorted(lib_data.keys()):
         v1 = lib_data[k1]
@@ -98,7 +99,7 @@ def convert_pkl2json(pkl_path):
                 all_data[tracked_id][time]["global_3d_joints"][jname] = {
                     "x": joint[0] + all_data[tracked_id][time]["camera"][0],
                     "y": joint[1] + all_data[tracked_id][time]["camera"][1],
-                    "z": joint[2] + all_data[tracked_id][time]["camera"][2],
+                    "z": joint[2] + (all_data[tracked_id][time]["camera"][2] - start_z) * 0.1,
                 }
 
             joints = v1["2d_joints"][tracked_id - 1].reshape(-1, 2).astype(np.float64).tolist()
