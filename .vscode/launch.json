@@ -8,19 +8,32 @@
             "name": "exec 4d-humans-track",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/demo_track.py",
+            "program": "${workspaceFolder}/src/exec_track.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "video.source=inputs/snobbism_1080-1380.mp4",
+                // "video.source=inputs/snobbism_2255-2265.mp4",
+                "video.source=inputs/buster_1167-1267.mp4",
                 "video.output_dir=outputs",
+            ]
+        },
+        {
+            "name": "exec pkl-to-josn",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/convert_pkl2json.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                // "outputs/results/demo_snobbism_2255-2265.pkl"
+                "outputs/results/demo_buster_1167-1267.pkl"
             ]
         },
         {
             "name": "exec mediapipe",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/demo_mediapipe.py",
+            "program": "${workspaceFolder}/src/exec_mediapipe.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [

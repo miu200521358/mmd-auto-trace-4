@@ -19,5 +19,4 @@ git+https://github.com/miu200521358/4D-Humans.git
 Babel==2.12.1
 mediapipe==0.10.0
 pykalman==0.9.7
-loguru
 
