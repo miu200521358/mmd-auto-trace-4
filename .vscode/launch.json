@@ -15,6 +15,7 @@
                 // "video.source=inputs/snobbism_2255-2265.mp4",
                 "video.source=inputs/buster_1167-1267.mp4",
                 "video.output_dir=outputs",
+                "video.end_frame=99999"
             ]
         },
         {
@@ -25,7 +26,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "outputs/results/demo_snobbism_1080-1380.pkl"
+                "outputs/results/demo_buster.pkl"
+                // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
                 // "outputs/results/demo_buster_1167-1267.pkl"
             ]
