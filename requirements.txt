@@ -1,5 +1,22 @@
-mediapipe==0.10.0
-Babel==2.12.1
-pykalman==0.9.7
+# 4D-Humans
+webdataset
+numpy
+pytorch-lightning
+smplx==0.1.28
+pyrender
+opencv-python
+yacs
+scikit-image
+einops
+timm
+dill
+pandas
+git+https://github.com/brjathu/PHALP.git
+git+https://github.com/mattloper/chumpy
 
+# mlib
+Babel==2.12.1
+mediapipe==0.10.0
+pykalman==0.9.7
+loguru
 

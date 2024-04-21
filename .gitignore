@@ -172,3 +172,4 @@ outputs/
 outputs_global/
 
 *.sh
+/data
