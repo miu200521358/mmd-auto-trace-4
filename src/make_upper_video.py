@@ -59,10 +59,46 @@ def make_upper_video(video_path, pkl_path):
                     np.array(joints[JOINT_INDEXES["OP RShoulder"]]) * np.array([w, h])
                 ).astype(int)
 
-                min_x = np.min([pelvis_x, head_x, left_wrist_x, right_wrist_x, left_shoulder_x, right_shoulder_x])
-                max_x = np.max([pelvis_x, head_x, left_wrist_x, right_wrist_x, left_shoulder_x, right_shoulder_x])
-                min_y = np.min([pelvis_y, head_y, left_wrist_y, right_wrist_y, left_shoulder_y, right_shoulder_y])
-                max_y = np.max([pelvis_y, head_y, left_wrist_y, right_wrist_y, left_shoulder_y, right_shoulder_y])
+                min_x = np.min(
+                    [
+                        pelvis_x,
+                        head_x,
+                        left_wrist_x,
+                        right_wrist_x,
+                        left_shoulder_x,
+                        right_shoulder_x,
+                    ]
+                )
+                max_x = np.max(
+                    [
+                        pelvis_x,
+                        head_x,
+                        left_wrist_x,
+                        right_wrist_x,
+                        left_shoulder_x,
+                        right_shoulder_x,
+                    ]
+                )
+                min_y = np.min(
+                    [
+                        pelvis_y,
+                        head_y,
+                        left_wrist_y,
+                        right_wrist_y,
+                        left_shoulder_y,
+                        right_shoulder_y,
+                    ]
+                )
+                max_y = np.max(
+                    [
+                        pelvis_y,
+                        head_y,
+                        left_wrist_y,
+                        right_wrist_y,
+                        left_shoulder_y,
+                        right_shoulder_y,
+                    ]
+                )
 
                 neck_frame = frame[min_y - 200 : max_y, min_x - 100 : max_x + 100, :]
                 if neck_frame.any():
@@ -84,47 +120,45 @@ def make_upper_video(video_path, pkl_path):
                     # )
                     # cv2.imwrite(img_path, all_data[tracked_id]["U"][time])
 
-                # for hand in ["R", "L"]:
-                #     wrist_x, wrist_y = np.round(
-                #         np.array(joints[JOINT_INDEXES[f"OP {hand}Wrist"]])
-                #         * np.array([w, h])
-                #     ).astype(int)
-                #     elbow_x, elbow_y = np.round(
-                #         np.array(joints[JOINT_INDEXES[f"OP {hand}Elbow"]])
-                #         * np.array([w, h])
-                #     ).astype(int)
+                for hand in ["R", "L"]:
+                    wrist_x, wrist_y = np.round(
+                        np.array(joints[JOINT_INDEXES[f"OP {hand}Wrist"]])
+                        * np.array([w, h])
+                    ).astype(int)
+                    elbow_x, elbow_y = np.round(
+                        np.array(joints[JOINT_INDEXES[f"OP {hand}Elbow"]])
+                        * np.array([w, h])
+                    ).astype(int)
 
-                #     elbow_distance = math.sqrt(
-                #         (elbow_x - wrist_x) ** 2
-                #         + (elbow_y - wrist_y) ** 2
-                #     )
-                #     distance = round(np.max([elbow_distance, 60]))
-                #     hand_frame = frame[
-                #         wrist_y - distance : wrist_y + distance,
-                #         wrist_x - distance : wrist_x + distance,
-                #         :,
-                #     ]
-                #     if hand_frame.any():
-                #         all_data[tracked_id][hand][time] = cv2.resize(
-                #             hand_frame,
-                #             (
-                #                 hand_frame.shape[1] * 6,
-                #                 hand_frame.shape[0] * 6,
-                #             ),
-                #             interpolation=cv2.INTER_CUBIC,
-                #         )
-                #         size_data[tracked_id][hand][time] = np.array(
-                #             all_data[tracked_id][hand][time].shape
-                #         )
+                    min_x = np.min([wrist_x, elbow_x])
+                    max_x = np.max([wrist_x, elbow_x])
+                    min_y = np.min([wrist_y, elbow_y])
+                    max_y = np.max([wrist_y, elbow_y])
 
-                #         # img_path = os.path.join(
-                #         #     os.path.dirname(pkl_path),
-                #         #     f"{video_name}_{tracked_id:02d}_{hand}_{time:04d}.jpg",
-                #         # )
-                #         # cv2.imwrite(img_path, all_data[tracked_id][hand][time])
+                    hand_frame = frame[
+                        min_y - 80 : max_y + 80, min_x - 80 : max_x + 80, :
+                    ]
+                    if hand_frame.any():
+                        all_data[tracked_id][hand][time] = cv2.resize(
+                            hand_frame,
+                            (
+                                hand_frame.shape[1] * 5,
+                                hand_frame.shape[0] * 5,
+                            ),
+                            interpolation=cv2.INTER_CUBIC,
+                        )
+                        size_data[tracked_id][hand][time] = np.array(
+                            all_data[tracked_id][hand][time].shape
+                        )
+
+                        # img_path = os.path.join(
+                        #     os.path.dirname(pkl_path),
+                        #     f"{video_name}_{tracked_id:02d}_{hand}_{time:04d}.jpg",
+                        # )
+                        # cv2.imwrite(img_path, all_data[tracked_id][hand][time])
 
     for tracked_id in all_data.keys():
-        for hand in ["U"]:
+        for hand in ["U", "R", "L"]:
             if all_data[tracked_id][hand]:
                 sizes = []
                 for time in all_data[tracked_id][hand].keys():
@@ -141,7 +175,10 @@ def make_upper_video(video_path, pkl_path):
                 (max_size[1], max_size[0]),
             )
 
-            for time in tqdm(range(max(all_data[tracked_id][hand].keys()) + 1), desc=f"{tracked_id:02d}_{hand}"):
+            for time in tqdm(
+                range(max(all_data[tracked_id][hand].keys()) + 1),
+                desc=f"{tracked_id:02d}_{hand}",
+            ):
                 if time in all_data[tracked_id][hand]:
                     frame = np.zeros((max_size[0], max_size[1], 3), dtype=np.uint8)
                     frame[
