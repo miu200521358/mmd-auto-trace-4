@@ -12,8 +12,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                // "video.source=inputs/snobbism_2255-2265.mp4",
-                "video.source=inputs/buster_1167-1267.mp4",
+                "video.source=inputs/snobbism_2255-2265.mp4",
+                // "video.source=inputs/buster_1167-1267.mp4",
                 "video.output_dir=outputs",
             ]
         },
@@ -29,6 +29,18 @@
                 // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
                 // "outputs/results/demo_buster_1167-1267.pkl"
+            ]
+        },
+        {
+            "name": "exec make upper video",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/make_upper_video.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "inputs/buster_1167-1267.mp4",
+                "outputs1/results/demo_buster_1167-1267.pkl",
             ]
         },
         {

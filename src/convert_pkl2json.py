@@ -61,6 +61,8 @@ JOINT_NAMES = [
     "Right Ear",  # 48
 ]
 
+JOINT_INDEXES = dict([(j, i) for i, j in enumerate(JOINT_NAMES)])
+
 
 def convert_pkl2json(pkl_path):
     with open(pkl_path, "rb") as f:
