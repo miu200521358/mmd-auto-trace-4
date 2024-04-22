@@ -3,6 +3,7 @@ import sys
 import joblib
 import numpy as np
 from phalp.utils import get_pylogger
+from tqdm import tqdm
 
 log = get_pylogger(__name__)
 
@@ -70,28 +71,28 @@ def convert_pkl2json(pkl_path):
             start_z = lib_data[k1]["camera"][0][2]
 
     all_data = {}
-    for k1 in sorted(lib_data.keys()):
+    for k1 in tqdm(sorted(lib_data.keys())):
         v1 = lib_data[k1]
         time = v1["time"]
-        for tracked_id in v1["tracked_ids"]:
+        for t, tracked_id in enumerate(v1["tracked_ids"]):
             if tracked_id not in all_data:
                 all_data[tracked_id] = {}
             all_data[tracked_id][time] = {}
-            if tracked_id - 1 < len(v1["tracked_bbox"]):
+            if t < len(v1["tracked_bbox"]):
                 all_data[tracked_id][time]["tracked_bbox"] = (
-                    v1["tracked_bbox"][tracked_id - 1].astype(np.float64).tolist()
+                    v1["tracked_bbox"][t].astype(np.float64).tolist()
                 )
-            if tracked_id - 1 < len(v1["conf"]):
-                all_data[tracked_id][time]["conf"] = v1["conf"][tracked_id - 1].astype(
+            if t < len(v1["conf"]):
+                all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(
                     np.float64
                 )
-            if tracked_id - 1 < len(v1["camera"]):
+            if t < len(v1["camera"]):
                 all_data[tracked_id][time]["camera"] = (
-                    v1["camera"][tracked_id - 1].astype(np.float64).tolist()
+                    v1["camera"][t].astype(np.float64).tolist()
                 )
 
-            if tracked_id - 1 < len(v1["3d_joints"]):
-                joints = v1["3d_joints"][tracked_id - 1].astype(np.float64).tolist()
+            if t < len(v1["3d_joints"]):
+                joints = v1["3d_joints"][t].astype(np.float64).tolist()
 
                 all_data[tracked_id][time]["3d_joints"] = {}
                 for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
@@ -110,9 +111,9 @@ def convert_pkl2json(pkl_path):
                         + (all_data[tracked_id][time]["camera"][2] - start_z) * 0.1,
                     }
 
-            if tracked_id - 1 < len(v1["2d_joints"]):
+            if t < len(v1["2d_joints"]):
                 joints = (
-                    v1["2d_joints"][tracked_id - 1]
+                    v1["2d_joints"][t]
                     .reshape(-1, 2)
                     .astype(np.float64)
                     .tolist()

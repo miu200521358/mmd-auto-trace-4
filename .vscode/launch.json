@@ -15,7 +15,6 @@
                 // "video.source=inputs/snobbism_2255-2265.mp4",
                 "video.source=inputs/buster_1167-1267.mp4",
                 "video.output_dir=outputs",
-                "video.end_frame=99999"
             ]
         },
         {
