@@ -8,7 +8,7 @@
             "name": "exec 4d-humans-track",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/exec_track.py",
+            "program": "${workspaceFolder}/py/exec_track.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
@@ -21,7 +21,7 @@
             "name": "exec pkl-to-josn",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/convert_pkl2json.py",
+            "program": "${workspaceFolder}/py/convert_pkl2json.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
@@ -35,19 +35,19 @@
             "name": "exec make upper video",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/make_upper_video.py",
+            "program": "${workspaceFolder}/py/make_upper_video.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "inputs/buster_1167-1267.mp4",
-                "outputs1/results/demo_buster_1167-1267.pkl",
+                "outputs/results/demo_buster_1167-1267.pkl",
             ]
         },
         {
             "name": "exec mediapipe",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/exec_mediapipe.py",
+            "program": "${workspaceFolder}/py/exec_mediapipe.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
