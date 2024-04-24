@@ -1,0 +1,54 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "shell: delete pre debug exe",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"set \"workspaceFolder=${workspaceFolder}\" && C:/MMD/mlib_go/.vscode/scripts/delete_pre_debug_exe.bat"
+			],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": false,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": true
+			}
+		},
+		{
+			"label": "go: mod tidy",
+			"type": "shell",
+			"command": "go",
+			"args": [
+				"mod",
+				"tidy"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": false,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"dependsOn": [
+				"shell: delete pre debug exe"
+			],
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}/go"
+			}
+		}
+	]
+}

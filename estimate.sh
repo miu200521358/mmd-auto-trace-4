@@ -2,12 +2,12 @@
 
 clear
 
-names=("snobbism" "baka" "heart" "buraiB" "buraiL")
+paths=("/mnt/e/MMD_E/201805_auto/03/bbf/bbf.mp4" "/mnt/e/MMD_E/201805_auto/04/charles/charles.mp4")
 
-for name in ${names[@]}; do
+for path in ${paths[@]}; do
     echo "=================================="
-    echo $name
+    echo $path
     # 姿勢推定+追跡+json出力
-    python py/exec_track.py video.source=inputs/$name.mp4 video.output_dir=outputs
+    python py/exec_track.py video.source=$path video.output_dir=outputs
 done
 
