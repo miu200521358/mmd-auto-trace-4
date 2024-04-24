@@ -67,7 +67,7 @@
             "cwd": "${workspaceFolder}/go",
             "args": [
                 "Rotate,LegIk",
-                "C:/MMD/mmd-auto-trace-4/outputs/results/demo_buster_01.json"
+                "E:/MMD_E/201805_auto/02/buster/buster_20240425_015307"
             ]
         },
         {

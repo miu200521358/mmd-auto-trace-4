@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 import os
 
@@ -175,6 +176,12 @@ class HMR2023TextureSampler(HMR2Predictor):
 class HMR2_4dhuman(PHALP):
     def __init__(self, cfg):
         cfg.render.enable = False
+        output_dir = os.path.join(
+            os.path.dirname(cfg.video.source),
+            f"{os.path.basename(cfg.video.source).split('.')[0]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        )
+        os.makedirs(output_dir, exist_ok=True)
+        cfg.video.output_dir = output_dir
         super().__init__(cfg)
 
     def setup_hmr(self):
@@ -229,6 +236,7 @@ def main(cfg: DictConfig) -> Optional[float]:
     final_visuals_dic, pkl_path = phalp_tracker.track()
 
     convert_pkl2json(pkl_path)
+
 
 if __name__ == "__main__":
     main()

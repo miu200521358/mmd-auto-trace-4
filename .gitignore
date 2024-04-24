@@ -174,3 +174,5 @@ outputs_global/
 /data
 /cache
 /outputs*
+
+*.exe

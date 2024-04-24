@@ -85,13 +85,15 @@ def convert_pkl2json(pkl_path):
                     v1["tracked_bbox"][t].astype(np.float64).tolist()
                 )
             if t < len(v1["conf"]):
-                all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(
-                    np.float64
-                )
+                all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(np.float64)
+
             if t < len(v1["camera"]):
-                all_data[tracked_id][time]["camera"] = (
-                    v1["camera"][t].astype(np.float64).tolist()
-                )
+                cam_pos = v1["camera"][t].astype(np.float64).tolist()
+                all_data[tracked_id][time]["camera"] = {
+                    "x": cam_pos[0],
+                    "y": -cam_pos[1],
+                    "z": cam_pos[2],
+                }
 
             if t < len(v1["3d_joints"]):
                 joints = v1["3d_joints"][t].astype(np.float64).tolist()
@@ -100,26 +102,21 @@ def convert_pkl2json(pkl_path):
                 for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                     all_data[tracked_id][time]["3d_joints"][jname] = {
                         "x": joint[0],
-                        "y": joint[1],
+                        "y": -joint[1],
                         "z": joint[2],
                     }
 
                 all_data[tracked_id][time]["global_3d_joints"] = {}
                 for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                     all_data[tracked_id][time]["global_3d_joints"][jname] = {
-                        "x": joint[0] + all_data[tracked_id][time]["camera"][0],
-                        "y": joint[1] + all_data[tracked_id][time]["camera"][1],
+                        "x": joint[0] + all_data[tracked_id][time]["camera"]["x"],
+                        "y": -(joint[1] + all_data[tracked_id][time]["camera"]["y"]),
                         "z": joint[2]
-                        + (all_data[tracked_id][time]["camera"][2] - start_z) * 0.1,
+                        + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.1,
                     }
 
             if t < len(v1["2d_joints"]):
-                joints = (
-                    v1["2d_joints"][t]
-                    .reshape(-1, 2)
-                    .astype(np.float64)
-                    .tolist()
-                )
+                joints = v1["2d_joints"][t].reshape(-1, 2).astype(np.float64).tolist()
 
                 all_data[tracked_id][time]["2d_joints"] = {}
                 for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):

@@ -6,28 +6,17 @@ type Position struct {
 	Z float64 `json:"z"`
 }
 
-type Joint3D struct {
-	Position map[JointName]Position `json:"3d_joints"`
-}
-
-type GlobalJoint3D struct {
-	Position map[JointName]Position `json:"global_3d_joints"`
-}
-
-type Joint2D struct {
-	Position map[JointName]Position `json:"2d_joints"`
-}
-
 type Frame struct {
-	TrackedBBox   []float64     `json:"tracked_bbox"`
-	Confidential  float64       `json:"conf"`
-	Camera        []float64     `json:"camera"`
-	Joint3D       Joint3D       `json:"3d_joints"`
-	GlobalJoint3D GlobalJoint3D `json:"global_3d_joints"`
-	Joint2D       Joint2D       `json:"2d_joints"`
+	TrackedBBox   []float64              `json:"tracked_bbox"`
+	Confidential  float64                `json:"conf"`
+	Camera        Position               `json:"camera"`
+	Joint3D       map[JointName]Position `json:"3d_joints"`
+	GlobalJoint3D map[JointName]Position `json:"global_3d_joints"`
+	Joint2D       map[JointName]Position `json:"2d_joints"`
 }
 
 type Frames struct {
+	Path   string
 	Frames map[int]Frame `json:"frames"`
 }
 
@@ -72,7 +61,7 @@ const (
 	LeftElbow     JointName = "Left Elbow"        // 35
 	LeftWrist     JointName = "Left Wrist"        // 36
 	NeckLSP       JointName = "Neck (LSP)"        // 37
-	TopOfHeadLSP  JointName = "Top of Head (LSP)" // 38
+	TopOfHeadLSP  JointName = "Top Of Head (LSP)" // 38
 	PelvisMPII    JointName = "Pelvis (MPII)"     // 39
 	ThoraxMPII    JointName = "Thorax (MPII)"     // 40
 	SpineH36M     JointName = "Spine (H36M)"      // 41
