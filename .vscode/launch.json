@@ -58,7 +58,7 @@
             ]
         },
         {
-            "name": "Launch",
+            "name": "Launch motion",
             "type": "go",
             "request": "launch",
             "mode": "debug",
@@ -66,12 +66,11 @@
             "preLaunchTask": "go: mod tidy",
             "cwd": "${workspaceFolder}/go",
             "args": [
-                "Rotate,LegIk",
                 "E:/MMD_E/201805_auto/02/buster/buster_20240425_015307"
             ]
         },
         {
-            "name": "Build",
+            "name": "Build motion",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/.vscode/scripts/build_exe.py",

@@ -2,13 +2,11 @@ package main
 
 import (
 	"os"
-	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
-
 )
 
 func init() {
@@ -16,10 +14,7 @@ func init() {
 }
 
 func main() {
-	commands := strings.Split(os.Args[1], ",")
-	mlog.I("commands: %v", commands)
-
-	dir_path := os.Args[2]
+	dir_path := os.Args[1]
 	mlog.I("dir_path: %v", dir_path)
 
 	mlog.I("Unpack json ...")
