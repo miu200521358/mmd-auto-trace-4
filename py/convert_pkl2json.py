@@ -135,7 +135,7 @@ def convert_pkl2json(pkl_path):
     for tracked_id in sorted(all_data.keys()):
         json_path = pkl_path.replace(".pkl", f"_{tracked_id:02d}.json")
         with open(json_path, "w") as f:
-            json.dump(all_data[tracked_id], f, indent=4)
+            json.dump({"frames": all_data[tracked_id]}, f, indent=4)
         log.info(f"Saved: {json_path}")
 
 

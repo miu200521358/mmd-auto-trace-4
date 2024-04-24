@@ -100,7 +100,7 @@
           //読込終了後の処理
           reader.onload = function (ev) {
             var max_x = -99999, max_y = -99999, max_z = -99999, min_x = 99999, min_y = 99999, min_z = 99999;
-            var jsonData = JSON.parse(ev.target.result);
+            var jsonData = JSON.parse(ev.target.result)["frames"];
             var max_fno = 0;
             var min_fno = -1;
 

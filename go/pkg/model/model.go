@@ -7,15 +7,15 @@ type Position struct {
 }
 
 type Joint3D struct {
-	Joint map[string]Position `json:"3d_joints"`
+	Position map[JointName]Position `json:"3d_joints"`
 }
 
 type GlobalJoint3D struct {
-	Joint map[string]Position `json:"global_3d_joints"`
+	Position map[JointName]Position `json:"global_3d_joints"`
 }
 
 type Joint2D struct {
-	Joint map[string]Position `json:"2d_joints"`
+	Position map[JointName]Position `json:"2d_joints"`
 }
 
 type Frame struct {
@@ -28,7 +28,7 @@ type Frame struct {
 }
 
 type Frames struct {
-	Frames map[string]Frame
+	Frames map[int]Frame `json:"frames"`
 }
 
 type JointName string
