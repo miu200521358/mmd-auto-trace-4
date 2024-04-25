@@ -13,11 +13,14 @@ func init() {
 }
 
 func main() {
-	dir_path := os.Args[1]
-	mlog.I("dir_path: %v", dir_path)
+	modelPath := os.Args[1]
+	mlog.I("modelPath: %v", modelPath)
+
+	dirPath := os.Args[2]
+	mlog.I("dirPath: %v", dirPath)
 
 	mlog.I("Unpack json ...")
-	allFrames, err := usecase.Unpack(dir_path)
+	allFrames, err := usecase.Unpack(dirPath)
 	if err != nil {
 		mlog.E("Failed to unpack: %v", err)
 		return
@@ -25,5 +28,8 @@ func main() {
 
 	mlog.I("Move Motion ...")
 	allMoveMotions := usecase.Move(allFrames)
-	mlog.I("allMoveMotions: %v", allMoveMotions)
+
+	mlog.I("Rotate Motion ...")
+	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
+	mlog.D("allRotateMotions: %v", allRotateMotions)
 }

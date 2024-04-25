@@ -14,10 +14,10 @@ import (
 )
 
 // Unpack jsonデータを読み込んで、構造体に展開する
-func Unpack(dir_path string) ([]*model.Frames, error) {
+func Unpack(dirPath string) ([]*model.Frames, error) {
 	var allFrames []*model.Frames
 
-	json_paths, err := getJSONFilePaths(dir_path)
+	json_paths, err := getJSONFilePaths(dirPath)
 	if err != nil {
 		mlog.E("Failed to get json file paths: %v", err)
 		return nil, err

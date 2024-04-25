@@ -25,7 +25,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "outputs/results/demo_buster.pkl"
+                "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/demo_snobbism_23_1500-1550.pkl"
+                // "outputs/results/demo_buster.pkl"
                 // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
                 // "outputs/results/demo_buster_1167-1267.pkl"
@@ -66,7 +67,9 @@
             "preLaunchTask": "go: mod tidy",
             "cwd": "${workspaceFolder}/go",
             "args": [
-                "E:/MMD_E/201805_auto/02/buster/buster_20240425_015307"
+                "C:/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx",
+                // "E:/MMD_E/201805_auto/02/buster/buster_20240425_015307",
+                "E:/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
             ]
         },
         {
