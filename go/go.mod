@@ -5,6 +5,16 @@ go 1.22.1
 require github.com/miu200521358/mlib_go v0.0.1
 
 require (
+	github.com/VividCortex/ewma v1.2.0 // indirect
+	github.com/fatih/color v1.15.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+)
+
+require (
+	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a // indirect
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
 	github.com/go-gl/mathgl v1.1.0 // indirect

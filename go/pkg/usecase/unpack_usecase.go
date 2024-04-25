@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
-
 )
 
 // Unpack jsonデータを読み込んで、構造体に展開する
@@ -22,6 +22,10 @@ func Unpack(dir_path string) ([]*model.Frames, error) {
 		mlog.E("Failed to get json file paths: %v", err)
 		return nil, err
 	}
+
+	// 全体のタスク数をカウント
+	totalFrames := len(json_paths)
+	bar := pb.StartNew(totalFrames)
 
 	// Create a channel to receive the results
 	resultCh := make(chan *model.Frames)
@@ -58,6 +62,7 @@ func Unpack(dir_path string) ([]*model.Frames, error) {
 
 			// Send the frames to the result channel
 			resultCh <- frames
+			bar.Increment()
 		}(json_path)
 	}
 
@@ -69,6 +74,8 @@ func Unpack(dir_path string) ([]*model.Frames, error) {
 		// Close the result channel
 		close(resultCh)
 	}()
+
+	bar.Finish()
 
 	// Collect the results from the result channel
 	for frames := range resultCh {

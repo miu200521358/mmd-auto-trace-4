@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
-	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
@@ -26,8 +25,5 @@ func main() {
 
 	mlog.I("Move Motion ...")
 	allMoveMotions := usecase.Move(allFrames)
-	for i, motion := range allMoveMotions {
-		mlog.I("motion[%v]: %v", i, motion.GetPath())
-		vmd.Write(motion)
-	}
+	mlog.I("allMoveMotions: %v", allMoveMotions)
 }

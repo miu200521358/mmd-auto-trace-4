@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cheggaaa/pb/v3"
+
 	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
-
 )
 
 const RATIO = 1 / 0.09
@@ -26,8 +27,15 @@ rootLoop:
 		}
 	}
 
+	// 全体のタスク数をカウント
+	totalFrames := 0
+	for _, frames := range allFrames {
+		totalFrames += len(frames.Frames)
+	}
+
 	// Create a channel to receive the results
 	resultCh := make(chan *vmd.VmdMotion)
+	bar := pb.StartNew(totalFrames)
 
 	// Iterate over allFrames in parallel
 	for i, frames := range allFrames {
@@ -36,6 +44,8 @@ rootLoop:
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
 			for fno, frame := range frames.Frames {
+				bar.Increment()
+
 				for jointName, pos := range frame.Joint3D {
 					// ボーンの位置を移動
 					bf := deform.NewBoneFrame(float32(fno))
@@ -58,6 +68,7 @@ rootLoop:
 
 			// Send the result to the channel
 			resultCh <- movMotion
+			vmd.Write(movMotion)
 		}(i, frames)
 	}
 
@@ -69,6 +80,8 @@ rootLoop:
 
 	// Close the channel
 	close(resultCh)
+
+	bar.Finish()
 
 	return allMoveMotions
 }
