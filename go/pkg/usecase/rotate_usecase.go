@@ -47,7 +47,7 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 			rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
 			rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
 
-			for fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
+			for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
 				{
 					bf := deform.NewBoneFrame(float32(fno))
 					bf.Registered = true
@@ -57,7 +57,7 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 			}
 
 			for _, boneConfig := range boneConfigs {
-				for fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
+				for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
 					bar.Increment()
 
 					// モデルのボーン角度

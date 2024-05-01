@@ -48,10 +48,10 @@ rootLoop:
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
 
-			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, ".json", "_mov.vmd", -1))
+			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mov.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
-			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, ".json", "_joint_mov.vmd", -1))
+			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_joint_mov.vmd", -1))
 			jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
 
 			for fno, frame := range frames.Frames {
