@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 
@@ -19,7 +20,8 @@ const RATIO = 1 / 0.09
 func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 	allMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 
-	minFrame := allFrames[0].Frames[getMinFrame(allFrames[0].Frames)]
+	minFno := getMinFrame(allFrames[0].Frames)
+	minFrame := allFrames[0].Frames[minFno]
 	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
@@ -143,7 +145,7 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 }
 
 func getMinFrame(m map[int]model.Frame) int {
-	minFrame := 0
+	minFrame := math.MaxInt
 
 	for frame := range m {
 		if frame < minFrame {
