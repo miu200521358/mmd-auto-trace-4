@@ -39,6 +39,7 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 		go func(i int, path string) {
 			// Decrement the wait group counter when the goroutine finishes
 			defer wg.Done()
+			defer bar.Increment()
 
 			// JSONデータを読み込んで展開
 			file, err := os.Open(path)
@@ -59,7 +60,6 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 
 			// Send the frames to the result channel
 			allFrames[i] = frames
-			bar.Increment()
 		}(i, json_path)
 	}
 

@@ -25,10 +25,7 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
-	totalFrames := 0
-	for _, frames := range allFrames {
-		totalFrames += len(frames.Frames)
-	}
+	totalFrames := len(allFrames) * 2
 
 	bar := pb.StartNew(totalFrames)
 
@@ -42,6 +39,7 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
+			defer bar.Increment()
 
 			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mov.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
@@ -50,8 +48,6 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 			jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
 
 			for fno, frame := range frames.Frames {
-				bar.Increment()
-
 				for jointName, pos := range frame.Joint3D {
 					// ジョイント移動モーション出力
 					bf := deform.NewBoneFrame(float32(fno))
@@ -128,11 +124,13 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 			if err != nil {
 				mlog.E("Failed to write joint vmd: %v", err)
 			}
+			bar.Increment()
 
-			err = vmd.Write(movMotion)
-			if err != nil {
-				mlog.E("Failed to write move vmd: %v", err)
-			}
+			// err = vmd.Write(movMotion)
+			// if err != nil {
+			// 	mlog.E("Failed to write move vmd: %v", err)
+			// }
+			// bar.Increment()
 
 			allMoveMotions[i] = movMotion
 		}(i, frames)
