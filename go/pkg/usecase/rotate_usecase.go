@@ -18,7 +18,10 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 	allRotateMotions := make([]*vmd.VmdMotion, len(allMoveMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allMoveMotions) * 2
+	totalFrames := len(allMoveMotions)
+	for range len(allMoveMotions) {
+		totalFrames += len(boneConfigs)
+	}
 
 	// モデル読み込み
 	pr := &pmx.PmxReader{}
@@ -40,7 +43,6 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 
 		go func(i int, movMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			defer bar.Increment()
 
 			rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
 			rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
@@ -54,6 +56,8 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 			}
 
 			for _, boneConfig := range boneConfigs {
+				bar.Increment()
+
 				for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
 					// モデルのボーン角度
 					boneDirectionFrom := model.Bones.GetItemByName(boneConfig.DirectionFrom).Position
@@ -98,9 +102,11 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 				}
 			}
 
-			err := vmd.Write(rotMotion)
-			if err != nil {
-				mlog.E("Failed to write rotate vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(rotMotion)
+				if err != nil {
+					mlog.E("Failed to write rotate vmd: %v", err)
+				}
 			}
 			bar.Increment()
 

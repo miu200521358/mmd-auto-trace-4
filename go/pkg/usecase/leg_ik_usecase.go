@@ -13,29 +13,33 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.VmdMotion {
+func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	allLegIkMotions := make([]*vmd.VmdMotion, len(allRotateMotions))
 
-	// mlog.SetLevel(mlog.IK_VERBOSE)
+	mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allRotateMotions) * 2
+	totalFrames := len(allRotateMotions)
+	for _, rotMotion := range allRotateMotions {
+		totalFrames += int(rotMotion.GetMaxFrame() - rotMotion.GetMinFrame())
+	}
+
+	pr := &pmx.PmxReader{}
 
 	// 足IK用モデルを読み込み
-	pr := &pmx.PmxReader{}
-	data, err := pr.ReadByFilepath(ikModelPath)
+	legIkData, err := pr.ReadByFilepath(strings.Replace(modelPath, ".pmx", "_leg_ik.pmx", -1))
 	if err != nil {
 		mlog.E("Failed to read pmx: %v", err)
 	}
-	legIkModel := data.(*pmx.PmxModel)
+	legIkModel := legIkData.(*pmx.PmxModel)
 	legIkModel.SetUp()
 
-	// つま先IK用モデルを読み込み
-	data, err = pr.ReadByFilepath(strings.Replace(ikModelPath, "_leg_ik.pmx", "_toe_ik.pmx", -1))
+	// 足首IK用モデル読み込み
+	toeIkData, err := pr.ReadByFilepath(strings.Replace(modelPath, ".pmx", "_toe_ik.pmx", -1))
 	if err != nil {
 		mlog.E("Failed to read pmx: %v", err)
 	}
-	toeIkModel := data.(*pmx.PmxModel)
+	toeIkModel := toeIkData.(*pmx.PmxModel)
 	toeIkModel.SetUp()
 
 	bar := pb.StartNew(totalFrames)
@@ -50,13 +54,14 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 
 		go func(i int, rotMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			defer bar.Increment()
 
 			legIkMotion := rotMotion.Copy().(*vmd.VmdMotion)
 			legIkMotion.Path = strings.Replace(rotMotion.Path, "_rot.vmd", "_leg_ik.vmd", -1)
 			legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
 
 			for fno := rotMotion.GetMinFrame(); fno <= rotMotion.GetMaxFrame(); fno += 1.0 {
+				bar.Increment()
+
 				var wg sync.WaitGroup
 				errChan := make(chan error, 2) // エラーを受け取るためのチャネル
 
@@ -68,16 +73,20 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 					ankleBoneName := pmx.ANKLE.StringFromDirection(direction)
 					toeBoneName := pmx.TOE.StringFromDirection(direction)
 					legIkBoneName := pmx.LEG_IK.StringFromDirection(direction)
+					toeIkBoneName := pmx.TOE_IK.StringFromDirection(direction)
 					hipTwistBoneName := fmt.Sprintf("%s足捩", direction)
-					toeBigBoneName := fmt.Sprintf("%sつま先親", direction)
+					ankleVBoneName := fmt.Sprintf("%s足首Z垂線", direction)
+					toeSmallBoneName := fmt.Sprintf("%sつま先子", direction)
+					heelBoneName := fmt.Sprintf("%sかかと", direction)
 					hipIkBoneName := fmt.Sprintf("%sももＩＫ", direction)
 					kneeIkBoneName := fmt.Sprintf("%sひざＩＫ", direction)
 					ankleIkBoneName := fmt.Sprintf("%s足首ＩＫ", direction)
+					ankleTwistIkBoneName := fmt.Sprintf("%s足首捩ＩＫ", direction)
 
 					// IKなしの変化量を取得
 					ikOffDeltas := rotMotion.AnimateBone(float32(fno), legIkModel,
-						[]string{legBoneName, kneeBoneName, ankleBoneName, toeBoneName, toeBigBoneName,
-							hipIkBoneName, kneeIkBoneName}, false)
+						[]string{legBoneName, kneeBoneName, ankleBoneName, ankleVBoneName, toeBoneName,
+							toeSmallBoneName, heelBoneName, hipIkBoneName, kneeIkBoneName}, false)
 
 					// 足IK --------------------
 
@@ -88,14 +97,14 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 					hipIkBf.Position = hipIkDelta.GlobalMatrix.Inverted().MulVec3(kneeOffDelta.Position)
 					legIkMotion.AppendBoneFrame(hipIkBoneName, hipIkBf)
 
-					// ひざＩＫは足首の位置を基準とする
+					// ひざＩＫは足首Z垂線の位置を基準とする
 					kneeIkBf := deform.NewBoneFrame(float32(fno))
-					ankleOffDelta := ikOffDeltas.GetItem(ankleBoneName, float32(fno))
+					ankleVOffDelta := ikOffDeltas.GetItem(ankleVBoneName, float32(fno))
 					// ももＩＫが定まった後のひざＩＫ位置を再計算
 					kneeIkMat := mmath.NewMMat4()
 					kneeIkMat.Translate(kneeOffDelta.Position)
 					kneeIkMat.Translate(legIkModel.Bones.GetItemByName(kneeIkBoneName).ParentRelativePosition)
-					kneeIkBf.Position = kneeIkMat.Inverted().MulVec3(ankleOffDelta.Position)
+					kneeIkBf.Position = kneeIkMat.Inverted().MulVec3(ankleVOffDelta.Position)
 					legIkMotion.AppendBoneFrame(kneeIkBoneName, kneeIkBf)
 
 					// ひざをグローバルX軸に対して曲げる
@@ -104,16 +113,15 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 					kneeBf.Rotation.SetQuaternion(mmath.NewMQuaternionFromAxisAngles(mmath.MVec3UnitX, -kneeYZQuat.ToRadian()))
 					legIkMotion.AppendRegisteredBoneFrame(kneeBoneName, kneeBf)
 
-					for j := range 500 {
+					for j := range 100 {
 						// IKありの変化量を取得
 						ikOnDeltas := legIkMotion.AnimateBone(float32(fno), legIkModel,
-							[]string{legBoneName, kneeBoneName, ankleBoneName, hipIkBoneName, kneeIkBoneName}, true)
+							[]string{legBoneName, kneeBoneName, ankleBoneName, ankleVBoneName, hipIkBoneName, kneeIkBoneName}, true)
 
 						kneeOnDelta := ikOnDeltas.GetItem(kneeBoneName, float32(fno))
-						ankleOnDelta := ikOnDeltas.GetItem(ankleBoneName, float32(fno))
+						ankleVOnDelta := ikOnDeltas.GetItem(ankleVBoneName, float32(fno))
 						kneeDistance := kneeOnDelta.Position.Distance(kneeOffDelta.Position)
-						ankleDistance := ankleOnDelta.Position.Distance(ankleOffDelta.Position)
-						mlog.V("Distance at [%d][%s][%d]: knee: %f ankle: %f", int(fno), direction, j, kneeDistance, ankleDistance)
+						ankleDistance := ankleVOnDelta.Position.Distance(ankleVOffDelta.Position)
 
 						// 足は足捩りと合成する
 						legBf := deform.NewBoneFrame(float32(fno))
@@ -131,37 +139,35 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 						kneeBf.Rotation.SetQuaternion(ikOnDeltas.GetItem(kneeBoneName, float32(fno)).FrameRotationWithoutEffect)
 						legIkMotion.AppendRegisteredBoneFrame(kneeBoneName, kneeBf)
 
+						// // 足の捩り成分の大きさをチェック
+						// hipTwistXQuat, _, _, _ := legBf.Rotation.GetQuaternion().SeparateByAxis(legIkModel.Bones.GetItemByName(legBoneName).NormalizedLocalAxisX)
+						// hipTwistXRad := hipTwistXQuat.ToRadian()
+						// mlog.V("Distance at [%d][%s][%d]: knee: %f ankle: %f hipTwist: %f", int(fno), direction, j, kneeDistance, ankleDistance, hipTwistXRad)
+
 						if kneeDistance < 0.3 && ankleDistance < 0.3 {
-							mlog.V("Converged at [%d][%s][%d]", int(fno), direction, j)
+							mlog.D("[Leg] Converged at [%d][%s][%d] knee: %f ankle: %f", int(fno), direction, j, kneeDistance, ankleDistance)
 							break
 						}
 					}
 
-					// つま先IK --------------------
-
-					// 足首ＩＫはつま先の位置を基準とする
-					ankleIkBf := deform.NewBoneFrame(float32(fno))
-					toeDelta := ikOffDeltas.GetItem(toeBoneName, float32(fno))
-					// ひざＩＫが定まった後の足首ＩＫ位置を再計算
-					ankleIkMat := mmath.NewMMat4()
-					ankleIkMat.Translate(ankleOffDelta.Position)
-					ankleIkMat.Translate(toeIkModel.Bones.GetItemByName(ankleIkBoneName).ParentRelativePosition)
-					ankleIkBf.Position = ankleIkMat.Inverted().MulVec3(toeDelta.Position)
-					legIkMotion.AppendBoneFrame(ankleIkBoneName, ankleIkBf)
-
-					// 足首を別途求める
-					ikOnDeltas := legIkMotion.AnimateBone(float32(fno), toeIkModel,
-						[]string{ankleBoneName, toeBoneName, toeBigBoneName, ankleIkBoneName}, true)
-					ankleOnDelta := ikOnDeltas.GetItem(ankleBoneName, float32(fno))
-
-					ankleBf := deform.NewBoneFrame(float32(fno))
-					ankleBf.Rotation.SetQuaternion(ankleOnDelta.FrameRotationWithoutEffect)
-					legIkMotion.AppendRegisteredBoneFrame(ankleBoneName, ankleBf)
-
 					// 足ＩＫの位置はIK OFF時の足首位置
 					legIkBf := deform.NewBoneFrame(float32(fno))
-					legIkBf.Rotation.SetQuaternion(ankleOffDelta.LocalMatrix.Quaternion())
-					legIkBf.Position = ankleOffDelta.Position.Subed(legIkModel.Bones.GetItemByName(ankleBoneName).Position)
+					ankleOffDelta := ikOffDeltas.GetItem(ankleBoneName, float32(fno))
+					legIkBf.Position = ankleOffDelta.Position.Subed(toeIkModel.Bones.GetItemByName(ankleBoneName).Position)
+
+					toeIkOffDeltas := legIkMotion.AnimateBone(float32(fno), toeIkModel, []string{toeIkBoneName}, false)
+
+					// つま先IKの位置はIK OFF時のつま先位置
+					toeIkBf := deform.NewBoneFrame(float32(fno))
+					toeOffDelta := ikOffDeltas.GetItem(toeBoneName, float32(fno))
+					toeIkOffDelta := toeIkOffDeltas.GetItem(toeIkBoneName, float32(fno))
+					toeIkBf.Position = toeIkOffDelta.Position.Sub(toeOffDelta.Position)
+					legIkMotion.AppendBoneFrame(toeIkBoneName, toeIkBf)
+
+					ikOnDeltas := legIkMotion.AnimateBone(float32(fno), toeIkModel,
+						[]string{ankleBoneName, toeBoneName, toeIkBoneName}, true)
+
+					legIkBf.Rotation.SetQuaternion(ikOnDeltas.GetItem(ankleBoneName, float32(fno)).FrameRotationWithoutEffect)
 					legIkMotion.AppendRegisteredBoneFrame(legIkBoneName, legIkBf)
 				}
 
@@ -187,10 +193,11 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, ikModelPath string) []*vmd.
 
 			legIkMotion.BoneFrames.Delete("右ももＩＫ")
 			legIkMotion.BoneFrames.Delete("右ひざＩＫ")
-			legIkMotion.BoneFrames.Delete("右足首ＩＫ")
+			legIkMotion.BoneFrames.Delete("右つま先ＩＫ")
 			legIkMotion.BoneFrames.Delete("左ももＩＫ")
 			legIkMotion.BoneFrames.Delete("左ひざＩＫ")
 			legIkMotion.BoneFrames.Delete("左足首ＩＫ")
+			legIkMotion.BoneFrames.Delete("左つま先ＩＫ")
 
 			allLegIkMotions[i] = legIkMotion
 		}(i, rotMotion)

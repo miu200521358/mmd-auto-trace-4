@@ -2,15 +2,21 @@ package main
 
 import (
 	"os"
-	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
 
+var logLevel = "DEBUG"
+
 func init() {
-	mlog.SetLevel(mlog.DEBUG)
+	switch logLevel {
+	case "INFO":
+		mlog.SetLevel(mlog.INFO)
+	default:
+		mlog.SetLevel(mlog.DEBUG)
+	}
 }
 
 func main() {
@@ -34,7 +40,7 @@ func main() {
 	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
 
 	mlog.I("Convert Leg Ik Motion ...")
-	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, strings.Replace(modelPath, ".pmx", "_leg_ik.pmx", -1))
+	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
 
 	print(len(allLegIkMotions))
 }

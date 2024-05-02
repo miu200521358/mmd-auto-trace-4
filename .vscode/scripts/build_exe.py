@@ -17,9 +17,10 @@ os.environ['GOARCH'] = 'amd64'
 # -a 全ての依存関係を再ビルド
 # -buildmode=exe 実行可能ファイルを生成
 # -ldflags "-s -w" バイナリサイズを小さくする
+# -X main.logLevel=INFO ビルド時に変数を設定
 # -gcflags "all=-N -l" デバッグ情報を削除
 build_command = f"cd go && go build -o {workspace_folder}/build/mat4 " \
-                f"-trimpath -v -a -buildmode=exe -ldflags \"-s -w\" " \
+                f"-trimpath -v -a -buildmode=exe -ldflags \"-s -w -X main.logLevel=INFO\" " \
                 f"{workspace_folder}/go/cmd/main.go"
 
 print(f"build_command: {build_command}")
