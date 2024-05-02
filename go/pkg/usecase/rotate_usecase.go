@@ -15,12 +15,12 @@ import (
 )
 
 func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	var allRotateMotions []*vmd.VmdMotion
+	allRotateMotions := make([]*vmd.VmdMotion, len(allMoveMotions))
 
 	// 全体のタスク数をカウント
 	totalFrames := 0
 	for _, movMotion := range allMoveMotions {
-		totalFrames += int(movMotion.GetMaxFrame())
+		totalFrames += int(movMotion.GetMaxFrame()) + 1
 	}
 
 	// モデル読み込み
@@ -43,6 +43,7 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 
 		go func(i int, movMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer bar.Increment()
 
 			rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
 			rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
@@ -50,9 +51,8 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 			for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
 				{
 					bf := deform.NewBoneFrame(float32(fno))
-					bf.Registered = true
 					bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
-					rotMotion.AppendBoneFrame("センター", bf)
+					rotMotion.AppendRegisteredBoneFrame("センター", bf)
 				}
 			}
 
@@ -97,10 +97,9 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 
 					// ボーンフレーム登録
 					bf := deform.NewBoneFrame(float32(fno))
-					bf.Registered = true
 					bf.Rotation.SetQuaternion(quat)
 
-					rotMotion.AppendBoneFrame(boneConfig.Name, bf)
+					rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
 				}
 			}
 
@@ -109,7 +108,7 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 				mlog.E("Failed to write rotate vmd: %v", err)
 			}
 
-			allRotateMotions = append(allRotateMotions, rotMotion)
+			allRotateMotions[i] = rotMotion
 		}(i, movMotion)
 	}
 

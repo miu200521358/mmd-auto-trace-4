@@ -17,17 +17,10 @@ import (
 const RATIO = 1 / 0.09
 
 func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
-	var allMoveMotions []*vmd.VmdMotion
-	var rootPos model.Position
+	allMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 
-rootLoop:
-	for _, frames := range allFrames {
-		for _, frame := range frames.Frames {
-			// 最初の人物の最初のフレームのカメラ位置をrootとする
-			rootPos = model.Position{X: frame.Camera.X, Y: frame.Camera.Y, Z: frame.Camera.Z}
-			break rootLoop
-		}
-	}
+	minFrame := allFrames[0].Frames[getMinFrame(allFrames[0].Frames)]
+	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
 	totalFrames := 0
@@ -133,12 +126,13 @@ rootLoop:
 			if err != nil {
 				mlog.E("Failed to write joint vmd: %v", err)
 			}
+
 			err = vmd.Write(movMotion)
 			if err != nil {
 				mlog.E("Failed to write move vmd: %v", err)
 			}
 
-			allMoveMotions = append(allMoveMotions, movMotion)
+			allMoveMotions[i] = movMotion
 		}(i, frames)
 	}
 
@@ -146,6 +140,18 @@ rootLoop:
 	bar.Finish()
 
 	return allMoveMotions
+}
+
+func getMinFrame(m map[int]model.Frame) int {
+	minFrame := 0
+
+	for frame := range m {
+		if frame < minFrame {
+			minFrame = frame
+		}
+	}
+
+	return minFrame
 }
 
 var joint2bones = map[string]string{

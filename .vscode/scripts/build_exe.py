@@ -8,6 +8,9 @@ workspace_folder = os.environ.get('WORKSPACE_FOLDER')
 # 値を表示
 print(f"workspace_folder: {workspace_folder}")
 
+os.environ['GOOS'] = 'linux'
+os.environ['GOARCH'] = 'amd64'
+
 # Build command
 # -o 出力フォルダ
 # -trimpath ビルドパスを削除
@@ -16,8 +19,8 @@ print(f"workspace_folder: {workspace_folder}")
 # -buildmode=exe 実行可能ファイルを生成
 # -ldflags "-s -w" バイナリサイズを小さくする
 # -gcflags "all=-N -l" デバッグ情報を削除
-build_command = f"cd go && go build -o {workspace_folder}/build/mat4.exe -trimpath " \
-                f"-v -a -buildmode=exe -ldflags \"-s -w\" " \
+build_command = f"cd go && go build -o {workspace_folder}/build/mat4 " \
+                f"-trimpath -v -a -buildmode=exe -ldflags \"-s -w\" " \
                 f"{workspace_folder}/go/cmd/main.go"
 
 print(f"build_command: {build_command}")

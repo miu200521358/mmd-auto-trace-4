@@ -75,6 +75,10 @@ func getJSONFilePaths(dirPath string) ([]string, error) {
 		if err != nil {
 			return err
 		}
+		if path != dirPath && info.IsDir() {
+			// 直下だけ参照
+			return filepath.SkipDir
+		}
 		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_smooth.json")) {
 			paths = append(paths, path)
 		}

@@ -171,3 +171,4 @@ outputs_global/
 /build
 
 *.exe
+/configs/pmx/IK_step

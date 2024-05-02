@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 
@@ -31,5 +32,9 @@ func main() {
 
 	mlog.I("Rotate Motion ...")
 	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
-	mlog.D("allRotateMotions: %v", allRotateMotions)
+
+	mlog.I("Convert Leg Ik Motion ...")
+	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, strings.Replace(modelPath, ".pmx", "_leg_ik.pmx", -1))
+
+	print(len(allLegIkMotions))
 }
