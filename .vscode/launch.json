@@ -85,8 +85,9 @@
             "preLaunchTask": "go: mod tidy",
             "cwd": "${workspaceFolder}/go",
             "args": [
-                "/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx",
-                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭",
+                "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx",
+                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭",
+                "-logLevel=DEBUG",
                 // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
             ]
         },

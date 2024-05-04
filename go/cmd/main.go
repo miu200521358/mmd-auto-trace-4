@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -8,9 +9,16 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
 
-var logLevel = "DEBUG"
+var logLevel string
+var modelPath string
+var dirPath string
 
 func init() {
+	flag.StringVar(&logLevel, "logLevel", "INFO", "set log level")
+	flag.StringVar(&modelPath, "modelPath", "", "set model path")
+	flag.StringVar(&dirPath, "dirPath", "", "set directory path")
+	flag.Parse()
+
 	switch logLevel {
 	case "INFO":
 		mlog.SetLevel(mlog.INFO)
@@ -20,11 +28,10 @@ func init() {
 }
 
 func main() {
-	modelPath := os.Args[1]
-	mlog.I("modelPath: %v", modelPath)
-
-	dirPath := os.Args[2]
-	mlog.I("dirPath: %v", dirPath)
+	if modelPath == "" || dirPath == "" {
+		mlog.E("modelPath and dirPath must be provided")
+		os.Exit(1)
+	}
 
 	mlog.I("Unpack json ...")
 	allFrames, err := usecase.Unpack(dirPath)
