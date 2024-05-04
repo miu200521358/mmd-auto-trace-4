@@ -2,8 +2,10 @@
 
 clear
 
-paths=("/mnt/e/MMD_E/201805_auto/03/ivory/ivory.mp4"
-        "/mnt/e/MMD_E/201805_auto/03/bbf/bbf.mp4")
+paths=("/mnt/e/MMD_E/201805_auto/01/cat/cat_30fps.mp4"
+        "/mnt/e/MMD_E/201805_auto/02/seven/seven.mp4"
+        "/mnt/e/MMD_E/201805_auto/03/wave/wave_full.mp4"
+        "/mnt/e/MMD_E/201805_auto/04/yoiyoi/yoiyoi.mp4")
 
 for path in ${paths[@]}; do
     echo "=================================="

@@ -30,7 +30,7 @@ pip install -r requirements.txt
 mmd-auto-trace-4/data/basicModel_neutral_lbs_10_207_0_v1.0.0.pkl
 ```
 
-
+./mat4 /mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx /mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307
 
 conda remove -n mat4 --all
 
