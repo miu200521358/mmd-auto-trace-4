@@ -24,6 +24,16 @@ export PATH=/home/miu/anaconda3/envs/mat4/bin:$PATH
 pip install -r requirements.txt
 ```
 
+### 画像拡大ライブラリ
+
+```
+mkdir resize
+wget -P resize https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip 
+unzip resize/realesrgan-ncnn-vulkan-20220424-ubuntu.zip -d resize
+```
+
+
+
 ### データ配置
 
 ```

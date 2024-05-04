@@ -11,6 +11,7 @@ type PositionVisibility struct {
 	Y          float64 `json:"y"`
 	Z          float64 `json:"z"`
 	Visibility float64 `json:"visibility"`
+	Presence   float64 `json:"presence"`
 }
 
 type Frame struct {

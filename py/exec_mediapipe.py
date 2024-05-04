@@ -117,13 +117,19 @@ def exec_person_mediapipe(video_path: str, original_json_path: str):
 
             # tracked_bboxの領域を取得したフレームから切り出す
             x, y, w, h = tracked_bbox
-            clipped_frame = frame[
-                max(0, int(y) - 20) : min(H, int(y + h) + 20),
-                max(0, int(x) - 20) : min(int(x + w) + 20, W),
-            ].astype(np.uint8)
+            clipped_x = max(0, int(y) - 20)
+            clipped_y = max(0, int(x) - 20)
+            clipped_w = min(int(x + w) + 20, W)
+            clipped_h = min(int(y + h) + 20, H)
+            clipped_frame = frame[clipped_x:clipped_h, clipped_y:clipped_w].astype(
+                np.uint8
+            )
+
+            # 画像を拡大
+            resize_frame = cv2.resize(clipped_frame, (clipped_w * 2, clipped_h * 2), interpolation=cv2.INTER_CUBIC)
 
             # STEP 3: Load the input image.
-            image = mp.Image(mp.ImageFormat.SRGB, clipped_frame)
+            image = mp.Image(mp.ImageFormat.SRGB, resize_frame)
 
             ts += 1 / fps * 1000
 

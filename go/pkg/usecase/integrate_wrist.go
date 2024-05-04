@@ -62,7 +62,7 @@ func integrateWristMotion(frames *model.Frames, dRotateMotion *vmd.VmdMotion, mp
 			bar.Increment()
 			visibility := frames.Frames[int(fno)].Mediapipe[mpWristName].Visibility
 
-			if visibility > 0.99 {
+			if visibility > 0.9 {
 				wristBf := mpRotateMotion.BoneFrames.GetItem(wristName).GetItem(fno)
 				dRotateMotion.AppendRegisteredBoneFrame(wristName, wristBf)
 			}

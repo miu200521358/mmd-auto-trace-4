@@ -122,6 +122,7 @@ def smooth(target_dir: str):
 
         start_camera_z = 0.0
         start_fno = -1
+        mp_start_fno = -1
         j = 0
         for time, frame_data in tqdm(
             data["frames"].items(), desc=f"Prepare[{i:02d}] ..."
@@ -186,6 +187,8 @@ def smooth(target_dir: str):
                             "z": prev_data["global_3d_joints"][jname]["z"],
                         }
 
+                if 0 < len(joint_positions[("mediapipe", "left wrist")]):
+                    j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
                     for jname in MEDIAPIPE_JOINT_NAMES:
                         joint_positions[("mediapipe", jname)].append(
                             np.array(
@@ -249,6 +252,9 @@ def smooth(target_dir: str):
                     }
 
             if "mediapipe" in frame_data:
+                if mp_start_fno == -1:
+                    mp_start_fno = int(time)
+
                 for jname, joint in frame_data["mediapipe"].items():
                     joint_positions[("mediapipe", jname)].append(
                         np.array([joint["x"], joint["y"], joint["z"]])
@@ -308,6 +314,7 @@ def smooth(target_dir: str):
 
             for j, joint_pose in enumerate(smoothed_state_means[:, :3]):
                 j2 = str(j + start_fno)
+                mj = str(j + mp_start_fno)
                 if "camera" == type_name:
                     if joint_name == "x":
                         smoothed_data["frames"][j2]["camera"]["x"] = joint_pose[0]
@@ -319,12 +326,22 @@ def smooth(target_dir: str):
                         )
                 elif "mediapipe" == type_name:
                     if joint_name not in smoothed_data["frames"][j2][type_name]:
-                        smoothed_data["frames"][j2][type_name][joint_name] = {
-                            "x": 0.0, "y": 0.0, "z": 0.0, "visibility": 0.0, "presence": 0.0,
+                        smoothed_data["frames"][mj][type_name][joint_name] = {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0,
+                            "visibility": 0.0,
+                            "presence": 0.0,
                         }
-                    smoothed_data["frames"][j2][type_name][joint_name]["x"] = joint_pose[0]
-                    smoothed_data["frames"][j2][type_name][joint_name]["y"] = joint_pose[1]
-                    smoothed_data["frames"][j2][type_name][joint_name]["z"] = joint_pose[2]
+                    smoothed_data["frames"][mj][type_name][joint_name]["x"] = (
+                        joint_pose[0]
+                    )
+                    smoothed_data["frames"][mj][type_name][joint_name]["y"] = (
+                        joint_pose[1]
+                    )
+                    smoothed_data["frames"][mj][type_name][joint_name]["z"] = (
+                        joint_pose[2]
+                    )
                 else:
                     smoothed_data["frames"][j2][type_name][joint_name] = {
                         "x": joint_pose[0],
