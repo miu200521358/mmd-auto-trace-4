@@ -17,15 +17,16 @@ import (
 
 const RATIO = 1 / 0.09
 
-func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
+func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 	allMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
+	allMpMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 
 	minFno := getMinFrame(allFrames[0].Frames)
 	minFrame := allFrames[0].Frames[minFno]
 	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allFrames)
+	totalFrames := len(allFrames) * 3
 	for _, frames := range allFrames {
 		totalFrames += len(frames.Frames)
 	}
@@ -46,6 +47,9 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mov.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
+			mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mp_mov.vmd", -1))
+			mpMovMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
+
 			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_joint_mov.vmd", -1))
 			jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
 
@@ -53,75 +57,110 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 				bar.Increment()
 
 				for jointName, pos := range frame.Joint3D {
-					// ジョイント移動モーション出力
+					// 4D-Humansのジョイント移動モーション出力
 					bf := deform.NewBoneFrame(float32(fno))
-					bf.Registered = true
 					bf.Position.SetX(pos.X * RATIO)
 					bf.Position.SetY(pos.Y * RATIO)
 					bf.Position.SetZ(pos.Z * RATIO)
-					jointMotion.AppendBoneFrame(string(jointName), bf)
+					jointMotion.AppendRegisteredBoneFrame(string(jointName), bf)
 
 					// ボーン名がある場合、ボーン移動モーションにも出力
 					if boneName, ok := joint2bones[string(jointName)]; ok {
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position.SetX(pos.X * RATIO)
 						bf.Position.SetY(pos.Y * RATIO)
 						bf.Position.SetZ(pos.Z * RATIO)
-						movMotion.AppendBoneFrame(boneName, bf)
+						movMotion.AppendRegisteredBoneFrame(boneName, bf)
 					}
 				}
 
 				{
 					bf := deform.NewBoneFrame(float32(fno))
-					bf.Registered = true
 					bf.Position.SetX(frame.Camera.X * RATIO)
 					bf.Position.SetY(frame.Camera.Y * RATIO)
 					bf.Position.SetZ((frame.Camera.Z - rootPos.Z))
-					jointMotion.AppendBoneFrame("Camera", bf)
+					jointMotion.AppendRegisteredBoneFrame("Camera", bf)
 				}
 				{
 					bf := deform.NewBoneFrame(float32(fno))
-					bf.Registered = true
 					bf.Position.SetX(frame.Camera.X * RATIO)
 					bf.Position.SetY(frame.Camera.Y * RATIO)
 					bf.Position.SetZ((frame.Camera.Z - rootPos.Z))
-					movMotion.AppendBoneFrame("Camera", bf)
+					movMotion.AppendRegisteredBoneFrame("Camera", bf)
 				}
 
 				{
 					// 追加で計算するボーン
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position = movMotion.BoneFrames.GetItem("右足").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("左足").GetItem(float32(fno)).Position).DivedScalar(2)
-						movMotion.AppendBoneFrame("下半身先", bf)
+						movMotion.AppendRegisteredBoneFrame("下半身先", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
-						movMotion.AppendBoneFrame("左肩", bf)
+						movMotion.AppendRegisteredBoneFrame("左肩", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position).DivedScalar(2)
-						movMotion.AppendBoneFrame("右肩", bf)
+						movMotion.AppendRegisteredBoneFrame("右肩", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position = movMotion.BoneFrames.GetItem("左つま先親").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("左つま先子").GetItem(float32(fno)).Position).DivedScalar(2)
-						movMotion.AppendBoneFrame("左つま先", bf)
+						movMotion.AppendRegisteredBoneFrame("左つま先", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Registered = true
 						bf.Position = movMotion.BoneFrames.GetItem("右つま先親").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("右つま先子").GetItem(float32(fno)).Position).DivedScalar(2)
-						movMotion.AppendBoneFrame("右つま先", bf)
+						movMotion.AppendRegisteredBoneFrame("右つま先", bf)
 					}
 				}
+
+				for jointName, posVis := range frame.Mediapipe {
+					// mediapipeのジョイント移動モーション出力
+					// ボーン名がある場合、ボーン移動モーションにも出力
+					if boneName, ok := mpJoint2bones[string(jointName)]; ok {
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position.SetX(posVis.X * RATIO)
+						bf.Position.SetY(posVis.Y * RATIO * -1)
+						bf.Position.SetZ(posVis.Z * RATIO)
+						mpMovMotion.AppendRegisteredBoneFrame(boneName, bf)
+					}
+				}
+
+				{
+					// 追加で計算するボーン
+					{
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position = mpMovMotion.BoneFrames.GetItem("右足").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左足").GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame("上半身", bf)
+					}
+					{
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position = mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame("首", bf)
+					}
+					{
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position = mpMovMotion.BoneFrames.GetItem("上半身").GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("上半身").GetItem(float32(fno)).Position).DivedScalar(2),
+						)
+						mpMovMotion.AppendRegisteredBoneFrame("上半身2", bf)
+					}
+					{
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame("左肩", bf)
+					}
+					{
+						bf := deform.NewBoneFrame(float32(fno))
+						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame("右肩", bf)
+					}
+				}
+
 			}
 
 			if mlog.IsDebug() {
@@ -129,24 +168,34 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 				if err != nil {
 					mlog.E("Failed to write joint vmd: %v", err)
 				}
+				bar.Increment()
 
 				err = vmd.Write(movMotion)
 				if err != nil {
 					mlog.E("Failed to write move vmd: %v", err)
 				}
+				bar.Increment()
+
+				err = vmd.Write(mpMovMotion)
+				if err != nil {
+					mlog.E("Failed to write mp move vmd: %v", err)
+				}
+				bar.Increment()
 			}
 
 			bar.Increment()
 			bar.Increment()
+			bar.Increment()
 
 			allMoveMotions[i] = movMotion
+			allMpMoveMotions[i] = mpMovMotion
 		}(i, frames)
 	}
 
 	wg.Wait()
 	bar.Finish()
 
-	return allMoveMotions
+	return allMoveMotions, allMpMoveMotions
 }
 
 func getMinFrame(m map[int]model.Frame) int {
@@ -191,4 +240,21 @@ var joint2bones = map[string]string{
 	"Spine (H36M)":  "上半身2",  // 41
 	"Head (H36M)":   "頭",     // 43
 	"Pelvis2":       "下半身先",
+}
+
+var mpJoint2bones = map[string]string{
+	"left shoulder":  "左腕",
+	"right shoulder": "右腕",
+	"left elbow":     "左ひじ",
+	"right elbow":    "右ひじ",
+	"left wrist":     "左手首",
+	"right wrist":    "右手首",
+	"left pinky":     "左小指１",
+	"right pinky":    "右小指１",
+	"left index":     "左人指１",
+	"right index":    "右人指１",
+	"left thumb":     "左親指１",
+	"right thumb":    "右親指１",
+	"left hip":       "左足",
+	"right hip":      "右足",
 }

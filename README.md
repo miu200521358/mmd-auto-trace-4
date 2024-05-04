@@ -33,7 +33,12 @@ mmd-auto-trace-4/data/basicModel_neutral_lbs_10_207_0_v1.0.0.pkl
 ### バイナリの起動
 
 ```
-./mat4 -modelPath=/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx -dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307
+python py/exec_mediapipe.py --video /mnt/e/MMD_E/201805_auto/02/buster/buster.mp4 --output_dir /mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307
+python py/smooth.py /mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307
+```
+
+```
+./dist/mat4 -modelPath=/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx -dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307
 ```
 
 conda remove -n mat4 --all

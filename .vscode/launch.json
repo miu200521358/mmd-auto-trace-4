@@ -19,7 +19,7 @@
             ]
         },
         {
-            "name": "exec pkl2josn",
+            "name": "exec pkl2json",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/py/convert_pkl2json.py",
@@ -35,6 +35,20 @@
             ]
         },
         {
+            "name": "exec mediapipe",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/py/exec_mediapipe.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--video",
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
+                "--output_dir",
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+            ]
+        },
+        {
             "name": "exec smooth",
             "type": "debugpy",
             "request": "launch",
@@ -42,8 +56,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2"
                 // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
-                "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
+                // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
                 // "outputs/results/demo_buster.pkl"
                 // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
@@ -63,20 +78,6 @@
             ]
         },
         {
-            "name": "exec mediapipe",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/exec_mediapipe.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "--video.source",
-                "inputs/heart_3039-4838.mp4",
-                "--video.output_dir",
-                "outputs",
-            ]
-        },
-        {
             "name": "Launch motion",
             "type": "go",
             "request": "launch",
@@ -86,7 +87,7 @@
             "cwd": "${workspaceFolder}/go",
             "args": [
                 "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/configs/pmx/v4_trace_model.pmx",
-                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭",
+                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
                 "-logLevel=DEBUG",
                 // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
             ]

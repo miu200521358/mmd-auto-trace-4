@@ -14,13 +14,14 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func Rotate(allMoveMotions []*vmd.VmdMotion, allMpMoveMotions []*vmd.VmdMotion, modelPath string) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 	allRotateMotions := make([]*vmd.VmdMotion, len(allMoveMotions))
+	allMpRotateMotions := make([]*vmd.VmdMotion, len(allMpMoveMotions))
 
 	// 全体のタスク数をカウント
 	totalFrames := len(allMoveMotions)
 	for range len(allMoveMotions) {
-		totalFrames += len(boneConfigs)
+		totalFrames += len(boneConfigs) * 2
 	}
 
 	// モデル読み込み
@@ -43,81 +44,102 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 
 		go func(i int, movMotion *vmd.VmdMotion) {
 			defer wg.Done()
-
-			rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
-			rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
-
-			for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
-				{
-					bf := deform.NewBoneFrame(float32(fno))
-					bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
-					rotMotion.AppendRegisteredBoneFrame("センター", bf)
-				}
-			}
-
-			for _, boneConfig := range boneConfigs {
-				bar.Increment()
-
-				for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
-					// モデルのボーン角度
-					boneDirectionFrom := model.Bones.GetItemByName(boneConfig.DirectionFrom).Position
-					boneDirectionTo := model.Bones.GetItemByName(boneConfig.DirectionTo).Position
-					boneUpFrom := model.Bones.GetItemByName(boneConfig.UpFrom).Position
-					boneUpTo := model.Bones.GetItemByName(boneConfig.UpTo).Position
-
-					boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
-					boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
-					boneCrossVector := boneUpVector.Cross(boneDirectionVector).Normalize()
-
-					boneQuat := mmath.NewMQuaternionFromDirection(boneDirectionVector, boneCrossVector)
-
-					// モーションのボーン角度
-					motionDirectionFromPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
-					motionDirectionToPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position
-					motionUpFromPos := movMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(float32(fno)).Position
-					motionUpToPos := movMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(float32(fno)).Position
-
-					motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
-					motionUpVector := motionUpToPos.Subed(motionUpFromPos).Normalize()
-					motionCrossVector := motionUpVector.Cross(motionDirectionVector).Normalize()
-
-					motionQuat := mmath.NewMQuaternionFromDirection(motionDirectionVector, motionCrossVector)
-
-					// キャンセルボーン角度
-					cancelQuat := mmath.NewMQuaternion()
-					for _, cancelBoneName := range boneConfig.Cancels {
-						cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Data[float32(fno)].Rotation.GetQuaternion())
-					}
-
-					// 調整角度
-					invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
-
-					quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
-
-					// ボーンフレーム登録
-					bf := deform.NewBoneFrame(float32(fno))
-					bf.Rotation.SetQuaternion(quat)
-
-					rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
-				}
-			}
-
-			if mlog.IsDebug() {
-				err := vmd.Write(rotMotion)
-				if err != nil {
-					mlog.E("Failed to write rotate vmd: %v", err)
-				}
-			}
-			bar.Increment()
-
-			allRotateMotions[i] = rotMotion
+			allRotateMotions[i] = convertMov2Rotate(model, movMotion, i, bar)
 		}(i, movMotion)
+	}
+
+	// Iterate over allMoveMotions in parallel
+	for i, mpMovMotion := range allMpMoveMotions {
+		// Increment the WaitGroup counter
+		wg.Add(1)
+
+		go func(i int, mpMovMotion *vmd.VmdMotion) {
+			defer wg.Done()
+			allMpRotateMotions[i] = convertMov2Rotate(model, mpMovMotion, i, bar)
+		}(i, mpMovMotion)
 	}
 
 	wg.Wait()
 	bar.Finish()
 
-	return allRotateMotions
+	return allRotateMotions, allMpRotateMotions
+}
+
+func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
+
+	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
+	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
+
+	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
+		{
+			bf := deform.NewBoneFrame(float32(fno))
+			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
+			rotMotion.AppendRegisteredBoneFrame("センター", bf)
+		}
+	}
+
+	for _, boneConfig := range boneConfigs {
+		bar.Increment()
+
+		if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
+			!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
+			!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
+			continue
+		}
+
+		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
+			// モデルのボーン角度
+			boneDirectionFrom := model.Bones.GetItemByName(boneConfig.DirectionFrom).Position
+			boneDirectionTo := model.Bones.GetItemByName(boneConfig.DirectionTo).Position
+			boneUpFrom := model.Bones.GetItemByName(boneConfig.UpFrom).Position
+			boneUpTo := model.Bones.GetItemByName(boneConfig.UpTo).Position
+
+			boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
+			boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
+			boneCrossVector := boneUpVector.Cross(boneDirectionVector).Normalize()
+
+			boneQuat := mmath.NewMQuaternionFromDirection(boneDirectionVector, boneCrossVector)
+
+			// モーションのボーン角度
+			motionDirectionFromPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
+			motionDirectionToPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position
+			motionUpFromPos := movMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(float32(fno)).Position
+			motionUpToPos := movMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(float32(fno)).Position
+
+			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
+			motionUpVector := motionUpToPos.Subed(motionUpFromPos).Normalize()
+			motionCrossVector := motionUpVector.Cross(motionDirectionVector).Normalize()
+
+			motionQuat := mmath.NewMQuaternionFromDirection(motionDirectionVector, motionCrossVector)
+
+			// キャンセルボーン角度
+			cancelQuat := mmath.NewMQuaternion()
+			for _, cancelBoneName := range boneConfig.Cancels {
+				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Data[float32(fno)].Rotation.GetQuaternion())
+			}
+
+			// 調整角度
+			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
+
+			quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
+
+			// ボーンフレーム登録
+			bf := deform.NewBoneFrame(float32(fno))
+			bf.Rotation.SetQuaternion(quat)
+
+			rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
+		}
+	}
+
+	if mlog.IsDebug() {
+		err := vmd.Write(rotMotion)
+		if err != nil {
+			mlog.E("Failed to write rotate vmd: %v", err)
+		}
+	}
+	bar.Increment()
+
+	return rotMotion
 }
 
 type boneConfig struct {
@@ -213,6 +235,16 @@ var boneConfigs = []*boneConfig{
 		InvertAfter:   &mmath.MVec3{},
 	},
 	{
+		Name:          "左手首",
+		DirectionFrom: "左手首",
+		DirectionTo:   "左人指１",
+		UpFrom:        "左親指１",
+		UpTo:          "左小指１",
+		Cancels:       []string{"上半身", "上半身2", "左肩", "左腕", "左ひじ"},
+		InvertBefore:  &mmath.MVec3{},
+		InvertAfter:   &mmath.MVec3{},
+	},
+	{
 		Name:          "右肩",
 		DirectionFrom: "右肩",
 		DirectionTo:   "右腕",
@@ -239,6 +271,16 @@ var boneConfigs = []*boneConfig{
 		UpFrom:        "上半身2",
 		UpTo:          "首",
 		Cancels:       []string{"上半身", "上半身2", "右肩", "右腕"},
+		InvertBefore:  &mmath.MVec3{},
+		InvertAfter:   &mmath.MVec3{},
+	},
+	{
+		Name:          "右手首",
+		DirectionFrom: "右手首",
+		DirectionTo:   "右人指１",
+		UpFrom:        "右親指１",
+		UpTo:          "右小指１",
+		Cancels:       []string{"上半身", "上半身2", "右肩", "右腕", "右ひじ"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},
 	},

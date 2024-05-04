@@ -41,10 +41,13 @@ func main() {
 	}
 
 	mlog.I("Move Motion ...")
-	allMoveMotions := usecase.Move(allFrames)
+	allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
 
 	mlog.I("Rotate Motion ...")
-	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
+	all4dRotateMotions, allMpRotateMotions := usecase.Rotate(allMoveMotions, allMpMoveMotions, modelPath)
+
+	mlog.I("Integrate Wrist Motion ...")
+	allRotateMotions := usecase.IntegrateWrist(allFrames, all4dRotateMotions, allMpRotateMotions)
 
 	mlog.I("Convert Leg Ik Motion ...")
 	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)

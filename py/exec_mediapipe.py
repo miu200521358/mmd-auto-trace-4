@@ -4,6 +4,7 @@ import json
 import os
 import cv2
 import mediapipe as mp
+import numpy as np
 from tqdm import tqdm
 
 JOINT_NAMES = [
@@ -66,78 +67,63 @@ HAND_JOINT_NAMES = [
     "pinky_finger_tip",
 ]
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--video", type=str)
-    parser.add_argument("--output_dir", type=str)
 
-    args = parser.parse_args()
+def exec_person_mediapipe(video_path: str, original_json_path: str):
+    with open(original_json_path) as f:
+        original_data = json.load(f)
 
     BaseOptions = mp.tasks.BaseOptions
     PoseLandmarker = mp.tasks.vision.PoseLandmarker
     PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
     VisionRunningMode = mp.tasks.vision.RunningMode
 
-    HandLandmarker = mp.tasks.vision.HandLandmarker
-    HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-
     pose_options = PoseLandmarkerOptions(
-        base_options=BaseOptions(
-            model_asset_path="data/pose_landmarker_full.task"
-        ),
+        base_options=BaseOptions(model_asset_path="data/pose_landmarker_full.task"),
         running_mode=VisionRunningMode.VIDEO,
     )
 
-    # Create a hand landmarker instance with the video mode:
-    hand_options = HandLandmarkerOptions(
-        base_options=BaseOptions(
-            model_asset_path="data/hand_landmarker.task"
-        ),
-        running_mode=VisionRunningMode.VIDEO,
-        num_hands=2,
-        min_hand_detection_confidence=0.4,
-    )
+    with PoseLandmarker.create_from_options(pose_options) as pose_landmarker:
+        video = cv2.VideoCapture(video_path)
 
-    os.makedirs(
-        os.path.join(args.output_dir, os.path.basename(args.video).split(".")[0]),
-        exist_ok=True,
-    )
-
-    with HandLandmarker.create_from_options(
-        hand_options
-    ) as hand_landmarker, PoseLandmarker.create_from_options(
-        pose_options
-    ) as pose_landmarker:
-        # json file
-        joint_fn = os.path.join(
-            args.output_dir,
-            os.path.basename(args.video).split(".")[0],
-            "mediapipe.json",
-        )
-        joints_dict = {}
-
-        video = cv2.VideoCapture(args.video)
-
-        # 幅
-        W = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-        # 高さ
-        H = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         # 総フレーム数
         count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        # 横
+        W = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+        # 縦
+        H = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         # fps
-        fps = video.get(cv2.CAP_PROP_FPS)
+        fps = 30
         # frame_timestamp_ms
         ts = 0
+        # 元のフレームを30fpsで計算し直した場合の1Fごとの該当フレーム数
+        interpolations = (
+            np.round(np.arange(0, count, fps / 30)).astype(np.int32).tolist()
+        )
 
-        for i in tqdm(range(count)):
+        for i, frame_id in enumerate(tqdm(interpolations)):
+            if str(i) not in original_data["frames"]:
+                continue
+
+            original_data["frames"][str(i)]["mediapipe"] = {}
+
             # 動画から1枚キャプチャして読み込む
-            flag, org_img = video.read()
-
+            video.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+            flag, frame = video.read()
             if not flag:
                 break
 
+            # フレームの中から人物のtracked_bboxを取得
+            tracked_bbox = original_data["frames"][str(i)]["tracked_bbox"]
+
+            # tracked_bboxの領域を取得したフレームから切り出す
+            x, y, w, h = tracked_bbox
+            clipped_frame = frame[
+                max(0, int(y) - 20) : min(H, int(y + h) + 20),
+                max(0, int(x) - 20) : min(int(x + w) + 20, W),
+            ].astype(np.uint8)
+
             # STEP 3: Load the input image.
-            image = mp.Image(image_format=mp.ImageFormat.SRGB, data=org_img)
+            image = mp.Image(mp.ImageFormat.SRGB, clipped_frame)
 
             ts += 1 / fps * 1000
 
@@ -147,35 +133,34 @@ if __name__ == "__main__":
             if not pose_detection.pose_world_landmarks:
                 continue
 
-            joints_dict[i] = {}
+            joints = {}
             for jname, joint in zip(
                 JOINT_NAMES, pose_detection.pose_world_landmarks[0]
             ):
-                joints_dict[i][jname] = {
+                joints[jname] = {
                     "x": float(joint.x),
                     "y": float(joint.y),
                     "z": float(joint.z),
                     "visibility": float(joint.visibility),
                     "presence": float(joint.presence),
                 }
+            original_data["frames"][str(i)]["mediapipe"] = joints
 
-            # STEP 4: Detect hand landmarks from the input image.
-            hand_detection = hand_landmarker.detect_for_video(image, int(ts))
+        with open(original_json_path, "w") as f:
+            json.dump(original_data, f, ensure_ascii=False, indent=4)
 
-            if not hand_detection.hand_world_landmarks:
-                continue
 
-            for handedness, hand_world_landmarks in zip(
-                hand_detection.handedness[0], hand_detection.hand_world_landmarks
-            ):
-                display_name = handedness.display_name.lower()
+def exec_mediapipe(video_path: str, output_dir: str):
+    # 該当ディレクトリ内のoriginal.jsonを探す
+    for json_fn in glob(os.path.join(args.output_dir, "*_original.json")):
+        exec_person_mediapipe(args.video, json_fn)
 
-                for jname, joint in zip(JOINT_NAMES, hand_world_landmarks):
-                    joints_dict[i][f"{display_name} {jname}"] = {
-                        "x": float(joint.x),
-                        "y": float(joint.y),
-                        "z": float(joint.z),
-                    }
 
-        with open(joint_fn, "w") as f:
-            json.dump(joints_dict, f, ensure_ascii=False, indent=4)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--video", type=str)
+    parser.add_argument("--output_dir", type=str)
+
+    args = parser.parse_args()
+
+    exec_mediapipe(args.video, args.output_dir)

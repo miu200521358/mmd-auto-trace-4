@@ -114,7 +114,7 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 					// 初期時点の足首の位置
 					ankleByLegPos := legIkOffDeltas.GetItem(ankleBoneName, float32(fno)).Position
 
-					if mlog.IsVerbose2() {
+					if mlog.IsVerbose() {
 						legIkMotion.Path = strings.Replace(rotMotion.Path, "rot.vmd", direction+"_leg_ik_0.vmd", -1)
 						err := vmd.Write(legIkMotion)
 						if err != nil {
@@ -151,7 +151,7 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 						key := mmath.MVec2{kneeDistance, ankleDistance}
 						keyLen := key.LengthSqr()
 
-						mlog.V2("[Leg] Distance [%d][%s][%d] knee: %f, ankle: %f, keyLen: %f, legKey: %f",
+						mlog.V("[Leg] Distance [%d][%s][%d] knee: %f, ankle: %f, keyLen: %f, legKey: %f",
 							int(fno), direction, j, kneeDistance, ankleDistance, keyLen, legKey)
 
 						if keyLen < legKey {
@@ -160,21 +160,21 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 						}
 
 						if kneeDistance < 1e-3 && ankleDistance < 0.1 {
-							mlog.D("*** [Leg] Converged at [%d][%s][%d] knee: %f, ankle: %f, keyLen: %f, legKey: %f",
+							mlog.V("*** [Leg] Converged at [%d][%s][%d] knee: %f, ankle: %f, keyLen: %f, legKey: %f",
 								int(fno), direction, j, kneeDistance, ankleDistance, keyLen, legKey)
 							break
 						}
 					}
 
 					// 最も近いものを採用
-					mlog.D("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, legKey, legQuat.ToDegrees().String())
+					mlog.V("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, legKey, legQuat.ToDegrees().String())
 
 					// 足は足捩りと合成した値を設定
 					legBf := deform.NewBoneFrame(float32(fno))
 					legBf.Rotation.SetQuaternion(legQuat)
 					legIkMotion.AppendRegisteredBoneFrame(legBoneName, legBf)
 
-					if mlog.IsVerbose2() {
+					if mlog.IsVerbose() {
 						legIkMotion.Path = strings.Replace(rotMotion.Path, "rot.vmd", direction+"_leg_ik_1.vmd", -1)
 						err := vmd.Write(legIkMotion)
 						if err != nil {
@@ -211,7 +211,7 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 					legIkBf := deform.NewBoneFrame(float32(fno))
 					legIkBf.Position = ankleOffDelta.Position.Added(ankleDiffVec).Subed(toeIkModel.Bones.GetItemByName(ankleBoneName).Position)
 
-					if mlog.IsVerbose2() {
+					if mlog.IsVerbose() {
 						legIkMotion.Path = strings.Replace(rotMotion.Path, "rot.vmd", direction+"_leg_ik_2.vmd", -1)
 						err := vmd.Write(legIkMotion)
 						if err != nil {
@@ -249,7 +249,7 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 						key := mmath.MVec3{toeDistance, toeSmallDistance, heelDistance}
 						keyLen := key.LengthSqr()
 
-						mlog.V2("[Toe] Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keyLen: %f, ankleKey: %f",
+						mlog.V("[Toe] Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keyLen: %f, ankleKey: %f",
 							int(fno), direction, k, toeDistance, toeSmallDistance, heelDistance, keyLen, ankleKey)
 
 						if keyLen < ankleKey {
@@ -258,20 +258,20 @@ func ConvertLegIk(allRotateMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 						}
 
 						if toeDistance < 1e-3 && toeSmallDistance < 0.1 && heelDistance < 0.1 {
-							mlog.D("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", int(fno), direction, k,
+							mlog.V("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", int(fno), direction, k,
 								toeDistance, toeSmallDistance, heelDistance)
 							break
 						}
 					}
 
 					// 最も近いものを採用
-					mlog.D("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, ankleKey, ankleIkQuat.ToDegrees().String())
+					mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, ankleKey, ankleIkQuat.ToDegrees().String())
 
 					// 足IKの回転は足首までの回転
 					legIkBf.Rotation.SetQuaternion(ankleIkQuat)
 					legIkMotion.AppendRegisteredBoneFrame(legIkBoneName, legIkBf)
 
-					if mlog.IsVerbose2() {
+					if mlog.IsVerbose() {
 						legIkMotion.Path = strings.Replace(rotMotion.Path, "rot.vmd", direction+"_leg_ik_3.vmd", -1)
 						err := vmd.Write(legIkMotion)
 						if err != nil {
