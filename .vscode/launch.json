@@ -49,6 +49,20 @@
             ]
         },
         {
+            "name": "exec osx",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/py/exec_osx.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--video",
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
+                "--output_dir",
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+            ]
+        },
+        {
             "name": "exec smooth",
             "type": "debugpy",
             "request": "launch",
@@ -63,18 +77,6 @@
                 // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"
                 // "outputs/results/demo_buster_1167-1267.pkl"
-            ]
-        },
-        {
-            "name": "exec make upper video",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/make_upper_video.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "inputs/buster_1167-1267.mp4",
-                "outputs/results/demo_buster_1167-1267.pkl",
             ]
         },
         {

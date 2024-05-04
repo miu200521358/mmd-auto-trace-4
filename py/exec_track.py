@@ -24,7 +24,7 @@ from phalp.configs.base import CACHE_DIR
 from hmr2.datasets.utils import expand_bbox_to_aspect_ratio
 from convert_pkl2json import convert_pkl2json
 from smooth import smooth
-from exec_mediapipe import exec_mediapipe
+from exec_osx import exec_osx
 
 warnings.filterwarnings("ignore")
 
@@ -236,12 +236,6 @@ def main(cfg: DictConfig) -> Optional[float]:
     phalp_tracker = HMR2_4dhuman(cfg)
 
     final_visuals_dic, pkl_path = phalp_tracker.track()
-
-    convert_pkl2json(pkl_path)
-
-    exec_mediapipe(cfg.video.source, os.path.basename(pkl_path))
-
-    smooth(os.path.basename(pkl_path))
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,6 @@
+from glob import glob
 import json
+import os
 import sys
 import joblib
 import numpy as np
@@ -76,6 +78,9 @@ def convert_pkl2json(pkl_path):
     for k1 in tqdm(sorted(lib_data.keys())):
         v1 = lib_data[k1]
         time = v1["time"]
+        # if not (0 < time < 100):
+        #     continue
+
         for t, tracked_id in enumerate(v1["tracked_ids"]):
             if tracked_id not in all_data:
                 all_data[tracked_id] = {}
@@ -137,4 +142,5 @@ def convert_pkl2json(pkl_path):
 
 
 if __name__ == "__main__":
-    convert_pkl2json(sys.argv[1])
+    for pkl_path in glob(os.path.join(sys.argv[1], "*.pkl")):
+        convert_pkl2json(pkl_path)

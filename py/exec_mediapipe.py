@@ -7,7 +7,7 @@ import mediapipe as mp
 import numpy as np
 from tqdm import tqdm
 
-JOINT_NAMES = [
+MP_JOINT_NAMES = [
     "nose",
     "left eye (inner)",
     "left eye",
@@ -92,7 +92,7 @@ def exec_person_mediapipe(video_path: str, original_json_path: str):
         # 縦
         H = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         # fps
-        fps = 30
+        fps = video.get(cv2.CAP_PROP_FPS)
         # frame_timestamp_ms
         ts = 0
         # 元のフレームを30fpsで計算し直した場合の1Fごとの該当フレーム数
@@ -117,16 +117,20 @@ def exec_person_mediapipe(video_path: str, original_json_path: str):
 
             # tracked_bboxの領域を取得したフレームから切り出す
             x, y, w, h = tracked_bbox
-            clipped_x = max(0, int(y) - 20)
-            clipped_y = max(0, int(x) - 20)
-            clipped_w = min(int(x + w) + 20, W)
-            clipped_h = min(int(y + h) + 20, H)
-            clipped_frame = frame[clipped_x:clipped_h, clipped_y:clipped_w].astype(
+            clipped_x1 = max(0, int(x) - 20)
+            clipped_y1 = max(0, int(y) - 20)
+            clipped_x2 = min(int(x + w) + 20, W)
+            clipped_y2 = min(int(y + h) + 20, H)
+            clipped_frame = frame[clipped_y1:clipped_y2, clipped_x1:clipped_x2].astype(
                 np.uint8
             )
 
             # 画像を拡大
-            resize_frame = cv2.resize(clipped_frame, (clipped_w * 2, clipped_h * 2), interpolation=cv2.INTER_CUBIC)
+            resize_frame = cv2.resize(
+                clipped_frame,
+                (clipped_frame.shape[1] * 2, clipped_frame.shape[0] * 2),
+                interpolation=cv2.INTER_CUBIC,
+            )
 
             # STEP 3: Load the input image.
             image = mp.Image(mp.ImageFormat.SRGB, resize_frame)
@@ -141,18 +145,18 @@ def exec_person_mediapipe(video_path: str, original_json_path: str):
 
             joints = {}
             for jname, joint in zip(
-                JOINT_NAMES, pose_detection.pose_world_landmarks[0]
+                MP_JOINT_NAMES, pose_detection.pose_world_landmarks[0]
             ):
                 joints[jname] = {
                     "x": float(joint.x),
-                    "y": float(joint.y),
+                    "y": -float(joint.y),
                     "z": float(joint.z),
                     "visibility": float(joint.visibility),
                     "presence": float(joint.presence),
                 }
             original_data["frames"][str(i)]["mediapipe"] = joints
 
-        with open(original_json_path, "w") as f:
+        with open(original_json_path.replace("_original", "_mp"), "w") as f:
             json.dump(original_data, f, ensure_ascii=False, indent=4)
 
 

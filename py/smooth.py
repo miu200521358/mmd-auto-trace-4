@@ -7,7 +7,7 @@ import numpy as np
 from pykalman import UnscentedKalmanFilter
 from tqdm import tqdm
 from convert_pkl2json import JOINT_NAMES
-from exec_mediapipe import JOINT_NAMES as MEDIAPIPE_JOINT_NAMES
+from exec_mediapipe import MP_JOINT_NAMES
 
 JOINT_NOISE = {
     ("camera", "x"): 6.0,
@@ -65,44 +65,97 @@ JOINT_NOISE = {
     "Left Ear": 3.0,  # 47
     "Right Ear": 3.0,  # 48
     # mediapipe
-    "nose": 1.0,  # 0
-    "left eye (inner)": 1.0,  # 1
-    "left eye": 1.0,  # 2
-    "left eye (outer)": 1.0,  # 3
-    "right eye (inner)": 1.0,  # 4
-    "right eye": 1.0,  # 5
-    "right eye (outer)": 1.0,  # 6
-    "left ear": 1.0,  # 7
-    "right ear": 1.0,  # 8
-    "mouth (left)": 1.0,  # 9
-    "mouth (right)": 1.0,  # 10
-    "left shoulder": 1.0,  # 11
-    "right shoulder": 1.0,  # 12
-    "left elbow": 1.0,  # 13
-    "right elbow": 1.0,  # 14
-    "left wrist": 1.0,  # 15
-    "right wrist": 1.0,  # 16
-    "left pinky": 1.0,  # 17
-    "right pinky": 1.0,  # 18
-    "left index": 1.0,  # 19
-    "right index": 1.0,  # 20
-    "left thumb": 1.0,  # 21
-    "right thumb": 1.0,  # 22
-    "left hip": 1.0,  # 23
-    "right hip": 1.0,  # 24
-    "left knee": 1.0,  # 25
-    "right knee": 1.0,  # 26
-    "left ankle": 1.0,  # 27
-    "right ankle": 1.0,  # 28
-    "left heel": 1.0,  # 29
-    "right heel": 1.0,  # 30
-    "left foot index": 1.0,  # 31
-    "right foot index": 1.0,  # 32
+    "nose": 0.7,  # 0
+    "left eye (inner)": 0.7,  # 1
+    "left eye": 0.7,  # 2
+    "left eye (outer)": 0.7,  # 3
+    "right eye (inner)": 0.7,  # 4
+    "right eye": 0.7,  # 5
+    "right eye (outer)": 0.7,  # 6
+    "left ear": 0.7,  # 7
+    "right ear": 0.7,  # 8
+    "mouth (left)": 0.7,  # 9
+    "mouth (right)": 0.7,  # 10
+    "left shoulder": 0.7,  # 11
+    "right shoulder": 0.7,  # 12
+    "left elbow": 0.7,  # 13
+    "right elbow": 0.7,  # 14
+    "left wrist": 0.7,  # 15
+    "right wrist": 0.7,  # 16
+    "left pinky": 0.7,  # 17
+    "right pinky": 0.7,  # 18
+    "left index": 0.7,  # 19
+    "right index": 0.7,  # 20
+    "left thumb": 0.7,  # 21
+    "right thumb": 0.7,  # 22
+    "left hip": 0.7,  # 23
+    "right hip": 0.7,  # 24
+    "left knee": 0.7,  # 25
+    "right knee": 0.7,  # 26
+    "left ankle": 0.7,  # 27
+    "right ankle": 0.7,  # 28
+    "left heel": 0.7,  # 29
+    "right heel": 0.7,  # 30
+    "left foot index": 0.7,  # 31
+    "right foot index": 0.7,  # 32
+    # # osx
+    # "pelvis": 0.7,  # 0
+    # "left_hip": 0.7,  # 1
+    # "right_hip": 0.7,  # 2
+    # "left wrist": 0.7,  # 3
+    # "left_knee": 0.7,  # 4
+    # "right_knee": 0.7,  # 5
+    # "spine2": 0.7,  # 6
+    # "left_ankle": 0.7,  # 7
+    # "right_ankle": 0.7,  # 8
+    # "spine3": 0.7,  # 9
+    # "left_foot": 0.7,  # 10
+    # "right_foot": 0.7,  # 11
+    # "neck": 0.7,  # 12
+    # "left_collar": 0.7,  # 13
+    # "right_collar": 0.7,  # 14
+    # "head": 0.7,  # 15
+    # "left_shoulder": 0.7,  # 16
+    # "right_shoulder": 0.7,  # 17
+    # "left_elbow": 0.7,  # 18
+    # "right_elbow": 0.7,  # 19
+    # "left_wrist": 0.7,  # 20
+    # "right_wrist": 0.7,  # 21
+    # "left_index1": 0.7,  # 22
+    # "left_index2": 0.7,  # 23
+    # "left_index3": 0.7,  # 24
+    # "left_middle1": 0.7,  # 25
+    # "left_middle2": 0.7,  # 26
+    # "left_middle3": 0.7,  # 27
+    # "left_pinky1": 0.7,  # 28
+    # "left_pinky2": 0.7,  # 29
+    # "left_pinky3": 0.7,  # 30
+    # "left_ring1": 0.7,  # 31
+    # "left_ring2": 0.7,  # 32
+    # "left_ring3": 0.7,  # 33
+    # "left_thumb1": 0.7,  # 34
+    # "left_thumb2": 0.7,  # 35
+    # "left_thumb3": 0.7,  # 36
+    # "right_index1": 0.7,  # 37
+    # "right_index2": 0.7,  # 38
+    # "right_index3": 0.7,  # 39
+    # "right_middle1": 0.7,  # 40
+    # "right_middle2": 0.7,  # 41
+    # "right_middle3": 0.7,  # 42
+    # "right_pinky1": 0.7,  # 43
+    # "right_pinky2": 0.7,  # 44
+    # "right_pinky3": 0.7,  # 45
+    # "right_ring1": 0.7,  # 46
+    # "right_ring2": 0.7,  # 47
+    # "right_ring3": 0.7,  # 48
+    # "right_thumb1": 0.7,  # 49
+    # "right_thumb2": 0.7,  # 50
+    # "right_thumb3": 0.7,  # 51
 }
 
 
 def smooth(target_dir: str):
-    for i, json_path in enumerate(glob(os.path.join(target_dir, "*_original.json"))):
+    for i, json_path in enumerate(glob(os.path.join(target_dir, "*_mp.json"))):
         with open(json_path, "r") as f:
             data = json.load(f)
 
@@ -117,7 +170,7 @@ def smooth(target_dir: str):
         for jname in JOINT_NAMES[:45]:
             joint_positions[("3d_joints", jname)] = []
             joint_positions[("global_3d_joints", jname)] = []
-        for jname in MEDIAPIPE_JOINT_NAMES:
+        for jname in MP_JOINT_NAMES:
             joint_positions[("mediapipe", jname)] = []
 
         start_camera_z = 0.0
@@ -189,7 +242,7 @@ def smooth(target_dir: str):
 
                 if 0 < len(joint_positions[("mediapipe", "left wrist")]):
                     j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
-                    for jname in MEDIAPIPE_JOINT_NAMES:
+                    for jname in MP_JOINT_NAMES:
                         joint_positions[("mediapipe", jname)].append(
                             np.array(
                                 [
@@ -330,8 +383,6 @@ def smooth(target_dir: str):
                             "x": 0.0,
                             "y": 0.0,
                             "z": 0.0,
-                            "visibility": 0.0,
-                            "presence": 0.0,
                         }
                     smoothed_data["frames"][mj][type_name][joint_name]["x"] = (
                         joint_pose[0]
@@ -349,7 +400,7 @@ def smooth(target_dir: str):
                         "z": joint_pose[2],
                     }
 
-        smooth_json_path = json_path.replace("_original.json", "_smooth.json")
+        smooth_json_path = json_path.replace("_mp.json", "_smooth.json")
         with open(smooth_json_path, "w") as f:
             json.dump(smoothed_data, f, indent=4)
 
