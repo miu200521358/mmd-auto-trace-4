@@ -27,8 +27,5 @@ print(f"build_command: {build_command}")
 
 os.system(build_command)
 
-# buildに出来上がったファイルをdistにコピーする
-os.system(f"cp {workspace_folder}/build/mat4 {workspace_folder}/dist/mat4")
-
 # Play beep sound
 print("\a")
