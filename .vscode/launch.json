@@ -45,7 +45,7 @@
                 "--video",
                 "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
                 "--output_dir",
-                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
             ]
         },
         {
@@ -70,7 +70,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2"
+                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
                 // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
                 // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
                 // "outputs/results/demo_buster.pkl"
