@@ -8,7 +8,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
 # dist/
 downloads/
@@ -168,7 +167,6 @@ outputs_global/
 /data
 /cache
 /outputs*
-/build
 
 *.exe
 /configs/pmx/IK_step
