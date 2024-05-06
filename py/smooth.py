@@ -253,7 +253,7 @@ def smooth(target_dir: str):
                                     ]
                                 )
                             )
-                            if prev_data["mediapipe"]:
+                            if "mediapipe" in prev_data and prev_data["mediapipe"]:
                                 smoothed_data["frames"][k2]["mediapipe"][jname] = {
                                     "x": prev_data["mediapipe"][jname]["x"],
                                     "y": prev_data["mediapipe"][jname]["y"],

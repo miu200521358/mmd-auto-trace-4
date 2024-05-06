@@ -27,5 +27,15 @@ print(f"build_command: {build_command}")
 
 os.system(build_command)
 
+# -----------
+
+build_command = f"cd go && go build -o {workspace_folder}/build/mat42 " \
+                f"-trimpath -v -a -buildmode=exe -ldflags \"-s -w -X main.logLevel=INFO\" " \
+                f"{workspace_folder}/go/cmd2/main.go"
+
+print(f"build_command: {build_command}")
+
+os.system(build_command)
+
 # Play beep sound
 print("\a")
