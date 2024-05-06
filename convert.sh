@@ -7,7 +7,7 @@ model_path="/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx"
 paths=(
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23.97_1500-1550.mp4"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4"
-    # "/mnt/e/MMD_E/201805_auto/02/buster/buster.mp4"
+    "/mnt/e/MMD_E/201805_auto/02/buster/buster.mp4"
     "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism.mp4"
     "/mnt/e/MMD_E/201805_auto/01/heart/heart_full5.mp4"
     "/mnt/e/MMD_E/201805_auto/01/sakura/sakura.mp4"
@@ -22,7 +22,7 @@ paths=(
 output_dirs=(
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2"
-    # "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
+    "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
     "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
     "/mnt/e/MMD_E/201805_auto/01/heart/heart_full5_20240425_015022"
     "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447"

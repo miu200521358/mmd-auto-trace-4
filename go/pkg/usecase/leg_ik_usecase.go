@@ -119,7 +119,6 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write leg ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 
 					var legIkOnDeltas *deform.BoneDeltas
@@ -178,7 +177,6 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write leg ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 
 					// 足系解決後の足首位置を取得
@@ -215,7 +213,6 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write leg ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 
 					ankleKey := math.MaxFloat64
@@ -274,7 +271,6 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write leg ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 				}
 
@@ -298,7 +294,6 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 				if err != nil {
 					mlog.E("Failed to write rotate vmd: %v", err)
 				}
-				bar.Increment()
 			}
 
 			legIkMotion.BoneFrames.Delete("左ももＩＫ")

@@ -22,9 +22,6 @@ from phalp.utils import get_pylogger
 from phalp.configs.base import CACHE_DIR
 
 from hmr2.datasets.utils import expand_bbox_to_aspect_ratio
-from convert_pkl2json import convert_pkl2json
-from smooth import smooth
-from exec_osx import exec_osx
 
 warnings.filterwarnings("ignore")
 
@@ -235,7 +232,7 @@ def main(cfg: DictConfig) -> Optional[float]:
 
     phalp_tracker = HMR2_4dhuman(cfg)
 
-    final_visuals_dic, pkl_path = phalp_tracker.track()
+    phalp_tracker.track()
 
 if __name__ == "__main__":
     main()

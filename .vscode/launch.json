@@ -80,17 +80,18 @@
             ]
         },
         {
-            "name": "Launch motion",
+            "name": "Launch motion cmd2",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/go/cmd/main.go",
+            "program": "${workspaceFolder}/go/cmd2/main.go",
             "preLaunchTask": "go: mod tidy",
             "cwd": "${workspaceFolder}/go",
             "args": [
                 "-logLevel=DEBUG",
                 "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
-                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
+                // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
             ]
         },

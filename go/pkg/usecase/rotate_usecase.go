@@ -21,7 +21,7 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, 
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for range len(allPrevMotions) {
-		totalFrames += len(boneConfigs) * 2
+		totalFrames += len(boneConfigs)
 	}
 
 	// モデル読み込み
@@ -137,7 +137,6 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 			mlog.E("Failed to write rotate vmd: %v", err)
 		}
 	}
-	bar.Increment()
 
 	return rotMotion
 }

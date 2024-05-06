@@ -24,7 +24,7 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allFrames) * 3
+	totalFrames := len(allFrames)
 	for _, frames := range allFrames {
 		totalFrames += len(frames.Frames)
 	}
@@ -166,24 +166,17 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 				if err != nil {
 					mlog.E("Failed to write joint vmd: %v", err)
 				}
-				bar.Increment()
 
 				err = vmd.Write(movMotion)
 				if err != nil {
 					mlog.E("Failed to write move vmd: %v", err)
 				}
-				bar.Increment()
 
 				err = vmd.Write(mpMovMotion)
 				if err != nil {
 					mlog.E("Failed to write mp move vmd: %v", err)
 				}
-				bar.Increment()
 			}
-
-			bar.Increment()
-			bar.Increment()
-			bar.Increment()
 
 			allMoveMotions[i] = movMotion
 			allMpMoveMotions[i] = mpMovMotion

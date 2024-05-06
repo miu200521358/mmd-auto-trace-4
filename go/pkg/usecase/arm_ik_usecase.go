@@ -119,7 +119,6 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write arm ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 
 					var wristIkOnDeltas *deform.BoneDeltas
@@ -170,7 +169,6 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write arm ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 
 					// 手捩IK --------------------
@@ -235,7 +233,6 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 						if err != nil {
 							mlog.E("Failed to write arm ik vmd: %v", err)
 						}
-						bar.Increment()
 					}
 				}
 
@@ -259,7 +256,6 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 				if err != nil {
 					mlog.E("Failed to write arm ik vmd: %v", err)
 				}
-				bar.Increment()
 			}
 
 			armIkMotion.BoneFrames.Delete("左腕捩ＩＫ")
