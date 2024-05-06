@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
+	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
@@ -52,5 +55,22 @@ func main() {
 	mlog.I("Convert Leg Ik Motion ...")
 	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
 
-	print(len(allLegIkMotions))
+	mlog.I("Convert Arm Ik Motion ...")
+	allArmIkMotions := usecase.ConvertArmIk(allLegIkMotions, modelPath)
+
+	for _, motion := range allArmIkMotions {
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, getResultFileName(motion.Path))
+		err := vmd.Write(motion)
+		if err != nil {
+			mlog.E("Failed to write result vmd: %v", err)
+		}
+	}
+}
+
+func getResultFileName(fileName string) string {
+	split := strings.Split(fileName, "_")
+	if len(split) < 3 {
+		return fileName
+	}
+	return split[1] + "_" + split[2] + "_result.vmd"
 }

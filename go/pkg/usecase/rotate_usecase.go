@@ -14,13 +14,13 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func Rotate(allMoveMotions []*vmd.VmdMotion, allMpMoveMotions []*vmd.VmdMotion, modelPath string) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
-	allRotateMotions := make([]*vmd.VmdMotion, len(allMoveMotions))
-	allMpRotateMotions := make([]*vmd.VmdMotion, len(allMpMoveMotions))
+func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
+	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
+	allMpRotateMotions := make([]*vmd.VmdMotion, len(allMpPrevMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allMoveMotions)
-	for range len(allMoveMotions) {
+	totalFrames := len(allPrevMotions)
+	for range len(allPrevMotions) {
 		totalFrames += len(boneConfigs) * 2
 	}
 
@@ -38,25 +38,25 @@ func Rotate(allMoveMotions []*vmd.VmdMotion, allMpMoveMotions []*vmd.VmdMotion, 
 	var wg sync.WaitGroup
 
 	// Iterate over allMoveMotions in parallel
-	for i, movMotion := range allMoveMotions {
+	for i, prevMotion := range allPrevMotions {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
-		go func(i int, movMotion *vmd.VmdMotion) {
+		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			allRotateMotions[i] = convertMov2Rotate(model, movMotion, i, bar)
-		}(i, movMotion)
+			allRotateMotions[i] = convertMov2Rotate(model, prevMotion, i, bar)
+		}(i, prevMotion)
 	}
 
 	// Iterate over allMoveMotions in parallel
-	for i, mpMovMotion := range allMpMoveMotions {
+	for i, mpPrevMotion := range allMpPrevMotions {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
-		go func(i int, mpMovMotion *vmd.VmdMotion) {
+		go func(i int, mpPrevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			allMpRotateMotions[i] = convertMov2Rotate(model, mpMovMotion, i, bar)
-		}(i, mpMovMotion)
+			allMpRotateMotions[i] = convertMov2Rotate(model, mpPrevMotion, i, bar)
+		}(i, mpPrevMotion)
 	}
 
 	wg.Wait()
