@@ -59,13 +59,17 @@ func main() {
 	mlog.I("Convert Arm Ik Motion ...")
 	allArmIkMotions := usecase.ConvertArmIk(allLegIkMotions, modelPath)
 
-	for _, motion := range allArmIkMotions {
-		motion.Path = fmt.Sprintf("%s/%s", dirPath, getResultFileName(filepath.Base(motion.Path)))
+	for i, motion := range allArmIkMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path))
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allArmIkMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
 			mlog.E("Failed to write result vmd: %v", err)
 		}
 	}
+
+	mlog.I("Done!")
 }
 
 func getResultFileName(fileName string) string {
