@@ -72,11 +72,8 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 
 	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
 		{
-			// ちょっとZを小さくする
 			bf := deform.NewBoneFrame(float32(fno))
-			pos := movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
-			pos.SetZ(pos.GetZ() * 0.7)
-			bf.Position = pos
+			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
 			rotMotion.AppendRegisteredBoneFrame("センター", bf)
 		}
 	}

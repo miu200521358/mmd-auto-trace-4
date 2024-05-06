@@ -76,14 +76,14 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					bf := deform.NewBoneFrame(float32(fno))
 					bf.Position.SetX(frame.Camera.X * RATIO)
 					bf.Position.SetY(frame.Camera.Y * RATIO)
-					bf.Position.SetZ((frame.Camera.Z - rootPos.Z))
+					bf.Position.SetZ((frame.Camera.Z - rootPos.Z) * 0.5)
 					jointMotion.AppendRegisteredBoneFrame("Camera", bf)
 				}
 				{
 					bf := deform.NewBoneFrame(float32(fno))
 					bf.Position.SetX(frame.Camera.X * RATIO)
 					bf.Position.SetY(frame.Camera.Y * RATIO)
-					bf.Position.SetZ((frame.Camera.Z - rootPos.Z))
+					bf.Position.SetZ((frame.Camera.Z - rootPos.Z) * 0.5)
 					movMotion.AppendRegisteredBoneFrame("Camera", bf)
 				}
 

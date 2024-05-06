@@ -117,7 +117,7 @@ def convert_pkl2json(pkl_path):
                         "x": joint[0] + all_data[tracked_id][time]["camera"]["x"],
                         "y": -(joint[1] + all_data[tracked_id][time]["camera"]["y"]),
                         "z": joint[2]
-                        + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.1,
+                        + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.05,
                     }
 
             if t < len(v1["2d_joints"]):
