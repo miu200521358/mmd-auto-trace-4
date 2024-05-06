@@ -17,10 +17,10 @@ func IntegrateHand(allFrames []*model.Frames, all4dRotateMotions []*vmd.VmdMotio
 	// 全体のタスク数をカウント
 	totalFrames := len(all4dRotateMotions)
 	for _, rotMotion := range all4dRotateMotions {
-		totalFrames += int(rotMotion.GetMaxFrame()) * 2
+		totalFrames += int(rotMotion.GetMaxFrame()-rotMotion.GetMinFrame()+1.0) * 2
 	}
 
-	bar := pb.StartNew(totalFrames)
+	bar := newProgressBar(totalFrames)
 	var wg sync.WaitGroup
 
 	for i := range all4dRotateMotions {

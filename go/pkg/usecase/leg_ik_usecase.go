@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -22,7 +21,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for _, prevMotion := range allPrevMotions {
-		totalFrames += int(prevMotion.GetMaxFrame())
+		totalFrames += int(prevMotion.BoneFrames.GetItem("センター").GetMaxFrame() - prevMotion.BoneFrames.GetItem("センター").GetMinFrame() + 1.0)
 	}
 
 	pr := &pmx.PmxReader{}
@@ -43,7 +42,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	toeIkModel := toeIkData.(*pmx.PmxModel)
 	toeIkModel.SetUp()
 
-	bar := pb.StartNew(totalFrames)
+	bar := newProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup
@@ -62,7 +61,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			legIkMotion.Path = strings.Replace(prevMotion.Path, "_wrist.vmd", "_leg_ik.vmd", -1)
 			legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
 
-			for fno := prevMotion.GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
+			for fno := prevMotion.BoneFrames.GetItem("センター").GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
 				bar.Increment()
 
 				var wg sync.WaitGroup
@@ -301,6 +300,15 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 				}
 				bar.Increment()
 			}
+
+			legIkMotion.BoneFrames.Delete("左ももＩＫ")
+			legIkMotion.BoneFrames.Delete("左ひざＩＫ")
+			legIkMotion.BoneFrames.Delete("左足首ＩＫ")
+			legIkMotion.BoneFrames.Delete("左足首捩ＩＫ")
+			legIkMotion.BoneFrames.Delete("右ももＩＫ")
+			legIkMotion.BoneFrames.Delete("右ひざＩＫ")
+			legIkMotion.BoneFrames.Delete("右足首ＩＫ")
+			legIkMotion.BoneFrames.Delete("右足首捩ＩＫ")
 
 			allLegIkMotions[i] = legIkMotion
 		}(i, prevMotion)

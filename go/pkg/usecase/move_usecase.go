@@ -6,8 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cheggaaa/pb/v3"
-
 	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
@@ -31,7 +29,7 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 		totalFrames += len(frames.Frames)
 	}
 
-	bar := pb.StartNew(totalFrames)
+	bar := newProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup

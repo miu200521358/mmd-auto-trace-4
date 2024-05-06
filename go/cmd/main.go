@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -59,7 +60,7 @@ func main() {
 	allArmIkMotions := usecase.ConvertArmIk(allLegIkMotions, modelPath)
 
 	for _, motion := range allArmIkMotions {
-		motion.Path = fmt.Sprintf("%s/%s", dirPath, getResultFileName(motion.Path))
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, getResultFileName(filepath.Base(motion.Path)))
 		err := vmd.Write(motion)
 		if err != nil {
 			mlog.E("Failed to write result vmd: %v", err)

@@ -32,7 +32,7 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, 
 	}
 	model := data.(*pmx.PmxModel)
 
-	bar := pb.StartNew(totalFrames)
+	bar := newProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup

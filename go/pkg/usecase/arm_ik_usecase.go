@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -14,15 +13,15 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	allArmIkMotions := make([]*vmd.VmdMotion, len(allPrevIkMotions))
+func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	allArmIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allPrevIkMotions)
-	for _, prevMotion := range allPrevIkMotions {
-		totalFrames += int(prevMotion.GetMaxFrame())
+	totalFrames := len(allPrevMotions)
+	for _, prevMotion := range allPrevMotions {
+		totalFrames += int(prevMotion.BoneFrames.GetItem("センター").GetMaxFrame() - prevMotion.BoneFrames.GetItem("センター").GetMinFrame() + 1.0)
 	}
 
 	pr := &pmx.PmxReader{}
@@ -35,7 +34,7 @@ func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 	armIkModel := armIkData.(*pmx.PmxModel)
 	armIkModel.SetUp()
 
-	bar := pb.StartNew(totalFrames)
+	bar := newProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup
@@ -43,7 +42,7 @@ func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 	loopLimit := 100
 
 	// Iterate over allRotateMotions in parallel
-	for i, prevMotion := range allPrevIkMotions {
+	for i, prevMotion := range allPrevMotions {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
@@ -54,7 +53,7 @@ func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 			armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)
 			armIkMotion.SetName(fmt.Sprintf("MAT4 ArmIk %02d", i+1))
 
-			for fno := prevMotion.GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
+			for fno := prevMotion.BoneFrames.GetItem("センター").GetMinFrame(); fno <= prevMotion.BoneFrames.GetItem("センター").GetMaxFrame(); fno += 1.0 {
 				bar.Increment()
 
 				var wg sync.WaitGroup
@@ -164,7 +163,7 @@ func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 								int(fno), direction, j, elbowDistance, wristDistance, middleDistance, thumbZDistance, keySum, armKey)
 						}
 
-						if elbowDistance < 1e-2 && wristDistance < 1e-2 && middleDistance < 1e-2 && thumbZDistance < 0.1 {
+						if elbowDistance < 1e-2 && wristDistance < 1e-2 && middleDistance < 0.1 && thumbZDistance < 0.1 {
 							mlog.D("*** [Arm] Converged at [%d][%s][%d] elbow: %f, wrist: %f, middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
 								int(fno), direction, j, elbowDistance, wristDistance, middleDistance, thumbZDistance, keySum, armKey)
 							break
@@ -219,6 +218,11 @@ func ConvertArmIk(allPrevIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.Vm
 				}
 				bar.Increment()
 			}
+
+			armIkMotion.BoneFrames.Delete("左腕捩ＩＫ")
+			armIkMotion.BoneFrames.Delete("左手捩ＩＫ")
+			armIkMotion.BoneFrames.Delete("右腕捩ＩＫ")
+			armIkMotion.BoneFrames.Delete("右手捩ＩＫ")
 
 			allArmIkMotions[i] = armIkMotion
 		}(i, prevMotion)
