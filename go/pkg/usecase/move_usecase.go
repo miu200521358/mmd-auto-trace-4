@@ -96,12 +96,14 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
+							movMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
 						movMotion.AppendRegisteredBoneFrame("左肩", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
+							movMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
 						movMotion.AppendRegisteredBoneFrame("右肩", bf)
 					}
 					{
@@ -121,9 +123,9 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					// ボーン名がある場合、ボーン移動モーションにも出力
 					if boneName, ok := mpJoint2bones[string(jointName)]; ok {
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position.SetX(posVis.X * RATIO)
-						bf.Position.SetY(posVis.Y * RATIO * -1)
-						bf.Position.SetZ(posVis.Z * RATIO)
+						bf.Position.SetX(posVis.X)
+						bf.Position.SetY(posVis.Y)
+						bf.Position.SetZ(posVis.Z)
 						mpMovMotion.AppendRegisteredBoneFrame(boneName, bf)
 					}
 				}
@@ -149,12 +151,14 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
 						mpMovMotion.AppendRegisteredBoneFrame("左肩", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position).DivedScalar(2)
+						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
 						mpMovMotion.AppendRegisteredBoneFrame("右肩", bf)
 					}
 				}
@@ -242,8 +246,8 @@ var mpJoint2bones = map[string]string{
 	"right wrist":    "右手首",
 	"left pinky":     "左小指１",
 	"right pinky":    "右小指１",
-	"left index":     "左人指１",
-	"right index":    "右人指１",
+	"left index":     "左人指先",
+	"right index":    "右人指先",
 	"left thumb":     "左親指１",
 	"right thumb":    "右親指１",
 	"left hip":       "左足",

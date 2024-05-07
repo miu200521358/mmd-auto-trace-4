@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,29 +36,55 @@ func main() {
 		mlog.E("modelPath and dirPath must be provided")
 		os.Exit(1)
 	}
+	if modelPath == "" || dirPath == "" {
+		mlog.E("modelPath and dirPath must be provided")
+		os.Exit(1)
+	}
 
-	allVmdPaths, err := getResultVmdFilePaths(dirPath)
+	mlog.I("Unpack json ...")
+	allFrames, err := usecase.Unpack(dirPath)
 	if err != nil {
-		mlog.E("Failed to get result vmd file paths: %v", err)
+		mlog.E("Failed to unpack: %v", err)
 		return
 	}
-	allArmIkMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
-	for i, vmdPath := range allVmdPaths {
-		mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
-		vr := &vmd.VmdMotionReader{}
-		motion, err := vr.ReadByFilepath(vmdPath)
-		if err != nil {
-			mlog.E("Failed to read vmd: %v", err)
-			return
-		}
-		allArmIkMotions[i] = motion.(*vmd.VmdMotion)
-	}
 
-	mlog.I("Fix Ground Motion ...")
-	allGroundMotions := usecase.FixGround(allArmIkMotions, modelPath)
+	mlog.I("Move Motion ...")
+	allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
 
-	for i, motion := range allGroundMotions {
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allArmIkMotions), motion.Path)
+	mlog.I("Rotate Motion ...")
+	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
+
+	// mlog.I("Unpack json ...")
+	// allFrames, err := usecase.Unpack(dirPath)
+	// if err != nil {
+	// 	mlog.E("Failed to unpack: %v", err)
+	// 	return
+	// }
+
+	// allVmdPaths, err := getResultVmdFilePaths(dirPath)
+	// if err != nil {
+	// 	mlog.E("Failed to get result vmd file paths: %v", err)
+	// 	return
+	// }
+	// allPrevMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
+	// for i, vmdPath := range allVmdPaths {
+	// 	mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
+	// 	vr := &vmd.VmdMotionReader{}
+	// 	motion, err := vr.ReadByFilepath(vmdPath)
+	// 	if err != nil {
+	// 		mlog.E("Failed to read vmd: %v", err)
+	// 		return
+	// 	}
+	// 	allPrevMotions[i] = motion.(*vmd.VmdMotion)
+	// }
+
+	// mlog.I("Fix Move Motion ...")
+	// allFixMotions := usecase.FixMove(allFrames, allPrevMotions, modelPath)
+
+	for i, motion := range allRotateMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path))
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allRotateMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
 			mlog.E("Failed to write result vmd: %v", err)
@@ -65,6 +92,14 @@ func main() {
 	}
 
 	mlog.I("Done!")
+}
+
+func getResultFileName(fileName string) string {
+	split := strings.Split(fileName, "_")
+	if len(split) < 3 {
+		return fileName
+	}
+	return split[1] + "_" + split[2] + "_result.vmd"
 }
 
 func getResultVmdFilePaths(dirPath string) ([]string, error) {

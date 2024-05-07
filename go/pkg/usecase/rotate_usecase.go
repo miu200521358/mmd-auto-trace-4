@@ -12,16 +12,16 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
 )
 
-func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
+func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
-	allMpRotateMotions := make([]*vmd.VmdMotion, len(allMpPrevMotions))
 
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for range len(allPrevMotions) {
-		totalFrames += len(boneConfigs) * 2
+		totalFrames += len(boneConfigs)
 	}
 
 	// モデル読み込み
@@ -30,7 +30,7 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, 
 	if err != nil {
 		mlog.E("Failed to read pmx: %v", err)
 	}
-	model := data.(*pmx.PmxModel)
+	pmxModel := data.(*pmx.PmxModel)
 
 	bar := newProgressBar(totalFrames)
 
@@ -38,34 +38,23 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, 
 	var wg sync.WaitGroup
 
 	// Iterate over allMoveMotions in parallel
-	for i, prevMotion := range allPrevMotions {
+	for i, frames := range allFrames {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
-		go func(i int, prevMotion *vmd.VmdMotion) {
+		go func(i int, frames *model.Frames) {
 			defer wg.Done()
-			allRotateMotions[i] = convertMov2Rotate(model, prevMotion, i, bar)
-		}(i, prevMotion)
-	}
-
-	// Iterate over allMoveMotions in parallel
-	for i, mpPrevMotion := range allMpPrevMotions {
-		// Increment the WaitGroup counter
-		wg.Add(1)
-
-		go func(i int, mpPrevMotion *vmd.VmdMotion) {
-			defer wg.Done()
-			allMpRotateMotions[i] = convertMov2Rotate(model, mpPrevMotion, i, bar)
-		}(i, mpPrevMotion)
+			allRotateMotions[i] = convertMov2Rotate(frames, pmxModel, allPrevMotions[i], allMpPrevMotions[i], i, bar)
+		}(i, frames)
 	}
 
 	wg.Wait()
 	bar.Finish()
 
-	return allRotateMotions, allMpRotateMotions
+	return allRotateMotions
 }
 
-func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
+func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd.VmdMotion, mpMovMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
 
 	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
 	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
@@ -81,13 +70,27 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 	for _, boneConfig := range boneConfigs {
 		bar.Increment()
 
-		if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
-			!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
-			!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
-			continue
+		if boneConfig.Name == "左手首" || boneConfig.Name == "右手首" {
+			if !mpMovMotion.BoneFrames.Contains(boneConfig.Name) ||
+				!mpMovMotion.BoneFrames.Contains(boneConfig.DirectionFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.DirectionTo) ||
+				!mpMovMotion.BoneFrames.Contains(boneConfig.UpFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.UpTo) {
+				continue
+			}
+		} else {
+			if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
+				!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
+				!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
+				continue
+			}
 		}
 
 		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
+			if boneConfig.Name == "左手首" && frames.Frames[int(fno)].Mediapipe["left wrist"].Visibility < 0.8 {
+				continue
+			} else if boneConfig.Name == "右手首" && frames.Frames[int(fno)].Mediapipe["right wrist"].Visibility < 0.8 {
+				continue
+			}
+
 			// モデルのボーン角度
 			boneDirectionFrom := model.Bones.GetItemByName(boneConfig.DirectionFrom).Position
 			boneDirectionTo := model.Bones.GetItemByName(boneConfig.DirectionTo).Position
@@ -101,10 +104,19 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 			boneQuat := mmath.NewMQuaternionFromDirection(boneDirectionVector, boneCrossVector)
 
 			// モーションのボーン角度
-			motionDirectionFromPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
-			motionDirectionToPos := movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position
-			motionUpFromPos := movMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(float32(fno)).Position
-			motionUpToPos := movMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(float32(fno)).Position
+			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
+			if boneConfig.Name == "左手首" || boneConfig.Name == "右手首" {
+				// 手首だけはmediapipeから取る
+				motionDirectionFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
+				motionDirectionToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position
+				motionUpFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(float32(fno)).Position
+				motionUpToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(float32(fno)).Position
+			} else {
+				motionDirectionFromPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
+				motionDirectionToPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position
+				motionUpFromPos = movMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(float32(fno)).Position
+				motionUpToPos = movMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(float32(fno)).Position
+			}
 
 			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
 			motionUpVector := motionUpToPos.Subed(motionUpFromPos).Normalize()
@@ -236,9 +248,9 @@ var boneConfigs = []*boneConfig{
 	{
 		Name:          "左手首",
 		DirectionFrom: "左手首",
-		DirectionTo:   "左人指１",
-		UpFrom:        "左ひじ",
-		UpTo:          "左手首",
+		DirectionTo:   "左人指先",
+		UpFrom:        "左親指１",
+		UpTo:          "左小指１",
 		Cancels:       []string{"上半身", "上半身2", "左肩", "左腕", "左ひじ"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},
@@ -276,9 +288,9 @@ var boneConfigs = []*boneConfig{
 	{
 		Name:          "右手首",
 		DirectionFrom: "右手首",
-		DirectionTo:   "右人指１",
-		UpFrom:        "右ひじ",
-		UpTo:          "右手首",
+		DirectionTo:   "右人指先",
+		UpFrom:        "右親指１",
+		UpTo:          "右小指１",
 		Cancels:       []string{"上半身", "上半身2", "右肩", "右腕", "右ひじ"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},

@@ -48,10 +48,7 @@ func main() {
 	allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
 
 	mlog.I("Rotate Motion ...")
-	all4dRotateMotions, allMpRotateMotions := usecase.Rotate(allMoveMotions, allMpMoveMotions, modelPath)
-
-	mlog.I("Integrate Hand Motion ...")
-	allRotateMotions := usecase.IntegrateHand(allFrames, all4dRotateMotions, allMpRotateMotions)
+	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
 
 	mlog.I("Convert Leg Ik Motion ...")
 	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
@@ -62,9 +59,12 @@ func main() {
 	mlog.I("Fix Ground Motion ...")
 	allGroundMotions := usecase.FixGround(allArmIkMotions, modelPath)
 
-	for i, motion := range allGroundMotions {
+	mlog.I("Fix Heel Motion ...")
+	allFixMotions := usecase.FixMove(allFrames, allGroundMotions, modelPath)
+
+	for i, motion := range allFixMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path))
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allArmIkMotions), fileName)
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allFixMotions), fileName)
 		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
