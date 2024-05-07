@@ -12,7 +12,7 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
 )
 
-func FixMove(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント

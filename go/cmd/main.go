@@ -60,7 +60,7 @@ func main() {
 	allGroundMotions := usecase.FixGround(allArmIkMotions, modelPath)
 
 	mlog.I("Fix Heel Motion ...")
-	allFixMotions := usecase.FixMove(allFrames, allGroundMotions, modelPath)
+	allFixMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
 	for i, motion := range allFixMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path))
