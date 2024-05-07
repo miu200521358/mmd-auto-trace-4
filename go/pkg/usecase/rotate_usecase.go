@@ -85,9 +85,9 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		}
 
 		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
-			if boneConfig.Name == "左手首" && frames.Frames[int(fno)].Mediapipe["left wrist"].Visibility < 0.8 {
+			if boneConfig.Name == "左手首" && frames.Frames[int(fno)].Mediapipe["left wrist"].Visibility < 0.85 {
 				continue
-			} else if boneConfig.Name == "右手首" && frames.Frames[int(fno)].Mediapipe["right wrist"].Visibility < 0.8 {
+			} else if boneConfig.Name == "右手首" && frames.Frames[int(fno)].Mediapipe["right wrist"].Visibility < 0.85 {
 				continue
 			}
 
