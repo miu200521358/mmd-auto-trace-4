@@ -21,7 +21,7 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, 
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for range len(allPrevMotions) {
-		totalFrames += len(boneConfigs)
+		totalFrames += len(boneConfigs) * 2
 	}
 
 	// モデル読み込み
