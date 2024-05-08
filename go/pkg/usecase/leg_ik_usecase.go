@@ -21,7 +21,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for _, prevMotion := range allPrevMotions {
-		totalFrames += int(prevMotion.BoneFrames.GetItem("センター").GetMaxFrame() - prevMotion.BoneFrames.GetItem("センター").GetMinFrame() + 1.0)
+		totalFrames += int(prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame() - prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame() + 1.0)
 	}
 
 	pr := &pmx.PmxReader{}
@@ -61,7 +61,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			legIkMotion.Path = strings.Replace(prevMotion.Path, "_wrist.vmd", "_leg_ik.vmd", -1)
 			legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
 
-			for fno := prevMotion.BoneFrames.GetItem("センター").GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
+			for fno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
 				bar.Increment()
 
 				var wg sync.WaitGroup
@@ -288,8 +288,8 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 				}
 			}
 
+			legIkMotion.Path = strings.Replace(prevMotion.Path, "_wrist.vmd", "_leg_ik.vmd", -1)
 			if mlog.IsDebug() {
-				legIkMotion.Path = strings.Replace(prevMotion.Path, "_wrist.vmd", "_leg_ik.vmd", -1)
 				err := vmd.Write(legIkMotion)
 				if err != nil {
 					mlog.E("Failed to write rotate vmd: %v", err)

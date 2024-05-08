@@ -21,7 +21,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	// 全体のタスク数をカウント
 	totalFrames := len(allPrevMotions)
 	for _, prevMotion := range allPrevMotions {
-		totalFrames += int(prevMotion.BoneFrames.GetItem("センター").GetMaxFrame() - prevMotion.BoneFrames.GetItem("センター").GetMinFrame() + 1.0)
+		totalFrames += int(prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame() - prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame() + 1.0)
 	}
 
 	pr := &pmx.PmxReader{}
@@ -61,7 +61,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)
 			armIkMotion.SetName(fmt.Sprintf("MAT4 ArmIk %02d", i+1))
 
-			for fno := prevMotion.BoneFrames.GetItem("センター").GetMinFrame(); fno <= prevMotion.BoneFrames.GetItem("センター").GetMaxFrame(); fno += 1.0 {
+			for fno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame(); fno <= prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame(); fno += 1.0 {
 				bar.Increment()
 
 				var wg sync.WaitGroup
@@ -250,8 +250,8 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 				}
 			}
 
+			armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)
 			if mlog.IsDebug() {
-				armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)
 				err := vmd.Write(armIkMotion)
 				if err != nil {
 					mlog.E("Failed to write arm ik vmd: %v", err)

@@ -9,7 +9,6 @@ import (
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
-
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
 
@@ -41,49 +40,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	mlog.I("Unpack json ...")
-	allFrames, err := usecase.Unpack(dirPath)
+	allVmdPaths, err := getResultVmdFilePaths(dirPath)
 	if err != nil {
-		mlog.E("Failed to unpack: %v", err)
+		mlog.E("Failed to get result vmd file paths: %v", err)
 		return
 	}
+	allPrevMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
+	for i, vmdPath := range allVmdPaths {
+		mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
+		vr := &vmd.VmdMotionReader{}
+		motion, err := vr.ReadByFilepath(vmdPath)
+		if err != nil {
+			mlog.E("Failed to read vmd: %v", err)
+			return
+		}
+		allPrevMotions[i] = motion.(*vmd.VmdMotion)
+	}
 
-	mlog.I("Move Motion ...")
-	allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
+	mlog.I("Reduce Motion ...")
+	allReductionMotions := usecase.Reduce(allPrevMotions, modelPath)
 
-	mlog.I("Rotate Motion ...")
-	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
-
-	// mlog.I("Unpack json ...")
-	// allFrames, err := usecase.Unpack(dirPath)
-	// if err != nil {
-	// 	mlog.E("Failed to unpack: %v", err)
-	// 	return
-	// }
-
-	// allVmdPaths, err := getResultVmdFilePaths(dirPath)
-	// if err != nil {
-	// 	mlog.E("Failed to get result vmd file paths: %v", err)
-	// 	return
-	// }
-	// allPrevMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
-	// for i, vmdPath := range allVmdPaths {
-	// 	mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
-	// 	vr := &vmd.VmdMotionReader{}
-	// 	motion, err := vr.ReadByFilepath(vmdPath)
-	// 	if err != nil {
-	// 		mlog.E("Failed to read vmd: %v", err)
-	// 		return
-	// 	}
-	// 	allPrevMotions[i] = motion.(*vmd.VmdMotion)
-	// }
-
-	// mlog.I("Fix Move Motion ...")
-	// allFixMotions := usecase.FixMove(allFrames, allPrevMotions, modelPath)
-
-	for i, motion := range allRotateMotions {
+	for i, motion := range allReductionMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path))
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allRotateMotions), fileName)
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allReductionMotions), fileName)
 		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
@@ -112,7 +91,7 @@ func getResultVmdFilePaths(dirPath string) ([]string, error) {
 			// 直下だけ参照
 			return filepath.SkipDir
 		}
-		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_result.vmd")) {
+		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_heel.vmd")) {
 			paths = append(paths, path)
 		}
 		return nil

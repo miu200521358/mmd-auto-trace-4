@@ -63,14 +63,14 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		{
 			bf := deform.NewBoneFrame(float32(fno))
 			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
-			rotMotion.AppendRegisteredBoneFrame("センター", bf)
+			rotMotion.AppendRegisteredBoneFrame(pmx.CENTER.String(), bf)
 		}
 	}
 
 	for _, boneConfig := range boneConfigs {
 		bar.Increment()
 
-		if boneConfig.Name == "左手首" || boneConfig.Name == "右手首" {
+		if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
 			if !mpMovMotion.BoneFrames.Contains(boneConfig.Name) ||
 				!mpMovMotion.BoneFrames.Contains(boneConfig.DirectionFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.DirectionTo) ||
 				!mpMovMotion.BoneFrames.Contains(boneConfig.UpFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.UpTo) {
@@ -85,9 +85,9 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		}
 
 		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
-			if boneConfig.Name == "左手首" && frames.Frames[int(fno)].Mediapipe["left wrist"].Visibility < 0.85 {
+			if boneConfig.Name == pmx.WRIST.Left() && frames.Frames[int(fno)].Mediapipe["left wrist"].Visibility < 0.85 {
 				continue
-			} else if boneConfig.Name == "右手首" && frames.Frames[int(fno)].Mediapipe["right wrist"].Visibility < 0.85 {
+			} else if boneConfig.Name == pmx.WRIST.Right() && frames.Frames[int(fno)].Mediapipe["right wrist"].Visibility < 0.85 {
 				continue
 			}
 
@@ -105,7 +105,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 
 			// モーションのボーン角度
 			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
-			if boneConfig.Name == "左手首" || boneConfig.Name == "右手首" {
+			if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
 				// 手首だけはmediapipeから取る
 				motionDirectionFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(float32(fno)).Position
 				motionDirectionToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(float32(fno)).Position

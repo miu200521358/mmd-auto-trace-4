@@ -8,6 +8,7 @@ import (
 
 	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
+	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
@@ -91,20 +92,20 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					// 追加で計算するボーン
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = movMotion.BoneFrames.GetItem("右足").GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem("左足").GetItem(float32(fno)).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.LEG.Right()).GetItem(float32(fno)).Position.Added(movMotion.BoneFrames.GetItem(pmx.LEG.Left()).GetItem(float32(fno)).Position).DivedScalar(2)
 						movMotion.AppendRegisteredBoneFrame("下半身先", bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
-							movMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
-						movMotion.AppendRegisteredBoneFrame("左肩", bf)
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position.Added(
+							movMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position).DivedScalar(2))
+						movMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
-							movMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
-						movMotion.AppendRegisteredBoneFrame("右肩", bf)
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position.Added(
+							movMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(float32(fno)).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position).DivedScalar(2))
+						movMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
@@ -134,32 +135,32 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					// 追加で計算するボーン
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("右足").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左足").GetItem(float32(fno)).Position).DivedScalar(2)
-						mpMovMotion.AppendRegisteredBoneFrame("上半身", bf)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.LEG.Right()).GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.LEG.Left()).GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position).DivedScalar(2)
-						mpMovMotion.AppendRegisteredBoneFrame("首", bf)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(float32(fno)).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(float32(fno)).Position).DivedScalar(2)
+						mpMovMotion.AppendRegisteredBoneFrame(pmx.NECK.String(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("上半身").GetItem(float32(fno)).Position.Added(
-							mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("上半身").GetItem(float32(fno)).Position).DivedScalar(2),
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).GetItem(float32(fno)).Position).DivedScalar(2),
 						)
-						mpMovMotion.AppendRegisteredBoneFrame("上半身2", bf)
+						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
-							mpMovMotion.BoneFrames.GetItem("左腕").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
-						mpMovMotion.AppendRegisteredBoneFrame("左肩", bf)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position).DivedScalar(2))
+						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
 					}
 					{
 						bf := deform.NewBoneFrame(float32(fno))
-						bf.Position = mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position.Added(
-							mpMovMotion.BoneFrames.GetItem("右腕").GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem("首").GetItem(float32(fno)).Position).DivedScalar(2))
-						mpMovMotion.AppendRegisteredBoneFrame("右肩", bf)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(float32(fno)).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(float32(fno)).Position).DivedScalar(2))
+						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
 					}
 				}
 

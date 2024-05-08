@@ -60,11 +60,14 @@ func main() {
 	allGroundMotions := usecase.FixGround(allArmIkMotions, modelPath)
 
 	mlog.I("Fix Heel Motion ...")
-	allFixMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
+	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
-	for i, motion := range allFixMotions {
+	// mlog.I("Reduce Motion ...")
+	// allReductionMotions := usecase.Reduce(allHeelMotions, modelPath)
+
+	for i, motion := range allHeelMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path))
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allFixMotions), fileName)
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allHeelMotions), fileName)
 		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
