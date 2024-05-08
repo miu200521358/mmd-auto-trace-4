@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/cheggaaa/pb/v3"
-	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
@@ -71,71 +70,56 @@ func reduceMotion(prevMotion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion
 			zs[i] = bf.Position.GetZ()
 		}
 
-		// xInflectionIndexes, xNonMoveIndexes := mmath.FindInflectionPoints(xs, 0.05)
-		yInflectionIndexes, yNonMoveIndexes := mmath.FindInflectionPoints(ys, 0.04)
-		// zInflectionIndexes, zNonMoveIndexes := mmath.FindInflectionPoints(zs, 0.1)
+		xInflectionIndexes := mmath.FindInflectionPoints(xs, 0.06)
+		yInflectionIndexes := mmath.FindInflectionPoints(ys, 0.06)
+		zInflectionIndexes := mmath.FindInflectionPoints(zs, 0.09)
+
+		centerXZInflectionIndexes := mmath.MergeInflectionPoints(xs, []map[int]int{xInflectionIndexes, zInflectionIndexes})
 
 		for i := 0; i <= int(maxFno-minFno); i += 1 {
 			fno := float32(i) + minFno
 			bar.Increment()
 
-			if _, ok := yInflectionIndexes[i]; ok {
-				// 変曲点は補間
-				{
-					// キーは終了地点（補間を入れるキーフレ）
-					endFno := fno
-					// 値は開始地点
-					startFno := float32(yInflectionIndexes[i]) + minFno
-					// 該当区間の値
-					clipYs := ys[yInflectionIndexes[i]:(i + 1)]
-
-					if !motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(startFno) {
-						// まだキーフレがない場合のみ開始キーフレ追加
-						startBf := deform.NewBoneFrame(startFno)
-						startBf.Position.SetY(prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetItem(startFno).Position.GetY())
-						motion.AppendRegisteredBoneFrame(pmx.GROOVE.String(), startBf)
-					}
-
-					// 終端キーフレ（補間を入れる）
-					endBf := deform.NewBoneFrame(endFno)
-					endBf.Position.SetY(prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetItem(endFno).Position.GetY())
-					endBf.Curves.TranslateY = mmath.NewCurveFromValues(clipYs)
-					motion.AppendRegisteredBoneFrame(pmx.GROOVE.String(), endBf)
-				}
+			if _, ok := centerXZInflectionIndexes[i]; ok {
+				// XZ (センター)
+				appendMoveCurveFrame(motion, pmx.CENTER.String(), fno, float32(centerXZInflectionIndexes[i])+minFno,
+					xs[i:(centerXZInflectionIndexes[i]+1)], nil, zs[i:(centerXZInflectionIndexes[i]+1)])
 			}
-		}
-
-		for i := 0; i <= int(maxFno-minFno); i += 1 {
-			fno := float32(i) + minFno
-			bar.Increment()
-
-			if _, ok := yNonMoveIndexes[i]; ok {
-				// 動かない場所は固定
-				// キーは開始地点
-				startFno := fno
-				// 値は終了地点
-				endFno := float32(yNonMoveIndexes[i]) + minFno
-				y := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetItem(startFno).Position.GetY()
-
-				if !motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(startFno) &&
-					!motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(startFno-1) &&
-					!motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(startFno+1) {
-					// 直接のキーフレもしくは補間ありの開始キーフレが無い場合のみ登録
-					startBf := deform.NewBoneFrame(startFno)
-					startBf.Position.SetY(y)
-					motion.AppendRegisteredBoneFrame(pmx.GROOVE.String(), startBf)
-				}
-
-				if !motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(endFno) &&
-					!motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(endFno-1) &&
-					!motion.BoneFrames.GetItem(pmx.GROOVE.String()).Contains(endFno+1) {
-					endBf := deform.NewBoneFrame(endFno)
-					endBf.Position.SetY(y)
-					motion.AppendRegisteredBoneFrame(pmx.GROOVE.String(), endBf)
-				}
+			if _, ok := yInflectionIndexes[i]; ok {
+				// Y (グルーブ)
+				appendMoveCurveFrame(motion, pmx.GROOVE.String(), fno, float32(yInflectionIndexes[i])+minFno,
+					nil, ys[i:(yInflectionIndexes[i]+1)], nil)
 			}
 		}
 	}
 
 	return motion
+}
+
+// 移動補間ありのキーフレを追加
+func appendMoveCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno float32, xs, ys, zs []float64) {
+	startBf := motion.BoneFrames.GetItem(boneName).GetItem(startFno)
+	endBf := motion.BoneFrames.GetItem(boneName).GetItem(endFno)
+
+	if ys == nil {
+		startBf.Position = &mmath.MVec3{xs[0], 0, zs[0]}
+		endBf.Position = &mmath.MVec3{xs[len(xs)-1], 0, zs[len(zs)-1]}
+		endBf.Curves.TranslateX = mmath.NewCurveFromValues(xs)
+		endBf.Curves.TranslateZ = mmath.NewCurveFromValues(zs)
+	} else if xs == nil {
+		startBf.Position = &mmath.MVec3{0, ys[0], 0}
+		endBf.Position = &mmath.MVec3{0, ys[len(ys)-1], 0}
+		endBf.Curves.TranslateY = mmath.NewCurveFromValues(ys)
+	} else {
+		startBf.Position = &mmath.MVec3{xs[0], ys[0], zs[0]}
+		endBf.Position = &mmath.MVec3{xs[len(xs)-1], ys[len(ys)-1], zs[len(zs)-1]}
+	}
+
+	if !motion.BoneFrames.GetItem(boneName).Contains(startFno) {
+		// まだキーフレがない場合のみ開始キーフレ追加
+		motion.AppendRegisteredBoneFrame(boneName, startBf)
+	}
+
+	// 終端キーフレは補間ありで登録
+	motion.AppendRegisteredBoneFrame(boneName, endBf)
 }
