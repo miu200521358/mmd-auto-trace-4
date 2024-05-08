@@ -75,10 +75,10 @@ func main() {
 
 func getResultFileName(fileName string) string {
 	split := strings.Split(fileName, "_")
-	if len(split) < 3 {
+	if len(split) < 2 {
 		return fileName
 	}
-	return split[1] + "_" + split[2] + "_result.vmd"
+	return split[0] + "_" + split[1] + "_result_reduce.vmd"
 }
 
 func getResultVmdFilePaths(dirPath string) ([]string, error) {
@@ -91,7 +91,7 @@ func getResultVmdFilePaths(dirPath string) ([]string, error) {
 			// 直下だけ参照
 			return filepath.SkipDir
 		}
-		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_heel.vmd")) {
+		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_result.vmd")) {
 			paths = append(paths, path)
 		}
 		return nil
