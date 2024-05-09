@@ -57,12 +57,25 @@ func main() {
 		allPrevMotions[i] = motion.(*vmd.VmdMotion)
 	}
 
-	mlog.I("Reduce Motion ...")
-	allReductionMotions := usecase.Reduce(allPrevMotions, modelPath)
+	mlog.I("Reduce Motion [Narrow] ...")
+	allNarrowReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.05, 0.00001, 1)
 
-	for i, motion := range allReductionMotions {
-		fileName := getResultFileName(filepath.Base(motion.Path))
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allReductionMotions), fileName)
+	for i, motion := range allNarrowReductionMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path), "narrow")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allNarrowReductionMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
+		err := vmd.Write(motion)
+		if err != nil {
+			mlog.E("Failed to write result vmd: %v", err)
+		}
+	}
+
+	mlog.I("Reduce Motion [Wide] ...")
+	allWideReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.07, 0.00005, 2)
+
+	for i, motion := range allWideReductionMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path), "wide")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allWideReductionMotions), fileName)
 		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
@@ -73,12 +86,12 @@ func main() {
 	mlog.I("Done!")
 }
 
-func getResultFileName(fileName string) string {
+func getResultFileName(fileName string, suffix string) string {
 	split := strings.Split(fileName, "_")
 	if len(split) < 2 {
 		return fileName
 	}
-	return split[0] + "_" + split[1] + "_result_reduce.vmd"
+	return split[0] + "_" + split[1] + "_result_reduce_" + suffix + ".vmd"
 }
 
 func getResultVmdFilePaths(dirPath string) ([]string, error) {

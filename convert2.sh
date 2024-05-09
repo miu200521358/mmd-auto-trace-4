@@ -22,8 +22,8 @@ paths=(
 output_dirs=(
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2"
-    "/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
     "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
+    "/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
     "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
     "/mnt/e/MMD_E/201805_auto/01/heart/heart_full5_20240425_015022"
     "/mnt/e/MMD_E/201805_auto/02/sugar/sugar_20240501_054628/results"

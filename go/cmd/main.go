@@ -62,9 +62,6 @@ func main() {
 	mlog.I("Fix Heel Motion ...")
 	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
-	mlog.I("Reduce Motion ...")
-	allReductionMotions := usecase.Reduce(allHeelMotions, modelPath)
-
 	for i, motion := range allHeelMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path))
 		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allHeelMotions), fileName)
@@ -75,13 +72,29 @@ func main() {
 		}
 	}
 
-	for i, motion := range allReductionMotions {
-		fileName := getReduceFileName(filepath.Base(motion.Path))
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allReductionMotions), fileName)
+	mlog.I("Reduce Motion [narrow] ...")
+	allNarrowReductionMotions := usecase.Reduce(allHeelMotions, modelPath, 0.05, 0.00001, 1)
+
+	for i, motion := range allNarrowReductionMotions {
+		fileName := getReduceFileName(filepath.Base(motion.Path), "narrow")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allNarrowReductionMotions), fileName)
 		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
 		err := vmd.Write(motion)
 		if err != nil {
-			mlog.E("Failed to write result vmd: %v", err)
+			mlog.E("Failed to write result narrow reduce vmd: %v", err)
+		}
+	}
+
+	mlog.I("Reduce Motion [wide] ...")
+	allWideReductionMotions := usecase.Reduce(allHeelMotions, modelPath, 0.07, 0.00005, 2)
+
+	for i, motion := range allWideReductionMotions {
+		fileName := getReduceFileName(filepath.Base(motion.Path), "wide")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allWideReductionMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
+		err := vmd.Write(motion)
+		if err != nil {
+			mlog.E("Failed to write result narrow reduce vmd: %v", err)
 		}
 	}
 
@@ -96,10 +109,10 @@ func getResultFileName(fileName string) string {
 	return split[1] + "_" + split[2] + "_result.vmd"
 }
 
-func getReduceFileName(fileName string) string {
+func getReduceFileName(fileName, suffix string) string {
 	split := strings.Split(fileName, "_")
 	if len(split) < 3 {
 		return fileName
 	}
-	return split[1] + "_" + split[2] + "_result_reduce.vmd"
+	return split[1] + "_" + split[2] + "_result_reduce_" + suffix + ".vmd"
 }

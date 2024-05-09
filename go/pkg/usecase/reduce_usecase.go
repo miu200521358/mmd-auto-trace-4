@@ -11,7 +11,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int) []*vmd.VmdMotion {
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
@@ -28,7 +28,7 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			motion := reduceMotion(prevMotion, bar)
+			motion := reduceMotion(prevMotion, moveTolerance, rotTolerance, space, bar)
 
 			if mlog.IsVerbose() {
 				motion.Path = strings.Replace(allPrevMotions[i].Path, "_ground.vmd", "_fix.vmd", -1)
@@ -48,7 +48,7 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 	return allMotions
 }
 
-func reduceMotion(prevMotion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion {
+func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64, space int, bar *pb.ProgressBar) *vmd.VmdMotion {
 	motion := vmd.NewVmdMotion(strings.Replace(prevMotion.Path, "_heel.vmd", "_fix.vmd", -1))
 
 	minFno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
@@ -104,13 +104,13 @@ func reduceMotion(prevMotion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion
 
 		for boneName := range moveXs {
 			if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
-				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], 0.06)
-				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], 0.06)
-				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], 0.08)
+				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], moveTolerance, space)
+				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], moveTolerance, space)
+				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], moveTolerance, space)
 			} else {
-				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], 0.12)
-				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], 0.12)
-				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], 0.12)
+				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], 0.12, space)
+				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], 0.12, space)
+				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], 0.12, space)
 			}
 		}
 
@@ -118,28 +118,31 @@ func reduceMotion(prevMotion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion
 
 		for boneName := range rots {
 			if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
-				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], 0.00002)
+				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], rotTolerance, space)
 			} else {
-				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], 0.001)
+				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], 0.001, space)
 			}
 		}
 
-		centerXZInflectionIndexes := mmath.MergeInflectionPoints(moveXs[pmx.CENTER.String()],
-			[]map[int]int{moveXInflections[pmx.CENTER.String()], moveZInflections[pmx.CENTER.String()]})
-		leftLegIkInflectionIndexes := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Left()],
+		centerXZInflections := mmath.MergeInflectionPoints(moveXs[pmx.CENTER.String()],
+			[]map[int]int{moveXInflections[pmx.CENTER.String()], moveZInflections[pmx.CENTER.String()]}, space)
+		leftLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Left()],
 			[]map[int]int{moveXInflections[pmx.LEG_IK.Left()], moveYInflections[pmx.LEG_IK.Left()],
-				moveZInflections[pmx.LEG_IK.Left()], rotInflections[pmx.LEG_IK.Left()]})
-		rightLegIkInflectionIndexes := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Right()],
+				moveZInflections[pmx.LEG_IK.Left()], rotInflections[pmx.LEG_IK.Left()]}, space)
+		rightLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Right()],
 			[]map[int]int{moveXInflections[pmx.LEG_IK.Right()], moveYInflections[pmx.LEG_IK.Right()],
-				moveZInflections[pmx.LEG_IK.Right()], rotInflections[pmx.LEG_IK.Right()]})
+				moveZInflections[pmx.LEG_IK.Right()], rotInflections[pmx.LEG_IK.Right()]}, space)
+
+		delete(rotInflections, pmx.LEG_IK.Left())
+		delete(rotInflections, pmx.LEG_IK.Right())
 
 		for i := 0; i <= int(maxFno-minFno); i += 1 {
 			fno := float32(i) + minFno
 			bar.Increment()
 
-			if _, ok := centerXZInflectionIndexes[i]; ok {
+			if _, ok := centerXZInflections[i]; ok {
 				// XZ (センター)
-				inflectionIndex := centerXZInflectionIndexes[i]
+				inflectionIndex := centerXZInflections[i]
 				appendCurveFrame(motion, pmx.CENTER.String(), fno, float32(inflectionIndex)+minFno,
 					moveXs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, moveZs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil)
 			}
@@ -149,23 +152,23 @@ func reduceMotion(prevMotion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion
 				appendCurveFrame(motion, pmx.GROOVE.String(), fno, float32(inflectionIndex)+minFno,
 					nil, moveYs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, nil)
 			}
-			if _, ok := leftLegIkInflectionIndexes[i]; ok {
+			if _, ok := leftLegIkInflections[i]; ok {
 				// 左足IK
-				inflectionIndex := leftLegIkInflectionIndexes[i]
+				inflectionIndex := leftLegIkInflections[i]
 				appendCurveFrame(motion, pmx.LEG_IK.Left(), fno, float32(inflectionIndex)+minFno,
 					moveXs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)],
 					quats[pmx.LEG_IK.Left()][i:(inflectionIndex+1)])
 			}
-			if _, ok := rightLegIkInflectionIndexes[i]; ok {
+			if _, ok := rightLegIkInflections[i]; ok {
 				// 右足IK
-				inflectionIndex := rightLegIkInflectionIndexes[i]
+				inflectionIndex := rightLegIkInflections[i]
 				appendCurveFrame(motion, pmx.LEG_IK.Right(), fno, float32(inflectionIndex)+minFno,
 					moveXs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)],
 					quats[pmx.LEG_IK.Right()][i:(inflectionIndex+1)])
 			}
 			for boneName, rotInflection := range rotInflections {
 				// 回転ボーン
-				if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() && rotInflection[i]-i > 1 {
+				if _, ok := rotInflection[i]; ok {
 					inflectionIndex := rotInflection[i]
 					appendCurveFrame(motion, boneName, fno, float32(inflectionIndex)+minFno,
 						nil, nil, nil, quats[boneName][i:(inflectionIndex+1)])
