@@ -26,8 +26,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
+                "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447/20240509_232722/"
                 // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307/demo_buster.pkl"
-                "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/demo_snobbism_23_1500-1550.pkl"
+                // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/demo_snobbism_23_1500-1550.pkl"
                 // "outputs/results/demo_buster.pkl"
                 // "outputs/results/demo_snobbism_1080-1380.pkl"
                 // "outputs/results/demo_snobbism_2255-2265.pkl"

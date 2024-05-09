@@ -262,8 +262,12 @@ def smooth(target_dir: str):
                                     "x": prev_data["mediapipe"][jname]["x"],
                                     "y": prev_data["mediapipe"][jname]["y"],
                                     "z": prev_data["mediapipe"][jname]["z"],
-                                    "visibility": prev_data["mediapipe"][jname]["visibility"],
-                                    "presence": prev_data["mediapipe"][jname]["presence"],
+                                    "visibility": prev_data["mediapipe"][jname][
+                                        "visibility"
+                                    ],
+                                    "presence": prev_data["mediapipe"][jname][
+                                        "presence"
+                                    ],
                                 }
 
                     continue
@@ -282,9 +286,21 @@ def smooth(target_dir: str):
                 joint_positions[("camera", "x")].append(
                     np.array([frame_data["camera"]["x"], 0, 0])
                 )
-                joint_positions[("camera", "y")].append(
-                    np.array([0, frame_data["camera"]["y"], 0])
-                )
+                if (
+                    time > 0
+                    and abs(
+                        joint_positions[("camera", "y")][-1] - frame_data["camera"]["y"]
+                    )
+                    > 0.04
+                ):
+                    # 跳ねる場合があるのでスルー
+                    joint_positions[("camera", "y")].append(
+                        np.array([0, joint_positions[("camera", "y")][-1], 0])
+                    )
+                else:
+                    joint_positions[("camera", "y")].append(
+                        np.array([0, frame_data["camera"]["y"], 0])
+                    )
                 joint_positions[("camera", "z")].append(
                     np.array([0, 0, frame_data["camera"]["z"] - start_camera_z])
                 )
@@ -345,10 +361,13 @@ def smooth(target_dir: str):
                                     "x": prev_data["mediapipe"][jname]["x"],
                                     "y": prev_data["mediapipe"][jname]["y"],
                                     "z": prev_data["mediapipe"][jname]["z"],
-                                    "visibility": prev_data["mediapipe"][jname]["visibility"],
-                                    "presence": prev_data["mediapipe"][jname]["presence"],
+                                    "visibility": prev_data["mediapipe"][jname][
+                                        "visibility"
+                                    ],
+                                    "presence": prev_data["mediapipe"][jname][
+                                        "presence"
+                                    ],
                                 }
-
 
             j = int(time) + 1
 
@@ -436,7 +455,6 @@ def smooth(target_dir: str):
 
 
 if __name__ == "__main__":
-
     log.info("Start: smooth =============================")
 
     smooth(sys.argv[1])

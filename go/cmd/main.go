@@ -53,6 +53,16 @@ func main() {
 	mlog.I("Convert Leg Ik Motion ...")
 	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
 
+	for i, motion := range allLegIkMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path), "_result_leg_ik")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allLegIkMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
+		err := vmd.Write(motion)
+		if err != nil {
+			mlog.E("Failed to write result leg ik vmd: %v", err)
+		}
+	}
+
 	mlog.I("Convert Arm Ik Motion ...")
 	allArmIkMotions := usecase.ConvertArmIk(allLegIkMotions, modelPath)
 
@@ -79,21 +89,21 @@ func main() {
 		}
 	}
 
-	// mlog.I("Fix Heel Motion ...")
-	// allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
+	mlog.I("Fix Heel Motion ...")
+	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
-	// for i, motion := range allHeelMotions {
-	// 	fileName := getResultFileName(filepath.Base(motion.Path), "_result_full")
-	// 	mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allHeelMotions), fileName)
-	// 	motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
-	// 	err := vmd.Write(motion)
-	// 	if err != nil {
-	// 		mlog.E("Failed to write result vmd: %v", err)
-	// 	}
-	// }
+	for i, motion := range allHeelMotions {
+		fileName := getResultFileName(filepath.Base(motion.Path), "_result_full")
+		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allHeelMotions), fileName)
+		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
+		err := vmd.Write(motion)
+		if err != nil {
+			mlog.E("Failed to write result vmd: %v", err)
+		}
+	}
 
 	mlog.I("Reduce Motion [narrow] ...")
-	allNarrowReductionMotions := usecase.Reduce(allGroundMotions, modelPath, 0.05, 0.00001, 0)
+	allNarrowReductionMotions := usecase.Reduce(allHeelMotions, modelPath, 0.05, 0.00001, 0)
 
 	for i, motion := range allNarrowReductionMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path), "_result_reduce_narrow")
@@ -106,7 +116,7 @@ func main() {
 	}
 
 	mlog.I("Reduce Motion [wide] ...")
-	allWideReductionMotions := usecase.Reduce(allGroundMotions, modelPath, 0.07, 0.00005, 2)
+	allWideReductionMotions := usecase.Reduce(allHeelMotions, modelPath, 0.07, 0.00005, 2)
 
 	for i, motion := range allWideReductionMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path), "_result_reduce_wide")

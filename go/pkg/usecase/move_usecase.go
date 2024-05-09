@@ -57,6 +57,10 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 			for fno, frame := range frames.Frames {
 				bar.Increment()
 
+				if frame.Confidential < 0.8 {
+					continue
+				}
+
 				for jointName, pos := range frame.Joint3D {
 					// 4D-Humansのジョイント移動モーション出力
 					bf := deform.NewBoneFrame(float32(fno))
