@@ -14,6 +14,8 @@ import (
 )
 
 func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	mlog.I("Start: Arm Ik =============================")
+
 	allArmIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// mlog.SetLevel(mlog.IK_VERBOSE)
@@ -269,6 +271,8 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Arm Ik =============================")
 
 	return allArmIkMotions
 }

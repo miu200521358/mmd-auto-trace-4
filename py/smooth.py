@@ -9,6 +9,10 @@ from tqdm import tqdm
 from convert_pkl2json import JOINT_NAMES
 from exec_mediapipe import MP_JOINT_NAMES
 
+from phalp.utils import get_pylogger
+
+log = get_pylogger(__name__)
+
 JOINT_NOISE = {
     ("camera", "x"): 6.0,
     ("camera", "y"): 6.0,
@@ -432,4 +436,9 @@ def smooth(target_dir: str):
 
 
 if __name__ == "__main__":
+
+    log.info("Start: smooth =============================")
+
     smooth(sys.argv[1])
+
+    log.info("End: smooth =============================")

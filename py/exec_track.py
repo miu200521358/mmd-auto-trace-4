@@ -234,4 +234,6 @@ def main(cfg: DictConfig) -> Optional[float]:
     phalp_tracker.track()
 
 if __name__ == "__main__":
+    log.info("Start: 4D-Humans =============================")
     main()
+    log.info("End: 4D-Humans =============================")

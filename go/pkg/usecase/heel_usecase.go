@@ -13,6 +13,8 @@ import (
 )
 
 func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	mlog.I("Start: Heel =============================")
+
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
@@ -135,6 +137,8 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 				int(fno), leftAnkleDiff3, rightAnkleDiff3, ratioLeftAnkleDiff3, ratioRightAnkleDiff3, meanAnkleDiff)
 		}
 	}
+
+	mlog.I("End: Heel =============================")
 
 	return motion
 }

@@ -17,6 +17,8 @@ import (
 const RATIO = 1 / 0.09
 
 func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
+	mlog.I("Start: Move =============================")
+
 	allMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 	allMpMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 
@@ -190,6 +192,8 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Move =============================")
 
 	return allMoveMotions, allMpMoveMotions
 }

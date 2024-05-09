@@ -142,5 +142,9 @@ def convert_pkl2json(pkl_path):
 
 
 if __name__ == "__main__":
+    log.info("Start: pkl to json =============================")
+
     for pkl_path in glob(os.path.join(sys.argv[1], "*.pkl")):
         convert_pkl2json(pkl_path)
+
+    log.info("End: pkl to json =============================")

@@ -7,6 +7,10 @@ import mediapipe as mp
 import numpy as np
 from tqdm import tqdm
 
+from phalp.utils import get_pylogger
+
+log = get_pylogger(__name__)
+
 MP_JOINT_NAMES = [
     "nose",
     "left eye (inner)",
@@ -173,4 +177,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    log.info("Start: mediapipe =============================")
+
     exec_mediapipe(args.video, args.output_dir)
+
+    log.info("End: mediapipe =============================")

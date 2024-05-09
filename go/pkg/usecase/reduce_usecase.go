@@ -12,6 +12,8 @@ import (
 )
 
 func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int) []*vmd.VmdMotion {
+	mlog.I("Start: Reduce =============================")
+
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
@@ -44,6 +46,8 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Reduce =============================")
 
 	return allMotions
 }

@@ -15,6 +15,8 @@ import (
 )
 
 func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	mlog.I("Start: Ground =============================")
+
 	allGroundMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
@@ -54,6 +56,8 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Ground =============================")
 
 	return allGroundMotions
 }

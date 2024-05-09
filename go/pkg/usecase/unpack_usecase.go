@@ -15,6 +15,8 @@ import (
 
 // Unpack jsonデータを読み込んで、構造体に展開する
 func Unpack(dirPath string) ([]*model.Frames, error) {
+	mlog.I("Start: Unpack =============================")
+
 	jsonPaths, err := getJSONFilePaths(dirPath)
 	if err != nil {
 		mlog.E("Failed to get json file paths: %v", err)
@@ -65,6 +67,8 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Unpack =============================")
 
 	return allFrames, nil
 }

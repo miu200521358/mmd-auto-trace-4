@@ -16,6 +16,8 @@ import (
 )
 
 func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	mlog.I("Start: Rotate =============================")
+
 	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
@@ -50,6 +52,8 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Rotate =============================")
 
 	return allRotateMotions
 }

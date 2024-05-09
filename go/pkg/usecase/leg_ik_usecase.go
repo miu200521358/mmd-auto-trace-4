@@ -14,6 +14,8 @@ import (
 )
 
 func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+	mlog.I("Start: Leg Ik =============================")
+
 	allLegIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// mlog.SetLevel(mlog.IK_VERBOSE)
@@ -311,6 +313,8 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 	wg.Wait()
 	bar.Finish()
+
+	mlog.I("End: Leg Ik =============================")
 
 	return allLegIkMotions
 }

@@ -14,9 +14,9 @@ paths=(
     # "/mnt/e/MMD_E/201805_auto/03/ivory/ivory.mp4"
     # "/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4"
     "/mnt/e/MMD_E/201805_auto/01/sakura/sakura.mp4"
-    "/mnt/e/MMD_E/201805_auto/02/baka/baka.mp4"
-    "/mnt/e/MMD_E/201805_auto/03/bbf/bbf.mp4"
-    "/mnt/e/MMD_E/201805_auto/04/charles/charles.mp4"
+    # "/mnt/e/MMD_E/201805_auto/02/baka/baka.mp4"
+    # "/mnt/e/MMD_E/201805_auto/03/bbf/bbf.mp4"
+    # "/mnt/e/MMD_E/201805_auto/04/charles/charles.mp4"
 )
 
 output_dirs=(
@@ -29,9 +29,9 @@ output_dirs=(
     # "/mnt/e/MMD_E/201805_auto/03/ivory/ivory_20240503_105004"
     # "/mnt/e/MMD_E/201805_auto/02/sugar/sugar_20240501_054628"
     "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447"
-    "/mnt/e/MMD_E/201805_auto/02/baka/baka_20240425_015515"
-    "/mnt/e/MMD_E/201805_auto/03/bbf/bbf_20240503_200532"
-    "/mnt/e/MMD_E/201805_auto/04/charles/charles_20240425_020048"
+    # "/mnt/e/MMD_E/201805_auto/02/baka/baka_20240425_015515"
+    # "/mnt/e/MMD_E/201805_auto/03/bbf/bbf_20240503_200532"
+    # "/mnt/e/MMD_E/201805_auto/04/charles/charles_20240425_020048"
 )
 
 for i in "${!paths[@]}"; do
