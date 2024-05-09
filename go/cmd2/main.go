@@ -58,7 +58,7 @@ func main() {
 	}
 
 	mlog.I("Reduce Motion [Narrow] ...")
-	allNarrowReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.05, 0.00001, 1)
+	allNarrowReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.05, 0.00001, 0)
 
 	for i, motion := range allNarrowReductionMotions {
 		fileName := getResultFileName(filepath.Base(motion.Path), "narrow")
