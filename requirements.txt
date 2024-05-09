@@ -11,6 +11,7 @@ einops
 timm
 dill
 pandas
+PyOpenGL-accelerate
 git+https://github.com/miu200521358/PHALP.git
 git+https://github.com/mattloper/chumpy
 git+https://github.com/miu200521358/4D-Humans.git
