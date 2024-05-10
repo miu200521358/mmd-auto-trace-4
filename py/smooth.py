@@ -14,9 +14,9 @@ from phalp.utils import get_pylogger
 log = get_pylogger(__name__)
 
 JOINT_NOISE = {
-    ("camera", "x"): 6.0,
-    ("camera", "y"): 6.0,
-    ("camera", "z"): 12.0,
+    ("camera", "x"): 2.0,
+    ("camera", "y"): 2.0,
+    ("camera", "z"): 1.0,
     # 25 OpenPose joints (in the order provided by OpenPose)
     "OP Nose": 3.0,  # 0
     "OP Neck": 3.0,  # 1
@@ -102,59 +102,6 @@ JOINT_NOISE = {
     "right heel": 0.7,  # 30
     "left foot index": 0.7,  # 31
     "right foot index": 0.7,  # 32
-    # # osx
-    # "pelvis": 0.7,  # 0
-    # "left_hip": 0.7,  # 1
-    # "right_hip": 0.7,  # 2
-    # "left wrist": 0.7,  # 3
-    # "left_knee": 0.7,  # 4
-    # "right_knee": 0.7,  # 5
-    # "spine2": 0.7,  # 6
-    # "left_ankle": 0.7,  # 7
-    # "right_ankle": 0.7,  # 8
-    # "spine3": 0.7,  # 9
-    # "left_foot": 0.7,  # 10
-    # "right_foot": 0.7,  # 11
-    # "neck": 0.7,  # 12
-    # "left_collar": 0.7,  # 13
-    # "right_collar": 0.7,  # 14
-    # "head": 0.7,  # 15
-    # "left_shoulder": 0.7,  # 16
-    # "right_shoulder": 0.7,  # 17
-    # "left_elbow": 0.7,  # 18
-    # "right_elbow": 0.7,  # 19
-    # "left_wrist": 0.7,  # 20
-    # "right_wrist": 0.7,  # 21
-    # "left_index1": 0.7,  # 22
-    # "left_index2": 0.7,  # 23
-    # "left_index3": 0.7,  # 24
-    # "left_middle1": 0.7,  # 25
-    # "left_middle2": 0.7,  # 26
-    # "left_middle3": 0.7,  # 27
-    # "left_pinky1": 0.7,  # 28
-    # "left_pinky2": 0.7,  # 29
-    # "left_pinky3": 0.7,  # 30
-    # "left_ring1": 0.7,  # 31
-    # "left_ring2": 0.7,  # 32
-    # "left_ring3": 0.7,  # 33
-    # "left_thumb1": 0.7,  # 34
-    # "left_thumb2": 0.7,  # 35
-    # "left_thumb3": 0.7,  # 36
-    # "right_index1": 0.7,  # 37
-    # "right_index2": 0.7,  # 38
-    # "right_index3": 0.7,  # 39
-    # "right_middle1": 0.7,  # 40
-    # "right_middle2": 0.7,  # 41
-    # "right_middle3": 0.7,  # 42
-    # "right_pinky1": 0.7,  # 43
-    # "right_pinky2": 0.7,  # 44
-    # "right_pinky3": 0.7,  # 45
-    # "right_ring1": 0.7,  # 46
-    # "right_ring2": 0.7,  # 47
-    # "right_ring3": 0.7,  # 48
-    # "right_thumb1": 0.7,  # 49
-    # "right_thumb2": 0.7,  # 50
-    # "right_thumb3": 0.7,  # 51
 }
 
 
