@@ -287,11 +287,15 @@ def smooth(target_dir: str):
                     np.array([frame_data["camera"]["x"], 0, 0])
                 )
                 if (
-                    time > 0
+                    time > 1
                     and abs(
                         joint_positions[("camera", "y")][-1] - frame_data["camera"]["y"]
                     )
                     > 0.04
+                    and abs(
+                        joint_positions[("camera", "y")][-2] - frame_data["camera"]["y"]
+                    )
+                    < 0.01
                 ):
                     # 跳ねる場合があるのでスルー
                     joint_positions[("camera", "y")].append(
