@@ -230,87 +230,158 @@ def smooth(target_dir: str):
             }
 
             if "camera" in frame_data:
+                # camera x ----------------------
+                if (
+                    int(time) > 1
+                    and len(joint_positions[("camera", "x")]) > 1
+                    and abs(
+                        joint_positions[("camera", "x")][-2][0]
+                        - frame_data["camera"]["x"]
+                    )
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "x")][-1][0]
+                        - frame_data["camera"]["x"]
+                    )
+                    > 0.002
+                ):
+                    # 1つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera X override 1 {time}")
+                    joint_positions[("camera", "x")][-1][0] = frame_data["camera"]["x"]
+
                 if (
                     int(time) > 2
                     and len(joint_positions[("camera", "x")]) > 2
                     and abs(
-                        joint_positions[("camera", "x")][-1][1]
+                        joint_positions[("camera", "x")][-3][0]
                         - frame_data["camera"]["x"]
                     )
-                    > 0.02
-                    and (
-                        abs(
-                            joint_positions[("camera", "x")][-3][1]
-                            - frame_data["camera"]["x"]
-                        )
-                        < 0.01
-                        or abs(
-                            joint_positions[("camera", "x")][-2][1]
-                            - frame_data["camera"]["x"]
-                        )
-                        < 0.01
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "x")][-2][0]
+                        - frame_data["camera"]["x"]
                     )
+                    > 0.002
+                    and abs(
+                        joint_positions[("camera", "x")][-1][0]
+                        - frame_data["camera"]["x"]
+                    )
+                    > 0.002
                 ):
-                    # 跳ねた場合は今回のを前回にも設定
-                    joint_positions[("camera", "x")][-1][1] = frame_data["camera"]["x"]
+                    # 2つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera X override 2 {time}")
+                    joint_positions[("camera", "x")][-1][0] = frame_data["camera"]["x"]
+                    joint_positions[("camera", "x")][-2][0] = frame_data["camera"]["x"]
+
                 joint_positions[("camera", "x")].append(
                     np.array([frame_data["camera"]["x"], 0, 0])
                 )
+
+                # camera y ----------------------
+                if (
+                    int(time) > 1
+                    and len(joint_positions[("camera", "y")]) > 1
+                    and abs(
+                        joint_positions[("camera", "y")][-2][1]
+                        - frame_data["camera"]["y"]
+                    )
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "y")][-1][1]
+                        - frame_data["camera"]["y"]
+                    )
+                    > 0.002
+                ):
+                    # 1つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera Y override 1 {time}")
+                    joint_positions[("camera", "y")][-1][1] = frame_data["camera"]["y"]
 
                 if (
                     int(time) > 2
                     and len(joint_positions[("camera", "y")]) > 2
                     and abs(
+                        joint_positions[("camera", "y")][-3][1]
+                        - frame_data["camera"]["y"]
+                    )
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "y")][-2][1]
+                        - frame_data["camera"]["y"]
+                    )
+                    > 0.002
+                    and abs(
                         joint_positions[("camera", "y")][-1][1]
                         - frame_data["camera"]["y"]
                     )
-                    > 0.02
-                    and (
-                        abs(
-                            joint_positions[("camera", "y")][-3][1]
-                            - frame_data["camera"]["y"]
-                        )
-                        < 0.01
-                        and abs(
-                            joint_positions[("camera", "y")][-2][1]
-                            - frame_data["camera"]["y"]
-                        )
-                        < 0.01
-                    )
+                    > 0.002
                 ):
-                    # 跳ねた場合は今回のを前回にも設定
+                    # 2つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera Y override 2 {time}")
                     joint_positions[("camera", "y")][-1][1] = frame_data["camera"]["y"]
+                    joint_positions[("camera", "y")][-2][1] = frame_data["camera"]["y"]
+
                 joint_positions[("camera", "y")].append(
                     np.array([0, frame_data["camera"]["y"], 0])
                 )
+
+                # camera z ----------------------
+                if (
+                    int(time) > 1
+                    and len(joint_positions[("camera", "z")]) > 1
+                    and abs(
+                        joint_positions[("camera", "z")][-2][2]
+                        - frame_data["camera"]["z"]
+                        - start_camera_z
+                    )
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "z")][-1][2]
+                        - frame_data["camera"]["z"]
+                        - start_camera_z
+                    )
+                    > 0.002
+                ):
+                    # 1つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera Z override 1 {time}")
+                    joint_positions[("camera", "z")][-1][2] = (
+                        frame_data["camera"]["z"] - start_camera_z
+                    )
 
                 if (
                     int(time) > 2
                     and len(joint_positions[("camera", "z")]) > 2
                     and abs(
-                        joint_positions[("camera", "z")][-1][1]
+                        joint_positions[("camera", "z")][-3][2]
                         - frame_data["camera"]["z"]
+                        - start_camera_z
                     )
-                    > 0.02
-                    and (
-                        abs(
-                            joint_positions[("camera", "z")][-3][1]
-                            - frame_data["camera"]["z"]
-                        )
-                        < 0.01
-                        and abs(
-                            joint_positions[("camera", "z")][-2][1]
-                            - frame_data["camera"]["z"]
-                        )
-                        < 0.01
+                    < 0.001
+                    and abs(
+                        joint_positions[("camera", "z")][-2][2]
+                        - frame_data["camera"]["z"]
+                        - start_camera_z
                     )
+                    > 0.002
+                    and abs(
+                        joint_positions[("camera", "z")][-1][2]
+                        - frame_data["camera"]["z"]
+                        - start_camera_z
+                    )
+                    > 0.002
                 ):
-                    # 跳ねた場合は今回のを前回にも設定
-                    joint_positions[("camera", "z")][-1][1] = frame_data["camera"]["z"]
+                    # 2つ跳ねた場合は今回のを前回にも設定
+                    log.debug(f"camera Z override 2 {time}")
+                    joint_positions[("camera", "z")][-1][2] = (
+                        frame_data["camera"]["z"] - start_camera_z
+                    )
+                    joint_positions[("camera", "z")][-2][2] = (
+                        frame_data["camera"]["z"] - start_camera_z
+                    )
 
                 joint_positions[("camera", "z")].append(
                     np.array([0, 0, frame_data["camera"]["z"] - start_camera_z])
                 )
+
             if "3d_joints" in frame_data:
                 for jname, joint in frame_data["3d_joints"].items():
                     joint_positions[("3d_joints", jname)].append(
@@ -462,8 +533,8 @@ def smooth(target_dir: str):
 
 
 if __name__ == "__main__":
-    log.info("Start: smooth =============================")
+    log.debug("Start: smooth =============================")
 
     smooth(sys.argv[1])
 
-    log.info("End: smooth =============================")
+    log.debug("End: smooth =============================")

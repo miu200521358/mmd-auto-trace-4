@@ -72,6 +72,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
+                "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447"
                 // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
                 // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
                 // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"

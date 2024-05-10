@@ -49,7 +49,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	// Create a WaitGroup
 	var wg sync.WaitGroup
 
-	loopLimit := 100
+	loopLimit := 70
 
 	// Iterate over allRotateMotions in parallel
 	for i, prevMotion := range allPrevMotions {
