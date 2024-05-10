@@ -283,28 +283,57 @@ def smooth(target_dir: str):
             }
 
             if "camera" in frame_data:
-                joint_positions[("camera", "x")].append(
-                    np.array([frame_data["camera"]["x"], 0, 0])
-                )
                 if (
-                    time > 1
+                    int(time) > 1
+                    and len(joint_positions[("camera", "x")]) > 1
                     and abs(
-                        joint_positions[("camera", "y")][-1] - frame_data["camera"]["y"]
+                        joint_positions[("camera", "x")][-1][1] - frame_data["camera"]["x"]
                     )
-                    > 0.03
+                    > 0.02
                     and abs(
-                        joint_positions[("camera", "y")][-2] - frame_data["camera"]["y"]
+                        joint_positions[("camera", "x")][-2][1] - frame_data["camera"]["x"]
                     )
                     < 0.01
                 ):
-                    # 跳ねる場合があるのでスルー
-                    joint_positions[("camera", "y")].append(
-                        np.array([0, joint_positions[("camera", "y")][-1], 0])
+                    # 跳ねた場合は今回のを前回にも設定
+                    joint_positions[("camera", "x")][-1][1] = frame_data["camera"]["x"]
+                joint_positions[("camera", "x")].append(
+                    np.array([frame_data["camera"]["x"], 0, 0])
+                )
+
+                if (
+                    int(time) > 1
+                    and len(joint_positions[("camera", "y")]) > 1
+                    and abs(
+                        joint_positions[("camera", "y")][-1][1] - frame_data["camera"]["y"]
                     )
-                else:
-                    joint_positions[("camera", "y")].append(
-                        np.array([0, frame_data["camera"]["y"], 0])
+                    > 0.03
+                    and abs(
+                        joint_positions[("camera", "y")][-2][1] - frame_data["camera"]["y"]
                     )
+                    < 0.01
+                ):
+                    # 跳ねた場合は今回のを前回にも設定
+                    joint_positions[("camera", "y")][-1][1] = frame_data["camera"]["y"]
+                joint_positions[("camera", "y")].append(
+                    np.array([0, frame_data["camera"]["y"], 0])
+                )
+
+                if (
+                    int(time) > 1
+                    and len(joint_positions[("camera", "z")]) > 1
+                    and abs(
+                        joint_positions[("camera", "z")][-1][1] - frame_data["camera"]["z"]
+                    )
+                    > 0.02
+                    and abs(
+                        joint_positions[("camera", "z")][-2][1] - frame_data["camera"]["z"]
+                    )
+                    < 0.01
+                ):
+                    # 跳ねた場合は今回のを前回にも設定
+                    joint_positions[("camera", "z")][-1][1] = frame_data["camera"]["z"]
+
                 joint_positions[("camera", "z")].append(
                     np.array([0, 0, frame_data["camera"]["z"] - start_camera_z])
                 )

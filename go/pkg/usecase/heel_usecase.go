@@ -89,38 +89,44 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 
 		// ほぼ動いていない場合、足IKを止める
 		if 0.0 < lt && lt < 1.0 {
-			prevLeftAnklePos3 := motion.BoneFrames.Data[pmx.LEG_IK.Left()].Data[prevFno].Position
-			nowLeftAnklePos3 := motion.BoneFrames.Data[pmx.LEG_IK.Left()].Data[fno].Position
+			leftLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(fno)
+			prevLeftAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(prevFno).Position
+			nowLeftAnklePos3 := leftLegIkBf.Position
 			leftAnkleDiff3 = prevLeftAnklePos3.Subed(nowLeftAnklePos3)
 			leftAnkleDiff3.SetY(0)
 			if leftAnkleDiff2.Length() < stopThreshold {
 				// 完全停止
-				motion.BoneFrames.Data[pmx.LEG_IK.Left()].Data[fno].Position.Add(leftAnkleDiff3)
+				leftLegIkBf.Position.Add(leftAnkleDiff3)
+				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					int(fno), prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
 			} else {
 				// 緩やかに停止
 				leftAnkleDiff3 = leftAnkleDiff3.MulScalar(lt)
-				motion.BoneFrames.Data[pmx.LEG_IK.Left()].Data[fno].Position.Add(leftAnkleDiff3)
+				leftLegIkBf.Position.Add(leftAnkleDiff3)
+				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT MINI STOP][%d] lt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					int(fno), lt, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
 			}
 		}
 
 		if 0.0 < rt && rt < 1.0 {
-			prevRightAnklePos3 := motion.BoneFrames.Data[pmx.LEG_IK.Right()].Data[prevFno].Position
-			nowRightAnklePos3 := motion.BoneFrames.Data[pmx.LEG_IK.Right()].Data[fno].Position
+			rightLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(fno)
+			prevRightAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(prevFno).Position
+			nowRightAnklePos3 := rightLegIkBf.Position
 			rightAnkleDiff3 = prevRightAnklePos3.Subed(nowRightAnklePos3)
 			rightAnkleDiff3.SetY(0)
 			if rightAnkleDiff2.Length() < stopThreshold {
 				// 完全停止
-				motion.BoneFrames.Data[pmx.LEG_IK.Right()].Data[fno].Position.Add(rightAnkleDiff3)
+				rightLegIkBf.Position.Add(rightAnkleDiff3)
+				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					int(fno), prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
 			} else {
 				// 緩やかに停止
 				rightAnkleDiff3 = rightAnkleDiff3.MulScalar(rt)
-				motion.BoneFrames.Data[pmx.LEG_IK.Right()].Data[fno].Position.Add(rightAnkleDiff3)
+				rightLegIkBf.Position.Add(rightAnkleDiff3)
+				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT MINI STOP][%d] rt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					int(fno), rt, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
 			}
@@ -131,7 +137,9 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 			ratioLeftAnkleDiff3 := leftAnkleDiff3.MuledScalar(lt)
 			ratioRightAnkleDiff3 := rightAnkleDiff3.MuledScalar(rt)
 			meanAnkleDiff := ratioLeftAnkleDiff3.Add(ratioRightAnkleDiff3).MulScalar(0.5)
-			motion.BoneFrames.Data[pmx.CENTER.String()].Data[fno].Position.Add(meanAnkleDiff)
+			centerBf := motion.BoneFrames.GetItem(pmx.CENTER.String()).GetItem(fno)
+			centerBf.Position.Add(meanAnkleDiff)
+			motion.AppendRegisteredBoneFrame(pmx.CENTER.String(), centerBf)
 
 			mlog.V("[CENTER][%d] leftAnkleDiff3: %v, rightAnkleDiff3: %v, ratioLeftAnkleDiff3: %v, ratioRightAnkleDiff3: %v, meanAnkleDiff: %v",
 				int(fno), leftAnkleDiff3, rightAnkleDiff3, ratioLeftAnkleDiff3, ratioRightAnkleDiff3, meanAnkleDiff)

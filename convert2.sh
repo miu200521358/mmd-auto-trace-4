@@ -53,13 +53,18 @@ for i in "${!paths[@]}"; do
     # # mediapipe
     # echo "mediapipe -----------------"
     # python py/exec_mediapipe.py --video "${paths[i]}" --output_dir "${path}"
-    # # 平滑化
-    # echo "smooth -----------------"
-    # python py/smooth.py "${path}"
 
     # jsonをコピー
     echo "copy json -----------------"
-    cp ${output_dirs[i]}/*_smooth.json "${path}"
+    cp ${output_dirs[i]}/*_mp.json "${path}"
+
+    # 平滑化
+    echo "smooth -----------------"
+    python py/smooth.py "${path}"
+
+    # # jsonをコピー
+    # echo "copy json -----------------"
+    # cp ${output_dirs[i]}/*_smooth.json "${path}"
 
     # # vmdをコピー
     # echo "copy json -----------------"
