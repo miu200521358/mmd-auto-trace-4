@@ -291,7 +291,7 @@ def smooth(target_dir: str):
                     and abs(
                         joint_positions[("camera", "y")][-1] - frame_data["camera"]["y"]
                     )
-                    > 0.04
+                    > 0.03
                     and abs(
                         joint_positions[("camera", "y")][-2] - frame_data["camera"]["y"]
                     )
