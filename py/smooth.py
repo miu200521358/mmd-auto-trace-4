@@ -231,16 +231,25 @@ def smooth(target_dir: str):
 
             if "camera" in frame_data:
                 if (
-                    int(time) > 1
-                    and len(joint_positions[("camera", "x")]) > 1
+                    int(time) > 2
+                    and len(joint_positions[("camera", "x")]) > 2
                     and abs(
-                        joint_positions[("camera", "x")][-1][1] - frame_data["camera"]["x"]
+                        joint_positions[("camera", "x")][-1][1]
+                        - frame_data["camera"]["x"]
                     )
                     > 0.02
-                    and abs(
-                        joint_positions[("camera", "x")][-2][1] - frame_data["camera"]["x"]
+                    and (
+                        abs(
+                            joint_positions[("camera", "x")][-3][1]
+                            - frame_data["camera"]["x"]
+                        )
+                        < 0.01
+                        or abs(
+                            joint_positions[("camera", "x")][-2][1]
+                            - frame_data["camera"]["x"]
+                        )
+                        < 0.01
                     )
-                    < 0.01
                 ):
                     # 跳ねた場合は今回のを前回にも設定
                     joint_positions[("camera", "x")][-1][1] = frame_data["camera"]["x"]
@@ -249,16 +258,25 @@ def smooth(target_dir: str):
                 )
 
                 if (
-                    int(time) > 1
-                    and len(joint_positions[("camera", "y")]) > 1
+                    int(time) > 2
+                    and len(joint_positions[("camera", "y")]) > 2
                     and abs(
-                        joint_positions[("camera", "y")][-1][1] - frame_data["camera"]["y"]
+                        joint_positions[("camera", "y")][-1][1]
+                        - frame_data["camera"]["y"]
                     )
-                    > 0.03
-                    and abs(
-                        joint_positions[("camera", "y")][-2][1] - frame_data["camera"]["y"]
+                    > 0.02
+                    and (
+                        abs(
+                            joint_positions[("camera", "y")][-3][1]
+                            - frame_data["camera"]["y"]
+                        )
+                        < 0.01
+                        and abs(
+                            joint_positions[("camera", "y")][-2][1]
+                            - frame_data["camera"]["y"]
+                        )
+                        < 0.01
                     )
-                    < 0.01
                 ):
                     # 跳ねた場合は今回のを前回にも設定
                     joint_positions[("camera", "y")][-1][1] = frame_data["camera"]["y"]
@@ -267,16 +285,25 @@ def smooth(target_dir: str):
                 )
 
                 if (
-                    int(time) > 1
-                    and len(joint_positions[("camera", "z")]) > 1
+                    int(time) > 2
+                    and len(joint_positions[("camera", "z")]) > 2
                     and abs(
-                        joint_positions[("camera", "z")][-1][1] - frame_data["camera"]["z"]
+                        joint_positions[("camera", "z")][-1][1]
+                        - frame_data["camera"]["z"]
                     )
                     > 0.02
-                    and abs(
-                        joint_positions[("camera", "z")][-2][1] - frame_data["camera"]["z"]
+                    and (
+                        abs(
+                            joint_positions[("camera", "z")][-3][1]
+                            - frame_data["camera"]["z"]
+                        )
+                        < 0.01
+                        and abs(
+                            joint_positions[("camera", "z")][-2][1]
+                            - frame_data["camera"]["z"]
+                        )
+                        < 0.01
                     )
-                    < 0.01
                 ):
                     # 跳ねた場合は今回のを前回にも設定
                     joint_positions[("camera", "z")][-1][1] = frame_data["camera"]["z"]
