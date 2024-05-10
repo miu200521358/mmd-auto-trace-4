@@ -172,8 +172,8 @@ class HMR2023TextureSampler(HMR2Predictor):
 class HMR2_4dhuman(PHALP):
     def __init__(self, cfg):
         cfg.render.enable = False
-        if not cfg.video.output_dir:
-            # 出力ディレクトリ未指定の場合、日時込みで作成する
+        if not cfg.video.output_dir or cfg.video.output_dir[0] != "/":
+            # 出力ディレクトリ絶対パス未指定の場合、日時込みで作成する
             output_dir = os.path.join(
                 os.path.dirname(cfg.video.source),
                 f"{os.path.basename(cfg.video.source).split('.')[0]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",

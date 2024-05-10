@@ -12,7 +12,8 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "video.source=/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4",
+                "video.source=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
+                // "video.source=/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4",
                 // "video.source=inputs/snobbism_2255-2265.mp4",
                 // "video.source=inputs/buster_1167-1267.mp4",
                 // "video.output_dir=outputs",
