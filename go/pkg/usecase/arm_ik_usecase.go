@@ -12,7 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-const arm_ik_block = float32(500)
+const arm_ik_block = 500
 
 func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Arm Ik =============================")
@@ -32,8 +32,8 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 	// mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
-	totalMinFrames := make([]float32, len(allPrevMotions))
-	totalMaxFrames := make([]float32, len(allPrevMotions))
+	totalMinFrames := make([]int, len(allPrevMotions))
+	totalMaxFrames := make([]int, len(allPrevMotions))
 	totalFrames := len(allPrevMotions)
 	for i, prevMotion := range allPrevMotions {
 		minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
@@ -86,10 +86,10 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 			minFrame := totalMinFrames[i]
 			maxFrame := totalMaxFrames[i]
 
-			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
+			for fno := minFrame; fno <= maxFrame; fno++ {
 				bar.Increment()
-				if int(fno)%100 == 0 {
-					mlog.I("[%d/%d] Convert Arm Ik [%d/%d] ...", i, len(allPrevMotions), int(fno), int(maxFrame))
+				if fno%100 == 0 {
+					mlog.I("[%d/%d] Convert Arm Ik [%d/%d] ...", i, len(allPrevMotions), fno, int(maxFrame))
 				}
 
 				var wg sync.WaitGroup
@@ -146,7 +146,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 }
 
 func convertArmIkMotion(
-	prevMotion *vmd.VmdMotion, armIkMotion *vmd.VmdMotion, direction string, fno float32,
+	prevMotion *vmd.VmdMotion, armIkMotion *vmd.VmdMotion, direction string, fno int,
 	armTwistIkModel *pmx.PmxModel, wristTwistIkModel *pmx.PmxModel, loopLimit int,
 ) {
 
@@ -218,25 +218,25 @@ func convertArmIkMotion(
 
 		keySum := elbowDistance + wristDistance
 		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-			int(fno), direction, j, elbowDistance, wristDistance, keySum, armKey)
+			fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
 
 		if keySum < armKey {
 			armKey = keySum
 			armTwistQuat = armTwistOnDelta.FrameRotationWithoutEffect
 
 			mlog.V("[Arm] Update IK [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-				int(fno), direction, j, elbowDistance, wristDistance, keySum, armKey)
+				fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
 		}
 
 		if elbowDistance < 1e-2 && wristDistance < 1e-2 {
 			mlog.V("*** [Arm] Converged at [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-				int(fno), direction, j, elbowDistance, wristDistance, keySum, armKey)
+				fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Arm] FIX Converged at [%d][%s] distance: %f", int(fno), direction, armKey)
+	mlog.V("[Arm] FIX Converged at [%d][%s] distance: %f", fno, direction, armKey)
 
 	// FKの各キーフレに値を設定
 	armTwistBf := vmd.NewBoneFrame(fno)
@@ -282,25 +282,25 @@ func convertArmIkMotion(
 
 		keySum := middleDistance + thumbZDistance
 		mlog.V("[Wrist] Distance [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-			int(fno), direction, j, middleDistance, thumbZDistance, keySum, wristKey)
+			fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
 
 		if keySum < wristKey {
 			wristKey = keySum
 			wristTwistQuat = wristTwistOnDelta.FrameRotationWithoutEffect
 
 			mlog.V("[Wrist] Update IK [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-				int(fno), direction, j, middleDistance, thumbZDistance, keySum, wristKey)
+				fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
 		}
 
 		if middleDistance < 1e-2 && thumbZDistance < 0.1 {
 			mlog.V("*** [Wrist] Converged at [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-				int(fno), direction, j, middleDistance, thumbZDistance, keySum, wristKey)
+				fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Wrist] FIX Converged at [%d][%s] distance: %f", int(fno), direction, wristKey)
+	mlog.V("[Wrist] FIX Converged at [%d][%s] distance: %f", fno, direction, wristKey)
 
 	// FKの各キーフレに値を設定
 	wristTwistBf := vmd.NewBoneFrame(fno)

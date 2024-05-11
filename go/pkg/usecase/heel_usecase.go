@@ -65,8 +65,8 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 		bar.Increment()
 
 		// 2d-jointの足首の位置を取得
-		leftAnkleJoint := frames.Frames[int(fno)].Joint2D["OP LAnkle"]
-		rightAnkleJoint := frames.Frames[int(fno)].Joint2D["OP RAnkle"]
+		leftAnkleJoint := frames.Frames[fno].Joint2D["OP LAnkle"]
+		rightAnkleJoint := frames.Frames[fno].Joint2D["OP RAnkle"]
 
 		if i == 0 {
 			prevLeftAnklePos2 = &mmath.MVec2{leftAnkleJoint.X, leftAnkleJoint.Y}
@@ -101,14 +101,14 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 				leftLegIkBf.Position.Add(leftAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
-					int(fno), prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
+					fno, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
 			} else {
 				// 緩やかに停止
 				leftAnkleDiff3 = leftAnkleDiff3.MulScalar(lt)
 				leftLegIkBf.Position.Add(leftAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT MINI STOP][%d] lt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
-					int(fno), lt, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
+					fno, lt, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
 			}
 		}
 
@@ -123,14 +123,14 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 				rightLegIkBf.Position.Add(rightAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
-					int(fno), prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
+					fno, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
 			} else {
 				// 緩やかに停止
 				rightAnkleDiff3 = rightAnkleDiff3.MulScalar(rt)
 				rightLegIkBf.Position.Add(rightAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT MINI STOP][%d] rt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
-					int(fno), rt, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
+					fno, rt, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
 			}
 		}
 
@@ -144,7 +144,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 			motion.AppendRegisteredBoneFrame(pmx.CENTER.String(), centerBf)
 
 			mlog.V("[CENTER][%d] leftAnkleDiff3: %v, rightAnkleDiff3: %v, ratioLeftAnkleDiff3: %v, ratioRightAnkleDiff3: %v, meanAnkleDiff: %v",
-				int(fno), leftAnkleDiff3, rightAnkleDiff3, ratioLeftAnkleDiff3, ratioRightAnkleDiff3, meanAnkleDiff)
+				fno, leftAnkleDiff3, rightAnkleDiff3, ratioLeftAnkleDiff3, ratioRightAnkleDiff3, meanAnkleDiff)
 		}
 	}
 

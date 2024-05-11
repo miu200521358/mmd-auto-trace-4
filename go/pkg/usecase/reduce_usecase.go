@@ -84,7 +84,7 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 
 		for i := 0; i <= int(maxFno-minFno); i += 1 {
 			bar.Increment()
-			fno := float32(i) + minFno
+			fno := int(i) + minFno
 
 			for boneName := range prevMotion.BoneFrames.Data {
 				if _, ok := moveXs[boneName]; ok {
@@ -144,32 +144,32 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 		delete(rotInflections, pmx.LEG_IK.Right())
 
 		for i := 0; i <= int(maxFno-minFno); i += 1 {
-			fno := float32(i) + minFno
+			fno := int(i) + minFno
 			bar.Increment()
 
 			if _, ok := centerXZInflections[i]; ok {
 				// XZ (センター)
 				inflectionIndex := centerXZInflections[i]
-				appendCurveFrame(motion, pmx.CENTER.String(), fno, float32(inflectionIndex)+minFno,
+				appendCurveFrame(motion, pmx.CENTER.String(), fno, int(inflectionIndex)+minFno,
 					moveXs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, moveZs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil)
 			}
 			if _, ok := moveYInflections[pmx.CENTER.String()][i]; ok {
 				// Y (グルーブ)
 				inflectionIndex := moveYInflections[pmx.CENTER.String()][i]
-				appendCurveFrame(motion, pmx.GROOVE.String(), fno, float32(inflectionIndex)+minFno,
+				appendCurveFrame(motion, pmx.GROOVE.String(), fno, int(inflectionIndex)+minFno,
 					nil, moveYs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, nil)
 			}
 			if _, ok := leftLegIkInflections[i]; ok {
 				// 左足IK
 				inflectionIndex := leftLegIkInflections[i]
-				appendCurveFrame(motion, pmx.LEG_IK.Left(), fno, float32(inflectionIndex)+minFno,
+				appendCurveFrame(motion, pmx.LEG_IK.Left(), fno, int(inflectionIndex)+minFno,
 					moveXs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)],
 					quats[pmx.LEG_IK.Left()][i:(inflectionIndex+1)])
 			}
 			if _, ok := rightLegIkInflections[i]; ok {
 				// 右足IK
 				inflectionIndex := rightLegIkInflections[i]
-				appendCurveFrame(motion, pmx.LEG_IK.Right(), fno, float32(inflectionIndex)+minFno,
+				appendCurveFrame(motion, pmx.LEG_IK.Right(), fno, int(inflectionIndex)+minFno,
 					moveXs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)],
 					quats[pmx.LEG_IK.Right()][i:(inflectionIndex+1)])
 			}
@@ -177,7 +177,7 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 				// 回転ボーン
 				if _, ok := rotInflection[i]; ok {
 					inflectionIndex := rotInflection[i]
-					appendCurveFrame(motion, boneName, fno, float32(inflectionIndex)+minFno,
+					appendCurveFrame(motion, boneName, fno, int(inflectionIndex)+minFno,
 						nil, nil, nil, quats[boneName][i:(inflectionIndex+1)])
 				}
 			}
@@ -187,7 +187,7 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 	return motion
 }
 
-func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno float32, xs, ys, zs []float64, quats []*mmath.MQuaternion) {
+func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno int, xs, ys, zs []float64, quats []*mmath.MQuaternion) {
 	startBf := motion.BoneFrames.GetItem(boneName).GetItem(startFno)
 	endBf := motion.BoneFrames.GetItem(boneName).GetItem(endFno)
 

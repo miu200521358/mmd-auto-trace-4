@@ -12,7 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-const leg_ik_block = float32(1000)
+const leg_ik_block = int(1000)
 
 func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Leg Ik =============================")
@@ -32,8 +32,8 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 	// mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
-	totalMinFrames := make([]float32, len(allPrevMotions))
-	totalMaxFrames := make([]float32, len(allPrevMotions))
+	totalMinFrames := make([]int, len(allPrevMotions))
+	totalMaxFrames := make([]int, len(allPrevMotions))
 	totalFrames := len(allPrevMotions)
 	for i, prevMotion := range allPrevMotions {
 		minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
@@ -86,10 +86,10 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 			minFrame := totalMinFrames[i]
 			maxFrame := totalMaxFrames[i]
 
-			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
+			for fno := minFrame; fno <= maxFrame; fno++ {
 				bar.Increment()
-				if int(fno)%100 == 0 {
-					mlog.I("[%d/%d] Convert Leg Ik [%d/%d] ...", i, len(allPrevMotions), int(fno), int(maxFrame))
+				if fno%100 == 0 {
+					mlog.I("[%d/%d] Convert Leg Ik [%d/%d] ...", i, len(allPrevMotions), fno, int(maxFrame))
 				}
 
 				var wg sync.WaitGroup
@@ -150,7 +150,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 }
 
 func convertLegIkMotion(
-	prevMotion *vmd.VmdMotion, legIkMotion *vmd.VmdMotion, direction string, fno float32,
+	prevMotion *vmd.VmdMotion, legIkMotion *vmd.VmdMotion, direction string, fno int,
 	legIkModel *pmx.PmxModel, toeIkModel *pmx.PmxModel, loopLimit int,
 ) {
 	legBoneName := pmx.LEG.StringFromDirection(direction)
@@ -232,7 +232,7 @@ func convertLegIkMotion(
 		keySum := kneeDistance + ankleDistance
 
 		mlog.V("[Leg] Distance [%d][%s][%d] knee: %f, ankle: %f, keySum: %f, legKey: %f",
-			int(fno), direction, j, kneeDistance, ankleDistance, keySum, legKey)
+			fno, direction, j, kneeDistance, ankleDistance, keySum, legKey)
 
 		if keySum < legKey {
 			legKey = keySum
@@ -241,13 +241,13 @@ func convertLegIkMotion(
 
 		if kneeDistance < 1e-3 && ankleDistance < 0.1 {
 			mlog.V("*** [Leg] Converged at [%d][%s][%d] knee: %f, ankle: %f, keySum: %f, legKey: %f",
-				int(fno), direction, j, kneeDistance, ankleDistance, keySum, legKey)
+				fno, direction, j, kneeDistance, ankleDistance, keySum, legKey)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, legKey, legQuat.ToDegrees().String())
+	mlog.V("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, legKey, legQuat.ToDegrees().String())
 
 	// 足は足捩りと合成した値を設定
 	legBf := vmd.NewBoneFrame(fno)
@@ -327,7 +327,7 @@ func convertLegIkMotion(
 		keySum := toeDistance + toeSmallDistance + heelDistance
 
 		mlog.V("[Toe] Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keySum: %f, ankleKey: %f",
-			int(fno), direction, k, toeDistance, toeSmallDistance, heelDistance, keySum, ankleKey)
+			fno, direction, k, toeDistance, toeSmallDistance, heelDistance, keySum, ankleKey)
 
 		if keySum < ankleKey {
 			ankleKey = keySum
@@ -335,14 +335,14 @@ func convertLegIkMotion(
 		}
 
 		if toeDistance < 1e-3 && toeSmallDistance < 0.1 && heelDistance < 0.1 {
-			mlog.V("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", int(fno), direction, k,
+			mlog.V("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", fno, direction, k,
 				toeDistance, toeSmallDistance, heelDistance)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", int(fno), direction, ankleKey, ankleIkQuat.ToDegrees().String())
+	mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, ankleKey, ankleIkQuat.ToDegrees().String())
 
 	// 足IKの回転は足首までの回転
 	legIkBf.Rotation.SetQuaternion(ankleIkQuat)
