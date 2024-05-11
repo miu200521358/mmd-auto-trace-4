@@ -7,7 +7,6 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 
-	"github.com/miu200521358/mlib_go/pkg/deform"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
@@ -67,7 +66,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 
 	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
 		{
-			bf := deform.NewBoneFrame(float32(fno))
+			bf := vmd.NewBoneFrame(float32(fno))
 			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(float32(fno)).Position
 			rotMotion.AppendRegisteredBoneFrame(pmx.CENTER.String(), bf)
 		}
@@ -142,7 +141,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
 
 			// ボーンフレーム登録
-			bf := deform.NewBoneFrame(float32(fno))
+			bf := vmd.NewBoneFrame(float32(fno))
 			bf.Rotation.SetQuaternion(quat)
 
 			rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
