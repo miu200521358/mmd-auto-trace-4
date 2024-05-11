@@ -45,13 +45,13 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
 
-			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mov.vmd", -1))
+			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_move.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
-			mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_mp_mov.vmd", -1))
+			mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_mp-move.vmd", -1))
 			mpMovMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
-			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_smooth_joint_mov.vmd", -1))
+			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_joint-move.vmd", -1))
 			jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
 
 			for fno, frame := range frames.Frames {
@@ -177,16 +177,16 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 				if err != nil {
 					mlog.E("Failed to write joint vmd: %v", err)
 				}
+			}
 
-				err = vmd.Write(movMotion)
-				if err != nil {
-					mlog.E("Failed to write move vmd: %v", err)
-				}
+			err := vmd.Write(movMotion)
+			if err != nil {
+				mlog.E("Failed to write move vmd: %v", err)
+			}
 
-				err = vmd.Write(mpMovMotion)
-				if err != nil {
-					mlog.E("Failed to write mp move vmd: %v", err)
-				}
+			err = vmd.Write(mpMovMotion)
+			if err != nil {
+				mlog.E("Failed to write mp move vmd: %v", err)
 			}
 
 			allMoveMotions[i] = movMotion

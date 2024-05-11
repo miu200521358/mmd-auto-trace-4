@@ -66,85 +66,100 @@ JOINT_NAMES = [
 JOINT_INDEXES = dict([(j, i) for i, j in enumerate(JOINT_NAMES)])
 
 
-def convert_pkl2json(pkl_path):
-    with open(pkl_path, "rb") as f:
-        lib_data = joblib.load(f)
-
-    for k1 in sorted(lib_data.keys()):
-        if lib_data[k1]["camera"]:
-            start_z = lib_data[k1]["camera"][0][2]
-
+def convert(all_lib_data: list[dict], output_dir_path):
     all_data = {}
-    for k1 in tqdm(sorted(lib_data.keys())):
-        v1 = lib_data[k1]
-        time = v1["time"]
-        # if not (0 < time < 100):
-        #     continue
 
-        for t, tracked_id in enumerate(v1["tracked_ids"]):
-            if tracked_id not in all_data:
-                all_data[tracked_id] = {}
-            all_data[tracked_id][time] = {}
-            if t < len(v1["tracked_bbox"]):
-                all_data[tracked_id][time]["tracked_bbox"] = (
-                    v1["tracked_bbox"][t].astype(np.float64).tolist()
-                )
-            if t < len(v1["conf"]):
-                all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(np.float64)
+    start_z = 0
+    for lib_data in all_lib_data:
+        for k1 in sorted(lib_data.keys()):
+            if lib_data[k1]["camera"]:
+                start_z = lib_data[k1]["camera"][0][2]
+                break
+            if start_z:
+                break
+        if start_z:
+            break
 
-            if t < len(v1["camera"]):
-                cam_pos = v1["camera"][t].astype(np.float64).tolist()
-                all_data[tracked_id][time]["camera"] = {
-                    "x": cam_pos[0],
-                    "y": -cam_pos[1],
-                    "z": cam_pos[2],
-                }
+    prev_last_key = 0
+    for lib_data in all_lib_data:
+        for k1 in tqdm(sorted(lib_data.keys())):
+            v1 = lib_data[k1]
+            time = v1["time"] + prev_last_key
 
-            if t < len(v1["3d_joints"]):
-                joints = v1["3d_joints"][t].astype(np.float64).tolist()
+            for t, tracked_id in enumerate(v1["tracked_ids"]):
+                if tracked_id not in all_data:
+                    all_data[tracked_id] = {}
+                all_data[tracked_id][time] = {}
+                if t < len(v1["tracked_bbox"]):
+                    all_data[tracked_id][time]["tracked_bbox"] = (
+                        v1["tracked_bbox"][t].astype(np.float64).tolist()
+                    )
+                if t < len(v1["conf"]):
+                    all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(np.float64)
 
-                all_data[tracked_id][time]["3d_joints"] = {}
-                for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
-                    all_data[tracked_id][time]["3d_joints"][jname] = {
-                        "x": joint[0],
-                        "y": -joint[1],
-                        "z": joint[2],
+                if t < len(v1["camera"]):
+                    cam_pos = v1["camera"][t].astype(np.float64).tolist()
+                    all_data[tracked_id][time]["camera"] = {
+                        "x": cam_pos[0],
+                        "y": -cam_pos[1],
+                        "z": cam_pos[2],
                     }
 
-                all_data[tracked_id][time]["global_3d_joints"] = {}
-                for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
-                    all_data[tracked_id][time]["global_3d_joints"][jname] = {
-                        "x": joint[0] + all_data[tracked_id][time]["camera"]["x"],
-                        "y": -(joint[1] + all_data[tracked_id][time]["camera"]["y"]),
-                        "z": joint[2]
-                        + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.05,
-                    }
+                if t < len(v1["3d_joints"]):
+                    joints = v1["3d_joints"][t].astype(np.float64).tolist()
 
-            if t < len(v1["2d_joints"]):
-                joints = v1["2d_joints"][t].reshape(-1, 2).astype(np.float64).tolist()
+                    all_data[tracked_id][time]["3d_joints"] = {}
+                    for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
+                        all_data[tracked_id][time]["3d_joints"][jname] = {
+                            "x": joint[0],
+                            "y": -joint[1],
+                            "z": joint[2],
+                        }
 
-                all_data[tracked_id][time]["2d_joints"] = {}
-                for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
-                    all_data[tracked_id][time]["2d_joints"][jname] = {
-                        "x": joint[0],
-                        "y": joint[1],
-                    }
+                    all_data[tracked_id][time]["global_3d_joints"] = {}
+                    for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
+                        all_data[tracked_id][time]["global_3d_joints"][jname] = {
+                            "x": joint[0] + all_data[tracked_id][time]["camera"]["x"],
+                            "y": -(joint[1] + all_data[tracked_id][time]["camera"]["y"]),
+                            "z": joint[2]
+                            + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.05,
+                        }
+
+                if t < len(v1["2d_joints"]):
+                    joints = v1["2d_joints"][t].reshape(-1, 2).astype(np.float64).tolist()
+
+                    all_data[tracked_id][time]["2d_joints"] = {}
+                    for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
+                        all_data[tracked_id][time]["2d_joints"][jname] = {
+                            "x": joint[0],
+                            "y": joint[1],
+                        }
+        # 終わったら最後のキーを保持
+        prev_last_key = int(sorted(lib_data.keys())[-1])
 
     if not all_data:
         log.error("No data to convert!")
         return
 
     for tracked_id in sorted(all_data.keys()):
-        json_path = pkl_path.replace(".pkl", f"_{tracked_id:02d}_original.json")
+        json_path = os.path.join(output_dir_path, f"{tracked_id:02d}_original.json")
         with open(json_path, "w") as f:
             json.dump({"frames": all_data[tracked_id]}, f, indent=4)
         log.info(f"Saved: {json_path}")
 
-
-if __name__ == "__main__":
+def main(output_dir_path):
     log.info("Start: pkl to json =============================")
 
-    for pkl_path in glob(os.path.join(sys.argv[1], "*.pkl")):
-        convert_pkl2json(pkl_path)
+    all_lib_data = []
+    for pkl_path in sorted(glob(os.path.join(output_dir_path, "*.pkl"))):
+        with open(pkl_path, "rb") as f:
+            all_lib_data.append(joblib.load(f))
+
+    convert(all_lib_data, output_dir_path)
 
     log.info("End: pkl to json =============================")
+
+if __name__ == "__main__":
+
+    main(sys.argv[1])
+

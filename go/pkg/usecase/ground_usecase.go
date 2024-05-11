@@ -50,7 +50,17 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			allGroundMotions[i] = setGroundedFootMotion(model, prevMotion, i, bar)
+			motion := setGroundedFootMotion(model, prevMotion, bar)
+
+			motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)
+			motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
+
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write ground vmd: %v", err)
+			}
+
+			allGroundMotions[i] = motion
 		}(i, prevMotion)
 	}
 
@@ -62,10 +72,7 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 	return allGroundMotions
 }
 
-func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
-	motion.Path = strings.Replace(motion.Path, "_arm_ik.vmd", "_ground.vmd", -1)
-	motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
-
+func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion {
 	minFno := motion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
 	maxFno := motion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
 
@@ -190,14 +197,6 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, i int, ba
 			}
 		}
 
-	}
-
-	motion.Path = strings.Replace(motion.Path, "_arm_ik.vmd", "_ground.vmd", -1)
-	if mlog.IsDebug() {
-		err := vmd.Write(motion)
-		if err != nil {
-			mlog.E("Failed to write ground vmd: %v", err)
-		}
 	}
 
 	return motion

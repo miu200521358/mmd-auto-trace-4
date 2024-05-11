@@ -1,7 +1,7 @@
-import argparse
 from glob import glob
 import json
 import os
+import sys
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -164,21 +164,16 @@ def exec_person_mediapipe(video_path: str, original_json_path: str):
             json.dump(original_data, f, ensure_ascii=False, indent=4)
 
 
-def exec_mediapipe(video_path: str, output_dir: str):
+def main(video_path: str, output_dir: str):
+    log.info("Start: mediapipe =============================")
+
     # 該当ディレクトリ内のoriginal.jsonを探す
-    for json_fn in glob(os.path.join(args.output_dir, "*_original.json")):
-        exec_person_mediapipe(args.video, json_fn)
+    for json_fn in glob(os.path.join(output_dir, "*_original.json")):
+        exec_person_mediapipe(video_path, json_fn)
+
+    log.info("End: mediapipe =============================")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--video", type=str)
-    parser.add_argument("--output_dir", type=str)
+    main(sys.argv[1], sys.argv[2])
 
-    args = parser.parse_args()
-
-    log.info("Start: mediapipe =============================")
-
-    exec_mediapipe(args.video, args.output_dir)
-
-    log.info("End: mediapipe =============================")

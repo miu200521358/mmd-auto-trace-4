@@ -3,9 +3,10 @@
 clear
 
 paths=(
+    /mnt/e/MMD_E/201805_auto/misozi/ashi/input_resize_24fps.mp4
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23.97_1500-1550.mp4"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4"
-    "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
+    # "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
     # "/mnt/e/MMD_E/201805_auto/01/sakura/sakura.mp4"
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism.mp4"
     # "/mnt/e/MMD_E/201805_auto/03/night/night.mp4"

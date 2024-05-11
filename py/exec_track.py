@@ -1,4 +1,5 @@
 from datetime import datetime
+from glob import glob
 import os
 
 import warnings
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import hydra
+import joblib
 import torch
 import numpy as np
 from hydra.core.config_store import ConfigStore
@@ -172,14 +174,25 @@ class HMR2023TextureSampler(HMR2Predictor):
 class HMR2_4dhuman(PHALP):
     def __init__(self, cfg):
         cfg.render.enable = False
-        if not cfg.video.output_dir or cfg.video.output_dir[0] != "/":
-            # 出力ディレクトリ絶対パス未指定の場合、日時込みで作成する
-            output_dir = os.path.join(
-                os.path.dirname(cfg.video.source),
-                f"{os.path.basename(cfg.video.source).split('.')[0]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            )
-            os.makedirs(output_dir, exist_ok=True)
-            cfg.video.output_dir = output_dir
+
+        # 出力ディレクトリ内にpklがある場合、開始フレームを調整する
+        prev_pkl_files = sorted(glob(os.path.join(cfg.video.output_dir, "*.pkl")))
+        if prev_pkl_files:
+            last_pkl_file = prev_pkl_files[-1]
+            with open(last_pkl_file, "rb") as f:
+                lib_data = joblib.load(f)
+                last_frame = sorted(lib_data.keys())[-1]
+                log.info(f"Prev Last Frame: {last_frame}")
+                cfg.phalp.start_frame = last_frame
+        else:
+            # まだpklファイルが出ていない場合、end_of_frameファイルを削除
+            cfg.phalp.start_frame = 0
+            if os.path.exists(os.path.join(cfg.video.output_dir, "end_of_frame")):
+                os.remove(os.path.join(cfg.video.output_dir, "end_of_frame"))
+
+        # 1000Fで一旦区切る
+        cfg.phalp.end_frame = cfg.phalp.start_frame + 1001
+
         super().__init__(cfg)
 
     def setup_hmr(self):
@@ -220,7 +233,6 @@ class Human4DConfig(FullConfig):
     expand_bbox_shape: Optional[Tuple[int]] = (192, 256)
     pass
 
-
 cs = ConfigStore.instance()
 cs.store(name="config", node=Human4DConfig)
 
@@ -228,12 +240,14 @@ cs.store(name="config", node=Human4DConfig)
 @hydra.main(version_base="1.2", config_name="config")
 def main(cfg: DictConfig) -> Optional[float]:
     """Main function for running the PHALP tracker."""
+    log.info("Start: 4D-Humans =============================")
 
     phalp_tracker = HMR2_4dhuman(cfg)
 
     phalp_tracker.track()
 
-if __name__ == "__main__":
-    log.info("Start: 4D-Humans =============================")
-    main()
     log.info("End: 4D-Humans =============================")
+
+
+if __name__ == "__main__":
+    main()

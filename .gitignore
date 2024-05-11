@@ -173,3 +173,4 @@ outputs_global/
 *.exe
 /configs/pmx/IK_step
 /resize
+/.hydra

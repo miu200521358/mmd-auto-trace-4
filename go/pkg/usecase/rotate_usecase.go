@@ -60,7 +60,7 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 
 func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd.VmdMotion, mpMovMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
 
-	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_mov.vmd", "_rot.vmd", -1))
+	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
 	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
 
 	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
@@ -147,11 +147,9 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		}
 	}
 
-	if mlog.IsDebug() {
-		err := vmd.Write(rotMotion)
-		if err != nil {
-			mlog.E("Failed to write rotate vmd: %v", err)
-		}
+	err := vmd.Write(rotMotion)
+	if err != nil {
+		mlog.E("Failed to write rotate vmd: %v", err)
 	}
 
 	return rotMotion

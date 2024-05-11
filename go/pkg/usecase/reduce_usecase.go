@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int) []*vmd.VmdMotion {
+func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int, reduceName string) []*vmd.VmdMotion {
 	mlog.I("Start: Reduce =============================")
 
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
@@ -32,12 +33,12 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 			defer wg.Done()
 			motion := reduceMotion(prevMotion, moveTolerance, rotTolerance, space, bar)
 
-			if mlog.IsVerbose() {
-				motion.Path = strings.Replace(allPrevMotions[i].Path, "_ground.vmd", "_fix.vmd", -1)
-				err := vmd.Write(motion)
-				if err != nil {
-					mlog.E("Failed to write leg ik vmd: %v", err)
-				}
+			motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)
+			motion.SetName(fmt.Sprintf("MAT4 Reduce %s %02d", reduceName, i+1))
+
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write leg ik vmd: %v", err)
 			}
 
 			allMotions[i] = motion

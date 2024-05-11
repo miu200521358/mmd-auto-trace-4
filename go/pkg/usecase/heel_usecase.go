@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -32,13 +33,13 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 		go func(i int, frames *model.Frames, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
 			motion := fixMoveMotion(frames, prevMotion, bar)
-			motion.Path = strings.Replace(allPrevMotions[i].Path, "_ground.vmd", "_heel.vmd", -1)
 
-			if mlog.IsVerbose() {
-				err := vmd.Write(motion)
-				if err != nil {
-					mlog.E("Failed to write leg ik vmd: %v", err)
-				}
+			motion.Path = strings.Replace(motion.Path, "_ground.vmd", "_heel.vmd", -1)
+			motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
+
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write heel vmd: %v", err)
 			}
 
 			allMotions[i] = motion
@@ -52,7 +53,6 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 }
 
 func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion {
-
 	threshold := 0.04
 	stopThreshold := threshold * 0.5
 
