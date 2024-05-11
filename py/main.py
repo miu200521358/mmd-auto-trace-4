@@ -25,6 +25,7 @@ if __name__ == "__main__":
     cfg = exec_track.Human4DConfig()
     cfg.video.source = video_path
     cfg.video.output_dir = output_dir_path
+    cfg.block_frame_num = 1000
 
     if not os.path.exists(os.path.join(cfg.video.output_dir, "end_of_frame")):
         # まだフレーム最後まで読み取り出来ていなかった場合、読み取り実行

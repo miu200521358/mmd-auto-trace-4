@@ -190,8 +190,8 @@ class HMR2_4dhuman(PHALP):
             if os.path.exists(os.path.join(cfg.video.output_dir, "end_of_frame")):
                 os.remove(os.path.join(cfg.video.output_dir, "end_of_frame"))
 
-        # 1000Fで一旦区切る
-        cfg.phalp.end_frame = cfg.phalp.start_frame + 1001
+        # 単位で区切る
+        cfg.phalp.end_frame = cfg.phalp.start_frame + cfg.block_frame_num
 
         super().__init__(cfg)
 
@@ -231,6 +231,7 @@ class HMR2_4dhuman(PHALP):
 class Human4DConfig(FullConfig):
     # override defaults if needed
     expand_bbox_shape: Optional[Tuple[int]] = (192, 256)
+    block_frame_num: int = 1000
     pass
 
 cs = ConfigStore.instance()

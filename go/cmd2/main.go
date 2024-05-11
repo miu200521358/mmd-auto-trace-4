@@ -2,13 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
-	"github.com/miu200521358/mlib_go/pkg/vmd"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
 
@@ -35,82 +31,37 @@ func main() {
 		mlog.E("modelPath and dirPath must be provided")
 		os.Exit(1)
 	}
-	if modelPath == "" || dirPath == "" {
-		mlog.E("modelPath and dirPath must be provided")
-		os.Exit(1)
-	}
 
-	allVmdPaths, err := getResultVmdFilePaths(dirPath)
+	mlog.I("Unpack json ================")
+	allFrames, err := usecase.Unpack(dirPath)
 	if err != nil {
-		mlog.E("Failed to get result vmd file paths: %v", err)
+		mlog.E("Failed to unpack: %v", err)
 		return
 	}
-	allPrevMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
-	for i, vmdPath := range allVmdPaths {
-		mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
-		vr := &vmd.VmdMotionReader{}
-		motion, err := vr.ReadByFilepath(vmdPath)
-		if err != nil {
-			mlog.E("Failed to read vmd: %v", err)
-			return
-		}
-		allPrevMotions[i] = motion.(*vmd.VmdMotion)
-	}
 
-	mlog.I("Reduce Motion [Narrow] ...")
-	allNarrowReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.05, 0.00001, 0, "narrow")
+	mlog.I("Move Motion ================")
+	allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
 
-	for i, motion := range allNarrowReductionMotions {
-		fileName := getResultFileName(filepath.Base(motion.Path), "narrow")
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allNarrowReductionMotions), fileName)
-		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
-		err := vmd.Write(motion)
-		if err != nil {
-			mlog.E("Failed to write result vmd: %v", err)
-		}
-	}
+	mlog.I("Rotate Motion ================")
+	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
 
-	mlog.I("Reduce Motion [Wide] ...")
-	allWideReductionMotions := usecase.Reduce(allPrevMotions, modelPath, 0.07, 0.00005, 2, "wide")
+	mlog.I("Convert Leg Ik Motion ================")
+	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
 
-	for i, motion := range allWideReductionMotions {
-		fileName := getResultFileName(filepath.Base(motion.Path), "wide")
-		mlog.I("Output Vmd [%02d/%02d] %s", i+1, len(allWideReductionMotions), fileName)
-		motion.Path = fmt.Sprintf("%s/%s", dirPath, fileName)
-		err := vmd.Write(motion)
-		if err != nil {
-			mlog.E("Failed to write result vmd: %v", err)
-		}
-	}
+	mlog.I("Fix Ground Motion ================")
+	allGroundMotions := usecase.FixGround(allLegIkMotions, modelPath)
+
+	mlog.I("Fix Heel Motion ================")
+	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
+
+	mlog.I("Convert Arm Ik Motion ================")
+	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
+
+	mlog.I("Reduce Motion [narrow] ================")
+	usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
+
+	mlog.I("Reduce Motion [wide] ================")
+	usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
 
 	mlog.I("Done!")
-}
-
-func getResultFileName(fileName string, suffix string) string {
-	split := strings.Split(fileName, "_")
-	if len(split) < 2 {
-		return fileName
-	}
-	return split[0] + "_" + split[1] + "_result_reduce_" + suffix + ".vmd"
-}
-
-func getResultVmdFilePaths(dirPath string) ([]string, error) {
-	var paths []string
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if path != dirPath && info.IsDir() {
-			// 直下だけ参照
-			return filepath.SkipDir
-		}
-		if !info.IsDir() && (strings.HasSuffix(info.Name(), "_result.vmd")) {
-			paths = append(paths, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return paths, nil
 }
