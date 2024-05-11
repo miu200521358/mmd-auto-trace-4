@@ -62,8 +62,14 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 			legIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
 
-			for fno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame(); fno <= prevMotion.GetMaxFrame(); fno += 1.0 {
+			minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
+			maxFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
+
+			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
 				bar.Increment()
+				if int(fno)%1000 == 0 {
+					mlog.I("[%d/%d][%00f/%00f] Convert Leg Ik ...", i, len(allPrevMotions), fno, maxFrame)
+				}
 
 				var wg sync.WaitGroup
 				errChan := make(chan error, 2) // エラーを受け取るためのチャネル
