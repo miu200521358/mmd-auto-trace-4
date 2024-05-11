@@ -32,6 +32,8 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 
 		go func(i int, frames *model.Frames, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Fix Heel ...", i, len(allPrevMotions))
+
 			motion := fixMoveMotion(frames, prevMotion, bar)
 
 			motion.Path = strings.Replace(motion.Path, "_ground.vmd", "_heel.vmd", -1)

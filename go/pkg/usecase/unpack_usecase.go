@@ -42,6 +42,7 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 			// Decrement the wait group counter when the goroutine finishes
 			defer wg.Done()
 			defer bar.Increment()
+			defer mlog.I("[%d/%d] Unpack ...", i, len(jsonPaths))
 
 			// JSONデータを読み込んで展開
 			file, err := os.Open(path)

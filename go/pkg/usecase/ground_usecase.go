@@ -50,6 +50,8 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Fix Ground ...", i, len(allPrevMotions))
+
 			motion := setGroundedFootMotion(model, prevMotion, bar)
 
 			motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)

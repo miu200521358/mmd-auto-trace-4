@@ -44,6 +44,7 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Convert Move ...", i, len(allFrames))
 
 			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_move.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))

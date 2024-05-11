@@ -58,6 +58,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Convert Arm Ik ...", i, len(allPrevMotions))
 
 			armIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
 			armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)

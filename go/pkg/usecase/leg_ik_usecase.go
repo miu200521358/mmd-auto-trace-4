@@ -58,6 +58,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Convert Leg Ik ...", i, len(allPrevMotions))
 
 			legIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
 

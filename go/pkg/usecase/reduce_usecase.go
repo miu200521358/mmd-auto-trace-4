@@ -31,6 +31,8 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Reduce ...", i, len(allPrevMotions))
+
 			motion := reduceMotion(prevMotion, moveTolerance, rotTolerance, space, bar)
 
 			motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)

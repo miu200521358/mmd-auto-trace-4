@@ -46,6 +46,8 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
+			defer mlog.I("[%d/%d] Convert Rotate ...", i, len(allPrevMotions))
+
 			allRotateMotions[i] = convertMov2Rotate(frames, pmxModel, allPrevMotions[i], allMpPrevMotions[i], i, bar)
 		}(i, frames)
 	}
