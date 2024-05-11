@@ -67,7 +67,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 
 			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
 				bar.Increment()
-				if int(fno)%1000 == 0 {
+				if int(fno)%200 == 0 {
 					mlog.I("[%d/%d][%00f/%00f] Convert Leg Ik ...", i, len(allPrevMotions), fno, maxFrame)
 				}
 
