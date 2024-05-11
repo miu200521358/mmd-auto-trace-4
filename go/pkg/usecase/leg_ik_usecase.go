@@ -68,7 +68,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
 				bar.Increment()
 				if int(fno)%200 == 0 {
-					mlog.I("[%d/%d][%00f/%00f] Convert Leg Ik ...", i, len(allPrevMotions), fno, maxFrame)
+					mlog.I("[%d/%d][%d/%d] Convert Leg Ik ...", i, len(allPrevMotions), int(fno), int(maxFrame))
 				}
 
 				var wg sync.WaitGroup
