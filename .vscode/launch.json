@@ -13,7 +13,7 @@
             "cwd": "${workspaceFolder}",
             "justMyCode": false,
             "args": [
-                "video.source=/mnt/e/MMD_E/201805_auto/misozi/ashi/input_resize_24fps.mp4"
+                "video.source=/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4"
                 // "video.source=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
                 // "video.source=/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4",
                 // "video.source=inputs/snobbism_2255-2265.mp4",
@@ -129,8 +129,21 @@
             "cwd": "${workspaceFolder}",
             "justMyCode": false,
             "args": [
-                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_resize_24fps.mp4",
+                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4",
                 // "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_20240511_114117"
+            ]
+        },
+        {
+            "name": "exec Each Block",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/py/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "args": [
+                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4",
+                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps_20240511_150939"
             ]
         },
         {
