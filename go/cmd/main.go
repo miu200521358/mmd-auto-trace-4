@@ -4,13 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 var logLevel string
@@ -49,7 +48,7 @@ func main() {
 	// 処理の後ろから順に読んでいって、1つ処理が終わったら終了
 	// 全てのトレース作業完了したら、complete ファイルを出力する
 
-	armIkMotionPaths, err := getVmdFilePaths(dirPath, "_arm_ik")
+	armIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_arm_ik")
 	if err != nil {
 		mlog.E("Failed to get arm ik vmd file paths: %v", err)
 		return
@@ -59,7 +58,7 @@ func main() {
 	if armIkMotionPaths != nil {
 		// 間引き --------
 		mlog.I("Read Arm Ik Motion ================")
-		allArmIkMotions, err = readVmdFile(armIkMotionPaths)
+		allArmIkMotions, err = utils.ReadVmdFiles(armIkMotionPaths)
 		if err != nil {
 			mlog.E("Failed to read arm ik motion: %v", err)
 			return
@@ -87,7 +86,7 @@ func main() {
 			mlog.I("Complete!")
 		}
 	} else {
-		heelMotionPaths, err := getVmdFilePaths(dirPath, "_heel")
+		heelMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_heel")
 		if err != nil {
 			mlog.E("Failed to get heel vmd file paths: %v", err)
 			return
@@ -97,7 +96,7 @@ func main() {
 		if heelMotionPaths != nil {
 			// 腕IK ------------
 			mlog.I("Read Heel Motion ================")
-			allHeelMotions, err = readVmdFile(heelMotionPaths)
+			allHeelMotions, err = utils.ReadVmdFiles(heelMotionPaths)
 			if err != nil {
 				mlog.E("Failed to read heel motion: %v", err)
 				return
@@ -107,7 +106,7 @@ func main() {
 			usecase.ConvertArmIk(allHeelMotions, modelPath)
 			return
 		} else {
-			groundMotionPaths, err := getVmdFilePaths(dirPath, "_ground")
+			groundMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_ground")
 			if err != nil {
 				mlog.E("Failed to get ground vmd file paths: %v", err)
 				return
@@ -117,7 +116,7 @@ func main() {
 			if groundMotionPaths != nil {
 				// 足接地 -----------
 				mlog.I("Read Ground Motion ================")
-				allGroundMotions, err = readVmdFile(groundMotionPaths)
+				allGroundMotions, err = utils.ReadVmdFiles(groundMotionPaths)
 				if err != nil {
 					mlog.E("Failed to read ground motion: %v", err)
 					return
@@ -128,7 +127,7 @@ func main() {
 				return
 			} else {
 
-				legIkMotionPaths, err := getVmdFilePaths(dirPath, "_leg_ik")
+				legIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_leg_ik")
 				if err != nil {
 					mlog.E("Failed to get leg ik vmd file paths: %v", err)
 					return
@@ -138,7 +137,7 @@ func main() {
 				if legIkMotionPaths != nil {
 					// 接地 ------------
 					mlog.I("Read Leg Ik Motion ================")
-					allLegIkMotions, err = readVmdFile(legIkMotionPaths)
+					allLegIkMotions, err = utils.ReadVmdFiles(legIkMotionPaths)
 					if err != nil {
 						mlog.E("Failed to read leg ik motion: %v", err)
 						return
@@ -148,7 +147,7 @@ func main() {
 					return
 				} else {
 
-					rotateMotionPaths, err := getVmdFilePaths(dirPath, "_rotate")
+					rotateMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_rotate")
 					if err != nil {
 						mlog.E("Failed to get rotate vmd file paths: %v", err)
 						return
@@ -158,7 +157,7 @@ func main() {
 					if rotateMotionPaths != nil {
 						// 足IK ------------
 						mlog.I("Read Rotate Motion ================")
-						allRotateMotions, err = readVmdFile(rotateMotionPaths)
+						allRotateMotions, err = utils.ReadVmdFiles(rotateMotionPaths)
 						if err != nil {
 							mlog.E("Failed to read rotate motion: %v", err)
 							return
@@ -168,13 +167,13 @@ func main() {
 						return
 					} else {
 
-						moveMotionPaths, err := getVmdFilePaths(dirPath, "_move")
+						moveMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_move")
 						if err != nil {
 							mlog.E("Failed to get move vmd file paths: %v", err)
 							return
 						}
 
-						moveMpMotionPaths, err := getVmdFilePaths(dirPath, "_mp-move")
+						moveMpMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_mp-move")
 						if err != nil {
 							mlog.E("Failed to get move vmd file paths: %v", err)
 							return
@@ -184,14 +183,14 @@ func main() {
 						if moveMotionPaths != nil && moveMpMotionPaths != nil {
 							// 回転 ------------
 							mlog.I("Read Move Motion ================")
-							allMoveMotions, err = readVmdFile(moveMotionPaths)
+							allMoveMotions, err = utils.ReadVmdFiles(moveMotionPaths)
 							if err != nil {
 								mlog.E("Failed to read move motion: %v", err)
 								return
 							}
 
 							mlog.I("Read Move Mp Motion ================")
-							allMpMoveMotions, err = readVmdFile(moveMpMotionPaths)
+							allMpMoveMotions, err = utils.ReadVmdFiles(moveMpMotionPaths)
 							if err != nil {
 								mlog.E("Failed to read move mp motion: %v", err)
 								return
@@ -211,41 +210,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func getVmdFilePaths(dirPath string, suffix string) ([]string, error) {
-	var paths []string
-	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if path != dirPath && info.IsDir() {
-			// 直下だけ参照
-			return filepath.SkipDir
-		}
-		if !info.IsDir() && (strings.HasSuffix(info.Name(), fmt.Sprintf("%s.vmd", suffix))) {
-			paths = append(paths, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return paths, nil
-}
-
-func readVmdFile(allVmdPaths []string) ([]*vmd.VmdMotion, error) {
-	allPrevMotions := make([]*vmd.VmdMotion, len(allVmdPaths))
-	for i, vmdPath := range allVmdPaths {
-		mlog.I("Read Vmd [%02d/%02d] %s", i+1, len(allVmdPaths), filepath.Base(vmdPath))
-		vr := &vmd.VmdMotionReader{}
-		motion, err := vr.ReadByFilepath(vmdPath)
-		if err != nil {
-			mlog.E("Failed to read vmd: %v", err)
-			return nil, err
-		}
-		allPrevMotions[i] = motion.(*vmd.VmdMotion)
-	}
-
-	return allPrevMotions, nil
 }
