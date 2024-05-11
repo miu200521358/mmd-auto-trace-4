@@ -13,17 +13,40 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+const arm_ik_block = float32(500)
+
+func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Arm Ik =============================")
 
-	allArmIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
+	var allArmIkMotions []*vmd.VmdMotion
+	if prevArmIkMotions == nil {
+		// 始めてこのステップに到達した場合、全ての前のモーションをコピー
+		allArmIkMotions = make([]*vmd.VmdMotion, len(allPrevMotions))
+		for i, prevMotion := range allPrevMotions {
+			allArmIkMotions[i] = prevMotion.Copy().(*vmd.VmdMotion)
+		}
+	} else {
+		// 途中までのがあったらそのまま置き換え
+		allArmIkMotions = prevArmIkMotions
+	}
 
 	// mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
+	totalMinFrames := make([]float32, len(allPrevMotions))
+	totalMaxFrames := make([]float32, len(allPrevMotions))
 	totalFrames := len(allPrevMotions)
-	for _, prevMotion := range allPrevMotions {
-		totalFrames += int(prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame() - prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame() + 1.0)
+	for i, prevMotion := range allPrevMotions {
+		minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
+		maxFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
+		if prevArmIkMotions != nil {
+			// 途中までのがあったらそこからの範囲を取得
+			minFrame = max(allArmIkMotions[i].BoneFrames.GetItem(pmx.ARM_TWIST.Right()).GetMaxFrame(), minFrame)
+		}
+		maxFrame = min(minFrame+arm_ik_block, maxFrame)
+		totalFrames += int(maxFrame - minFrame + 1.0)
+		totalMinFrames[i] = minFrame
+		totalMaxFrames[i] = maxFrame
 	}
 
 	pr := &pmx.PmxReader{}
@@ -60,18 +83,12 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			defer wg.Done()
 			defer mlog.I("[%d/%d] Convert Arm Ik ...", i, len(allPrevMotions))
 
-			armIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
-			armIkMotion.Path = strings.Replace(prevMotion.Path, "_leg_ik.vmd", "_arm_ik.vmd", -1)
-			armIkMotion.SetName(fmt.Sprintf("MAT4 ArmIk %02d", i+1))
-
-			minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
-			maxFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
+			armIkMotion := allArmIkMotions[i]
+			minFrame := totalMinFrames[i]
+			maxFrame := totalMaxFrames[i]
 
 			for fno := minFrame; fno <= maxFrame; fno += 1.0 {
 				bar.Increment()
-				if int(fno)%200 == 0 {
-					mlog.I("[%d/%d][%d/%d] Convert Arm Ik ...", i, len(allPrevMotions), int(fno), int(maxFrame))
-				}
 
 				var wg sync.WaitGroup
 				errChan := make(chan error, 2) // エラーを受け取るためのチャネル
@@ -101,14 +118,20 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 			armIkMotion.BoneFrames.Delete("右腕捩ＩＫ")
 			armIkMotion.BoneFrames.Delete("右手捩ＩＫ")
 
-			armIkMotion.Path = strings.Replace(prevMotion.Path, "_heel.vmd", "_arm_ik.vmd", -1)
+			if maxFrame == prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame() {
+				armIkMotion.Path = strings.Replace(prevMotion.Path, "_heel.vmd", "_arm_ik.vmd", -1)
+			} else {
+				armIkMotion.Path = strings.Replace(prevMotion.Path, "_heel.vmd", "_arm_ik-process.vmd", -1)
+			}
 			armIkMotion.SetName(fmt.Sprintf("MAT4 ArmIk %02d", i+1))
+
 			err := vmd.Write(armIkMotion)
 			if err != nil {
 				mlog.E("Failed to write arm ik vmd: %v", err)
 			}
 
 			allArmIkMotions[i] = armIkMotion
+			bar.Increment()
 		}(i, prevMotion)
 	}
 

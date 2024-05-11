@@ -102,8 +102,25 @@ func main() {
 				return
 			}
 
+			prevArmIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_arm_ik-process")
+			if err != nil {
+				mlog.E("Failed to get arm vmd file paths: %v", err)
+				return
+			}
+
+			var prevArmIkMotions []*vmd.VmdMotion
+			if prevArmIkMotionPaths != nil {
+				// 腕IK(途中VMD) ------------
+				mlog.I("Read Arm Ik Process Motion ================")
+				prevArmIkMotions, err = utils.ReadVmdFiles(prevArmIkMotionPaths)
+				if err != nil {
+					mlog.E("Failed to read arm ik process motion: %v", err)
+					return
+				}
+			}
+
 			mlog.I("Convert Arm Ik Motion ================")
-			usecase.ConvertArmIk(allHeelMotions, modelPath)
+			usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath)
 			return
 		} else {
 			groundMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_ground")
@@ -146,7 +163,6 @@ func main() {
 					usecase.FixGround(allLegIkMotions, modelPath)
 					return
 				} else {
-
 					rotateMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_rotate")
 					if err != nil {
 						mlog.E("Failed to get rotate vmd file paths: %v", err)
@@ -162,11 +178,29 @@ func main() {
 							mlog.E("Failed to read rotate motion: %v", err)
 							return
 						}
-						mlog.I("Convert Leg Ik Motion ================")
-						usecase.ConvertLegIk(allRotateMotions, modelPath)
-						return
-					} else {
 
+						prevLegIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_leg_ik-process")
+						if err != nil {
+							mlog.E("Failed to get leg ik process vmd file paths: %v", err)
+							return
+						}
+
+						var prevLegIkMotions []*vmd.VmdMotion
+						if prevLegIkMotionPaths != nil {
+							// 足IK(途中VMD) ------------
+							mlog.I("Read Leg Ik Process Motion ================")
+							prevLegIkMotions, err = utils.ReadVmdFiles(prevLegIkMotionPaths)
+							if err != nil {
+								mlog.E("Failed to read leg ik process motion: %v", err)
+								return
+							}
+						}
+
+						mlog.I("Convert Leg Ik Motion ================")
+						usecase.ConvertLegIk(allRotateMotions, prevLegIkMotions, modelPath)
+						return
+
+					} else {
 						moveMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_move")
 						if err != nil {
 							mlog.E("Failed to get move vmd file paths: %v", err)

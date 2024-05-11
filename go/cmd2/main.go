@@ -46,7 +46,7 @@ func main() {
 	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
 
 	mlog.I("Convert Leg Ik Motion ================")
-	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
+	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, nil, modelPath)
 
 	mlog.I("Fix Ground Motion ================")
 	allGroundMotions := usecase.FixGround(allLegIkMotions, modelPath)
@@ -55,7 +55,7 @@ func main() {
 	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
 	mlog.I("Convert Arm Ik Motion ================")
-	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
+	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, nil, modelPath)
 
 	mlog.I("Reduce Motion [narrow] ================")
 	usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
