@@ -120,7 +120,7 @@ func main() {
 			}
 
 			mlog.I("Convert Arm Ik Motion ================")
-			usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath)
+			usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath, 500)
 			return
 		} else {
 			groundMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_ground")
@@ -197,7 +197,7 @@ func main() {
 						}
 
 						mlog.I("Convert Leg Ik Motion ================")
-						usecase.ConvertLegIk(allRotateMotions, prevLegIkMotions, modelPath)
+						usecase.ConvertLegIk(allRotateMotions, prevLegIkMotions, modelPath, 1000)
 						return
 
 					} else {

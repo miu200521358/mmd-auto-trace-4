@@ -12,9 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-const arm_ik_block = 500
-
-func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMotion, modelPath string, arm_ik_block int) []*vmd.VmdMotion {
 	mlog.I("Start: Arm Ik =============================")
 
 	var allArmIkMotions []*vmd.VmdMotion

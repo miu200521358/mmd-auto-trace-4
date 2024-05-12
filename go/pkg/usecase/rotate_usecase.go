@@ -64,7 +64,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
 	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
 
-	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes {
+	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes.List() {
 		{
 			bf := vmd.NewBoneFrame(fno)
 			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(fno).Position
@@ -89,7 +89,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			}
 		}
 
-		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes {
+		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes.List() {
 			if boneConfig.Name == pmx.WRIST.Left() && frames.Frames[fno].Mediapipe["left wrist"].Visibility < 0.85 {
 				continue
 			} else if boneConfig.Name == pmx.WRIST.Right() && frames.Frames[fno].Mediapipe["right wrist"].Visibility < 0.85 {

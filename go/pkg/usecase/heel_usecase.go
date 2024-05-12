@@ -61,7 +61,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 	var prevLeftAnklePos2 *mmath.MVec2
 	var prevRightAnklePos2 *mmath.MVec2
 
-	for i, fno := range motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes {
+	for i, fno := range motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes.List() {
 		bar.Increment()
 
 		// 2d-jointの足首の位置を取得
@@ -81,7 +81,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 		leftAnkleDiff2 := leftAnklePos2.Subed(prevLeftAnklePos2)
 		rightAnkleDiff2 := rightAnklePos2.Subed(prevRightAnklePos2)
 
-		prevFno := motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes[i-1]
+		prevFno := motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes.Prev(i)
 
 		leftAnkleDiff3 := mmath.NewMVec3()
 		rightAnkleDiff3 := mmath.NewMVec3()

@@ -12,9 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
 
-const leg_ik_block = int(1000)
-
-func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMotion, modelPath string, leg_ik_block int) []*vmd.VmdMotion {
 	mlog.I("Start: Leg Ik =============================")
 
 	var allLegIkMotions []*vmd.VmdMotion
