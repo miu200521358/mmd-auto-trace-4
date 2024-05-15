@@ -38,9 +38,11 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 			motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)
 			motion.SetName(fmt.Sprintf("MAT4 Reduce %s %02d", reduceName, i+1))
 
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write leg ik vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(motion)
+				if err != nil {
+					mlog.E("Failed to write leg ik vmd: %v", err)
+				}
 			}
 
 			allMotions[i] = motion
@@ -88,17 +90,17 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 
 			for boneName := range prevMotion.BoneFrames.Data {
 				if _, ok := moveXs[boneName]; ok {
-					bf := prevMotion.BoneFrames.GetItem(boneName).GetItem(fno)
+					bf := prevMotion.BoneFrames.GetItem(boneName).Get(fno)
 					moveXs[boneName][i] = bf.Position.GetX()
 					moveYs[boneName][i] = bf.Position.GetY()
 					moveZs[boneName][i] = bf.Position.GetZ()
 				}
 				if _, ok := rots[boneName]; ok {
-					bf := prevMotion.BoneFrames.GetItem(boneName).GetItem(fno)
+					bf := prevMotion.BoneFrames.GetItem(boneName).Get(fno)
 					if i == 0 {
 						rots[boneName][i] = 1.0
 					} else {
-						rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.GetItem(boneName).GetItem(fno - 1).Rotation.GetQuaternion())
+						rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.GetItem(boneName).Get(fno - 1).Rotation.GetQuaternion())
 					}
 					quats[boneName][i] = bf.Rotation.GetQuaternion()
 				}
@@ -188,8 +190,8 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 }
 
 func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno int, xs, ys, zs []float64, quats []*mmath.MQuaternion) {
-	startBf := motion.BoneFrames.GetItem(boneName).GetItem(startFno)
-	endBf := motion.BoneFrames.GetItem(boneName).GetItem(endFno)
+	startBf := motion.BoneFrames.GetItem(boneName).Get(startFno)
+	endBf := motion.BoneFrames.GetItem(boneName).Get(endFno)
 
 	if xs != nil && ys == nil && zs != nil {
 		startBf.Position = &mmath.MVec3{xs[0], 0, zs[0]}

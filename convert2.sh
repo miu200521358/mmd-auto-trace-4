@@ -68,11 +68,11 @@ for i in "${!paths[@]}"; do
     echo "copy json -----------------"
     cp ${output_dirs[i]}/*.json "${dir_path}"
 
-    # vmdをコピー
-    echo "copy json -----------------"
-    cp ${output_dirs[i]}/*.vmd "${dir_path}"
+    # # vmdをコピー
+    # echo "copy json -----------------"
+    # cp ${output_dirs[i]}/*.vmd "${dir_path}"
 
     # vmd変換処理(一括)
     echo "vmd convert -----------------"
-    ./build/mat42 -modelPath=$model_path -dirPath="${dir_path}"
+    ./build/mat4 -modelPath=$model_path -dirPath="${dir_path}"
 done

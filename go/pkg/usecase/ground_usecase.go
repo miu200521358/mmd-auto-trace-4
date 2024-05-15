@@ -57,9 +57,11 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 			motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)
 			motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
 
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write ground vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(motion)
+				if err != nil {
+					mlog.E("Failed to write ground vmd: %v", err)
+				}
 			}
 
 			allGroundMotions[i] = motion
@@ -83,8 +85,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 	for fno := minFno; fno <= maxFno; fno++ {
 		bar.Increment()
 
-		leftY := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(fno).Position.GetY()
-		rightY := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(fno).Position.GetY()
+		leftY := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno).Position.GetY()
+		rightY := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno).Position.GetY()
 
 		mlog.V("fno: %d, left: %f, right: %f", fno, leftY, rightY)
 
@@ -98,8 +100,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 	for fno := minFno; fno <= maxFno; fno++ {
 		bar.Increment()
 
-		newLeftY := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(fno).Position.GetY() - groundY
-		newRightY := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(fno).Position.GetY() - groundY
+		newLeftY := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno).Position.GetY() - groundY
+		newRightY := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno).Position.GetY() - groundY
 
 		newMinY := min(newLeftY, newRightY)
 
@@ -108,24 +110,24 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 			frameGroundY += newMinY
 		}
 
-		newLeftY = motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(fno).Position.GetY() - frameGroundY
+		newLeftY = motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno).Position.GetY() - frameGroundY
 		if newLeftY < 0.2 {
 			newLeftY = 0.0
 		}
-		newRightY = motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(fno).Position.GetY() - frameGroundY
+		newRightY = motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno).Position.GetY() - frameGroundY
 		if newRightY < 0.2 {
 			newRightY = 0.0
 		}
 
-		leftLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).GetItem(fno)
+		leftLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno)
 		leftLegIkBf.Position.SetY(newLeftY)
 		motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 
-		rightLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).GetItem(fno)
+		rightLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno)
 		rightLegIkBf.Position.SetY(newRightY)
 		motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 
-		centerBf := motion.BoneFrames.GetItem(pmx.CENTER.String()).GetItem(fno)
+		centerBf := motion.BoneFrames.GetItem(pmx.CENTER.String()).Get(fno)
 		centerBf.Position.SetY(centerBf.Position.GetY() - frameGroundY)
 		motion.AppendRegisteredBoneFrame(pmx.CENTER.String(), centerBf)
 	}
@@ -158,7 +160,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 			ankleBoneName := pmx.ANKLE.StringFromDirection(direction)
 			legIkBoneName := pmx.LEG_IK.StringFromDirection(direction)
 
-			if motion.BoneFrames.GetItem(legIkBoneName).GetItem(fno).Position.GetY() == 0.0 {
+			if motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Position.GetY() == 0.0 {
 				heelPos := deltas.GetItem(heelBoneName, fno).Position
 				toePos := deltas.GetItem(toeBoneName, fno).Position
 				toeHorizontalPos := mmath.MVec3{toePos.GetX(), heelPos.GetY(), toePos.GetZ()}
@@ -190,12 +192,12 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 				ankleHQuat := mmath.NewMQuaternionFromAxisAngles(ankleHAxis, ankleHRad)
 
 				// 足首の向きを調整する角度
-				ankleQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.GetItem(ankleBoneName).GetItem(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.GetItem(ankleBoneName).GetItem(fno).Rotation.SetQuaternion(ankleQuat)
+				ankleQuat := ankleHQuat.Muled(&ankleVQuat).Muled(motion.BoneFrames.GetItem(ankleBoneName).Get(fno).Rotation.GetQuaternion())
+				motion.BoneFrames.GetItem(ankleBoneName).Get(fno).Rotation.SetQuaternion(ankleQuat)
 
 				// 足ＩＫの向きを調整する角度
-				legIkQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.GetItem(legIkBoneName).GetItem(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.GetItem(legIkBoneName).GetItem(fno).Rotation.SetQuaternion(legIkQuat)
+				legIkQuat := ankleHQuat.Muled(&ankleVQuat).Muled(motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Rotation.GetQuaternion())
+				motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Rotation.SetQuaternion(legIkQuat)
 			}
 		}
 

@@ -67,7 +67,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes.List() {
 		{
 			bf := vmd.NewBoneFrame(fno)
-			bf.Position = movMotion.BoneFrames.GetItem("Camera").GetItem(fno).Position
+			bf.Position = movMotion.BoneFrames.GetItem("Camera").Get(fno).Position
 			rotMotion.AppendRegisteredBoneFrame(pmx.CENTER.String(), bf)
 		}
 	}
@@ -102,8 +102,8 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			boneUpFrom := model.Bones.GetItemByName(boneConfig.UpFrom).Position
 			boneUpTo := model.Bones.GetItemByName(boneConfig.UpTo).Position
 
-			boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
-			boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
+			boneDirectionVector := boneDirectionTo.Subed(&boneDirectionFrom).Normalize()
+			boneUpVector := boneUpTo.Subed(&boneUpFrom).Normalize()
 			boneCrossVector := boneUpVector.Cross(boneDirectionVector).Normalize()
 
 			boneQuat := mmath.NewMQuaternionFromDirection(boneDirectionVector, boneCrossVector)
@@ -112,15 +112,15 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
 			if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
 				// 手首だけはmediapipeから取る
-				motionDirectionFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(fno).Position
-				motionDirectionToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(fno).Position
-				motionUpFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(fno).Position
-				motionUpToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(fno).Position
+				motionDirectionFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).Get(fno).Position
+				motionDirectionToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionTo).Get(fno).Position
+				motionUpFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpFrom).Get(fno).Position
+				motionUpToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpTo).Get(fno).Position
 			} else {
-				motionDirectionFromPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).GetItem(fno).Position
-				motionDirectionToPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).GetItem(fno).Position
-				motionUpFromPos = movMotion.BoneFrames.GetItem(boneConfig.UpFrom).GetItem(fno).Position
-				motionUpToPos = movMotion.BoneFrames.GetItem(boneConfig.UpTo).GetItem(fno).Position
+				motionDirectionFromPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).Get(fno).Position
+				motionDirectionToPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).Get(fno).Position
+				motionUpFromPos = movMotion.BoneFrames.GetItem(boneConfig.UpFrom).Get(fno).Position
+				motionUpToPos = movMotion.BoneFrames.GetItem(boneConfig.UpTo).Get(fno).Position
 			}
 
 			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
@@ -132,13 +132,13 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			// キャンセルボーン角度
 			cancelQuat := mmath.NewMQuaternion()
 			for _, cancelBoneName := range boneConfig.Cancels {
-				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).GetItem(fno).Rotation.GetQuaternion())
+				cancelQuat = *cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Get(fno).Rotation.GetQuaternion())
 			}
 
 			// 調整角度
 			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
 
-			quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
+			quat := cancelQuat.Invert().Mul(&motionQuat).Mul(boneQuat.Invert()).Mul(&invertQuat).Normalize()
 
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)
@@ -148,9 +148,11 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		}
 	}
 
-	err := vmd.Write(rotMotion)
-	if err != nil {
-		mlog.E("Failed to write rotate vmd: %v", err)
+	if mlog.IsDebug() {
+		err := vmd.Write(rotMotion)
+		if err != nil {
+			mlog.E("Failed to write rotate vmd: %v", err)
+		}
 	}
 
 	return rotMotion

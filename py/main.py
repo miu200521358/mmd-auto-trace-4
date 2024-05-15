@@ -54,9 +54,12 @@ if __name__ == "__main__":
                     # まだスムージング実行出来ていない場合、実行
                     exec_smooth.smooth(output_dir_path)
 
+                    with open(os.path.join(output_dir_path, "gpu_complete"), "w") as f:
+                        # 最後までいったら終了
+                        f.write("gpu complete")
+
                     print("All prepare done!")
                 else:
-                    # go バイナリを実行する
-                    os.system(
-                        f"./build/mat4 -modelPath='./data/pmx/v4_trace_model.pmx' -dirPath='{output_dir_path}'"
-                    )
+                    with open(os.path.join(output_dir_path, "gpu_complete"), "w") as f:
+                        # 最後までいったら終了
+                        f.write("gpu complete")

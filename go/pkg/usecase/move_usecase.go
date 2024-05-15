@@ -98,29 +98,29 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					// 追加で計算するボーン
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = movMotion.BoneFrames.GetItem(pmx.LEG.Right()).GetItem(fno).Position.Added(movMotion.BoneFrames.GetItem(pmx.LEG.Left()).GetItem(fno).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.LEG.Right()).Get(fno).Position.Added(movMotion.BoneFrames.GetItem(pmx.LEG.Left()).Get(fno).Position).DivedScalar(2)
 						movMotion.AppendRegisteredBoneFrame("下半身先", bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position.Added(
-							movMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(fno).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position).DivedScalar(2))
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position.Added(
+							movMotion.BoneFrames.GetItem(pmx.ARM.Left()).Get(fno).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
 						movMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position.Added(
-							movMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(fno).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position).DivedScalar(2))
+						bf.Position = movMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position.Added(
+							movMotion.BoneFrames.GetItem(pmx.ARM.Right()).Get(fno).Position.Subed(movMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
 						movMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = movMotion.BoneFrames.GetItem("左つま先親").GetItem(fno).Position.Added(movMotion.BoneFrames.GetItem("左つま先子").GetItem(fno).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem("左つま先親").Get(fno).Position.Added(movMotion.BoneFrames.GetItem("左つま先子").Get(fno).Position).DivedScalar(2)
 						movMotion.AppendRegisteredBoneFrame("左つま先", bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = movMotion.BoneFrames.GetItem("右つま先親").GetItem(fno).Position.Added(movMotion.BoneFrames.GetItem("右つま先子").GetItem(fno).Position).DivedScalar(2)
+						bf.Position = movMotion.BoneFrames.GetItem("右つま先親").Get(fno).Position.Added(movMotion.BoneFrames.GetItem("右つま先子").Get(fno).Position).DivedScalar(2)
 						movMotion.AppendRegisteredBoneFrame("右つま先", bf)
 					}
 				}
@@ -141,31 +141,31 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					// 追加で計算するボーン
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.LEG.Right()).GetItem(fno).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.LEG.Left()).GetItem(fno).Position).DivedScalar(2)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.LEG.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.LEG.Left()).Get(fno).Position).DivedScalar(2)
 						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(fno).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(fno).Position).DivedScalar(2)
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).Get(fno).Position).DivedScalar(2)
 						mpMovMotion.AppendRegisteredBoneFrame(pmx.NECK.String(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).GetItem(fno).Position.Added(
-							mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).GetItem(fno).Position).DivedScalar(2),
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).Get(fno).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.UPPER.String()).Get(fno).Position).DivedScalar(2),
 						)
 						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position.Added(
-							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).GetItem(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position).DivedScalar(2))
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Left()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
 						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
 					}
 					{
 						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position.Added(
-							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).GetItem(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).GetItem(fno).Position).DivedScalar(2))
+						bf.Position = mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position.Added(
+							mpMovMotion.BoneFrames.GetItem(pmx.ARM.Right()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.GetItem(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
 						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
 					}
 				}
@@ -179,14 +179,18 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 				}
 			}
 
-			err := vmd.Write(movMotion)
-			if err != nil {
-				mlog.E("Failed to write move vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(movMotion)
+				if err != nil {
+					mlog.E("Failed to write move vmd: %v", err)
+				}
 			}
 
-			err = vmd.Write(mpMovMotion)
-			if err != nil {
-				mlog.E("Failed to write mp move vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(mpMovMotion)
+				if err != nil {
+					mlog.E("Failed to write mp move vmd: %v", err)
+				}
 			}
 
 			allMoveMotions[i] = movMotion

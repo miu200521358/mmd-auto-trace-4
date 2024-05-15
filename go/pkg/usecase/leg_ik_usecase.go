@@ -129,9 +129,11 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 			}
 			legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
 
-			err := vmd.Write(legIkMotion)
-			if err != nil {
-				mlog.E("Failed to write leg ik vmd: %v", err)
+			if mlog.IsDebug() {
+				err := vmd.Write(legIkMotion)
+				if err != nil {
+					mlog.E("Failed to write leg ik vmd: %v", err)
+				}
 			}
 
 			allLegIkMotions[i] = legIkMotion
@@ -176,19 +178,20 @@ func convertLegIkMotion(
 	// ももＩＫはひざの位置を基準とする
 	hipIkBf := vmd.NewBoneFrame(fno)
 	kneeOffDelta := legIkOffDeltas.GetItem(kneeBoneName, fno)
-	hipIkBf.Position = kneeOffDelta.Position.Subed(legIkModel.Bones.GetItemByName(hipIkBoneName).Position)
+	hipIkBf.Position = kneeOffDelta.Position.Subed(&legIkModel.Bones.GetItemByName(hipIkBoneName).Position)
 	legIkMotion.AppendBoneFrame(hipIkBoneName, hipIkBf)
 
 	// ひざＩＫは足首の位置を基準とする
 	kneeIkBf := vmd.NewBoneFrame(fno)
 	ankleOffDelta := legIkOffDeltas.GetItem(ankleBoneName, fno)
-	kneeIkBf.Position = ankleOffDelta.Position.Subed(hipIkBf.Position).Subed(legIkModel.Bones.GetItemByName(kneeIkBoneName).Position)
+	kneeIkBf.Position = ankleOffDelta.Position.Subed(hipIkBf.Position).Subed(&legIkModel.Bones.GetItemByName(kneeIkBoneName).Position)
 	legIkMotion.AppendBoneFrame(kneeIkBoneName, kneeIkBf)
 
 	// ひざをグローバルX軸に対して曲げる
-	_, _, _, kneeYZQuat := kneeOffDelta.FrameRotation.SeparateByAxis(legIkModel.Bones.GetItemByName(kneeBoneName).NormalizedLocalAxisX)
+	_, _, _, kneeYZQuat := kneeOffDelta.FrameRotation.SeparateByAxis(&legIkModel.Bones.GetItemByName(kneeBoneName).NormalizedLocalAxisX)
 	kneeBf := vmd.NewBoneFrame(fno)
-	kneeBf.Rotation.SetQuaternion(mmath.NewMQuaternionFromAxisAngles(mmath.MVec3UnitX, -kneeYZQuat.ToRadian()))
+	kneeQuat := mmath.NewMQuaternionFromAxisAngles(mmath.MVec3UnitX, -kneeYZQuat.ToRadian())
+	kneeBf.Rotation.SetQuaternion(&kneeQuat)
 	legIkMotion.AppendRegisteredBoneFrame(kneeBoneName, kneeBf)
 
 	// 初期時点の足首の位置
@@ -270,14 +273,14 @@ func convertLegIkMotion(
 	// 足首ＩＫはつま先の位置を基準とする
 	ankleIkBf := vmd.NewBoneFrame(fno)
 	toeOffDelta := legIkOffDeltas.GetItem(toeBoneName, fno)
-	ankleIkBf.Position = toeOffDelta.Position.Added(ankleDiffVec).Subed(toeIkModel.Bones.GetItemByName(ankleIkBoneName).Position)
+	ankleIkBf.Position = toeOffDelta.Position.Added(ankleDiffVec).Subed(&toeIkModel.Bones.GetItemByName(ankleIkBoneName).Position)
 	legIkMotion.AppendBoneFrame(ankleIkBoneName, ankleIkBf)
 
 	// 足首捩ＩＫはつま先親の位置を基準とする
 	ankleTwistIkBf := vmd.NewBoneFrame(fno)
 	toeBigOffDelta := legIkOffDeltas.GetItem(toeBigBoneName, fno)
 	ankleTwistIkBf.Position = toeBigOffDelta.Position.Added(ankleDiffVec).
-		Subed(ankleIkBf.Position).Subed(toeIkModel.Bones.GetItemByName(ankleTwistIkBoneName).Position)
+		Subed(ankleIkBf.Position).Subed(&toeIkModel.Bones.GetItemByName(ankleTwistIkBoneName).Position)
 	legIkMotion.AppendBoneFrame(ankleTwistIkBoneName, ankleTwistIkBf)
 
 	toeOffPos := legIkOffDeltas.GetItem(toeBoneName, fno).Position.Added(ankleDiffVec)
@@ -286,7 +289,7 @@ func convertLegIkMotion(
 
 	// 足ＩＫの位置はIK OFF時の足首位置
 	legIkBf := vmd.NewBoneFrame(fno)
-	legIkBf.Position = ankleOffDelta.Position.Added(ankleDiffVec).Subed(toeIkModel.Bones.GetItemByName(ankleBoneName).Position)
+	legIkBf.Position = ankleOffDelta.Position.Added(ankleDiffVec).Subed(&toeIkModel.Bones.GetItemByName(ankleBoneName).Position)
 
 	if mlog.IsVerbose() {
 		legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_2.vmd", -1)
