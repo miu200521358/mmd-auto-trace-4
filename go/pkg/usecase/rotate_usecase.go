@@ -15,7 +15,7 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Rotate =============================")
 
 	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
@@ -48,7 +48,7 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 			defer wg.Done()
 			defer mlog.I("[%d/%d] Convert Rotate ...", i, len(allPrevMotions))
 
-			allRotateMotions[i] = convertMov2Rotate(frames, pmxModel, allPrevMotions[i], allMpPrevMotions[i], i, bar)
+			allRotateMotions[i] = convertMov2Rotate(frames, pmxModel, allPrevMotions[i], i, bar)
 		}(i, frames)
 	}
 
@@ -60,7 +60,7 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 	return allRotateMotions
 }
 
-func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd.VmdMotion, mpMovMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
+func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
 
 	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
 	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
@@ -76,19 +76,19 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 	for _, boneConfig := range boneConfigs {
 		bar.Increment()
 
-		if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
-			if !mpMovMotion.BoneFrames.Contains(boneConfig.Name) ||
-				!mpMovMotion.BoneFrames.Contains(boneConfig.DirectionFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.DirectionTo) ||
-				!mpMovMotion.BoneFrames.Contains(boneConfig.UpFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.UpTo) {
-				continue
-			}
-		} else {
-			if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
-				!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
-				!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
-				continue
-			}
+		// if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
+		// 	if !mpMovMotion.BoneFrames.Contains(boneConfig.Name) ||
+		// 		!mpMovMotion.BoneFrames.Contains(boneConfig.DirectionFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.DirectionTo) ||
+		// 		!mpMovMotion.BoneFrames.Contains(boneConfig.UpFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.UpTo) {
+		// 		continue
+		// 	}
+		// } else {
+		if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
+			!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
+			!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
+			continue
 		}
+		// }
 
 		for _, fno := range movMotion.BoneFrames.Get(boneConfig.Name).RegisteredIndexes.List() {
 			if boneConfig.Name == pmx.WRIST.Left() && frames.Frames[fno].Mediapipe["left wrist"].Visibility < 0.85 {
@@ -111,18 +111,18 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 
 			// モーションのボーン角度
 			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
-			if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
-				// 手首だけはmediapipeから取る
-				motionDirectionFromPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
-				motionDirectionToPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
-				motionUpFromPos = mpMovMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
-				motionUpToPos = mpMovMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
-			} else {
-				motionDirectionFromPos = movMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
-				motionDirectionToPos = movMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
-				motionUpFromPos = movMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
-				motionUpToPos = movMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
-			}
+			// if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
+			// 	// 手首だけはmediapipeから取る
+			// 	motionDirectionFromPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
+			// 	motionDirectionToPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
+			// 	motionUpFromPos = mpMovMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
+			// 	motionUpToPos = mpMovMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
+			// } else {
+			motionDirectionFromPos = movMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
+			motionDirectionToPos = movMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
+			motionUpFromPos = movMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
+			motionUpToPos = movMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
+			// }
 
 			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
 			motionUpVector := motionUpToPos.Subed(motionUpFromPos).Normalize()

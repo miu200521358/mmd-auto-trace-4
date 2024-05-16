@@ -7,7 +7,7 @@ import numpy as np
 from pykalman import UnscentedKalmanFilter
 from tqdm import tqdm
 from convert_pkl2json import JOINT_NAMES
-from exec_mediapipe import MP_JOINT_NAMES
+# from exec_mediapipe import MP_JOINT_NAMES
 
 from phalp.utils import get_pylogger
 
@@ -68,45 +68,45 @@ JOINT_NOISE = {
     "Right Eye": 3.0,  # 46
     "Left Ear": 3.0,  # 47
     "Right Ear": 3.0,  # 48
-    # mediapipe
-    "nose": 0.7,  # 0
-    "left eye (inner)": 0.7,  # 1
-    "left eye": 0.7,  # 2
-    "left eye (outer)": 0.7,  # 3
-    "right eye (inner)": 0.7,  # 4
-    "right eye": 0.7,  # 5
-    "right eye (outer)": 0.7,  # 6
-    "left ear": 0.7,  # 7
-    "right ear": 0.7,  # 8
-    "mouth (left)": 0.7,  # 9
-    "mouth (right)": 0.7,  # 10
-    "left shoulder": 0.7,  # 11
-    "right shoulder": 0.7,  # 12
-    "left elbow": 0.7,  # 13
-    "right elbow": 0.7,  # 14
-    "left wrist": 0.7,  # 15
-    "right wrist": 0.7,  # 16
-    "left pinky": 0.7,  # 17
-    "right pinky": 0.7,  # 18
-    "left index": 0.7,  # 19
-    "right index": 0.7,  # 20
-    "left thumb": 0.7,  # 21
-    "right thumb": 0.7,  # 22
-    "left hip": 0.7,  # 23
-    "right hip": 0.7,  # 24
-    "left knee": 0.7,  # 25
-    "right knee": 0.7,  # 26
-    "left ankle": 0.7,  # 27
-    "right ankle": 0.7,  # 28
-    "left heel": 0.7,  # 29
-    "right heel": 0.7,  # 30
-    "left foot index": 0.7,  # 31
-    "right foot index": 0.7,  # 32
+    # # mediapipe
+    # "nose": 0.7,  # 0
+    # "left eye (inner)": 0.7,  # 1
+    # "left eye": 0.7,  # 2
+    # "left eye (outer)": 0.7,  # 3
+    # "right eye (inner)": 0.7,  # 4
+    # "right eye": 0.7,  # 5
+    # "right eye (outer)": 0.7,  # 6
+    # "left ear": 0.7,  # 7
+    # "right ear": 0.7,  # 8
+    # "mouth (left)": 0.7,  # 9
+    # "mouth (right)": 0.7,  # 10
+    # "left shoulder": 0.7,  # 11
+    # "right shoulder": 0.7,  # 12
+    # "left elbow": 0.7,  # 13
+    # "right elbow": 0.7,  # 14
+    # "left wrist": 0.7,  # 15
+    # "right wrist": 0.7,  # 16
+    # "left pinky": 0.7,  # 17
+    # "right pinky": 0.7,  # 18
+    # "left index": 0.7,  # 19
+    # "right index": 0.7,  # 20
+    # "left thumb": 0.7,  # 21
+    # "right thumb": 0.7,  # 22
+    # "left hip": 0.7,  # 23
+    # "right hip": 0.7,  # 24
+    # "left knee": 0.7,  # 25
+    # "right knee": 0.7,  # 26
+    # "left ankle": 0.7,  # 27
+    # "right ankle": 0.7,  # 28
+    # "left heel": 0.7,  # 29
+    # "right heel": 0.7,  # 30
+    # "left foot index": 0.7,  # 31
+    # "right foot index": 0.7,  # 32
 }
 
 
 def smooth(output_dir_path: str):
-    for i, json_path in enumerate(glob(os.path.join(output_dir_path, "*_mp.json"))):
+    for i, json_path in enumerate(glob(os.path.join(output_dir_path, "*_original.json"))):
         with open(json_path, "r") as f:
             data = json.load(f)
 
@@ -121,8 +121,8 @@ def smooth(output_dir_path: str):
         for jname in JOINT_NAMES[:45]:
             joint_positions[("3d_joints", jname)] = []
             joint_positions[("global_3d_joints", jname)] = []
-        for jname in MP_JOINT_NAMES:
-            joint_positions[("mediapipe", jname)] = []
+        # for jname in MP_JOINT_NAMES:
+        #     joint_positions[("mediapipe", jname)] = []
 
         start_camera_z = 0.0
         start_fno = -1
@@ -158,7 +158,7 @@ def smooth(output_dir_path: str):
                         "3d_joints": {},
                         "global_3d_joints": {},
                         "2d_joints": prev_data["2d_joints"],
-                        "mediapipe": {},
+                        # "mediapipe": {},
                     }
 
                     for jname in JOINT_NAMES[:45]:
@@ -191,31 +191,31 @@ def smooth(output_dir_path: str):
                             "z": prev_data["global_3d_joints"][jname]["z"],
                         }
 
-                    if 0 < len(joint_positions[("mediapipe", "left wrist")]):
-                        j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
+                    # if 0 < len(joint_positions[("mediapipe", "left wrist")]):
+                    #     j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
 
-                        for jname in MP_JOINT_NAMES:
-                            joint_positions[("mediapipe", jname)].append(
-                                np.array(
-                                    [
-                                        joint_positions[("mediapipe", jname)][j2][0],
-                                        joint_positions[("mediapipe", jname)][j2][1],
-                                        joint_positions[("mediapipe", jname)][j2][2],
-                                    ]
-                                )
-                            )
-                            if "mediapipe" in prev_data and prev_data["mediapipe"]:
-                                smoothed_data["frames"][k2]["mediapipe"][jname] = {
-                                    "x": prev_data["mediapipe"][jname]["x"],
-                                    "y": prev_data["mediapipe"][jname]["y"],
-                                    "z": prev_data["mediapipe"][jname]["z"],
-                                    "visibility": prev_data["mediapipe"][jname][
-                                        "visibility"
-                                    ],
-                                    "presence": prev_data["mediapipe"][jname][
-                                        "presence"
-                                    ],
-                                }
+                    #     for jname in MP_JOINT_NAMES:
+                    #         joint_positions[("mediapipe", jname)].append(
+                    #             np.array(
+                    #                 [
+                    #                     joint_positions[("mediapipe", jname)][j2][0],
+                    #                     joint_positions[("mediapipe", jname)][j2][1],
+                    #                     joint_positions[("mediapipe", jname)][j2][2],
+                    #                 ]
+                    #             )
+                    #         )
+                    #         if "mediapipe" in prev_data and prev_data["mediapipe"]:
+                    #             smoothed_data["frames"][k2]["mediapipe"][jname] = {
+                    #                 "x": prev_data["mediapipe"][jname]["x"],
+                    #                 "y": prev_data["mediapipe"][jname]["y"],
+                    #                 "z": prev_data["mediapipe"][jname]["z"],
+                    #                 "visibility": prev_data["mediapipe"][jname][
+                    #                     "visibility"
+                    #                 ],
+                    #                 "presence": prev_data["mediapipe"][jname][
+                    #                     "presence"
+                    #                 ],
+                    #             }
 
                     continue
 
@@ -226,7 +226,7 @@ def smooth(output_dir_path: str):
                 "3d_joints": {},
                 "global_3d_joints": {},
                 "2d_joints": data["frames"][time]["2d_joints"],
-                "mediapipe": {},
+                # "mediapipe": {},
             }
 
             if "camera" in frame_data:
@@ -404,48 +404,48 @@ def smooth(output_dir_path: str):
                         "z": frame_data["global_3d_joints"][jname]["z"],
                     }
 
-            if "mediapipe" in frame_data:
-                if mp_start_fno == -1:
-                    mp_start_fno = int(time)
+            # if "mediapipe" in frame_data:
+            #     if mp_start_fno == -1:
+            #         mp_start_fno = int(time)
 
-                if frame_data["mediapipe"]:
-                    for jname, joint in frame_data["mediapipe"].items():
-                        joint_positions[("mediapipe", jname)].append(
-                            np.array([joint["x"], joint["y"], joint["z"]])
-                        )
-                        smoothed_data["frames"][time]["mediapipe"][jname] = {
-                            "x": frame_data["mediapipe"][jname]["x"],
-                            "y": frame_data["mediapipe"][jname]["y"],
-                            "z": frame_data["mediapipe"][jname]["z"],
-                            "visibility": frame_data["mediapipe"][jname]["visibility"],
-                            "presence": frame_data["mediapipe"][jname]["presence"],
-                        }
-                else:
-                    if 0 < len(joint_positions[("mediapipe", "left wrist")]):
-                        j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
-                        prev_data = data["frames"][str(j - 1)]
-                        for jname in MP_JOINT_NAMES:
-                            joint_positions[("mediapipe", jname)].append(
-                                np.array(
-                                    [
-                                        joint_positions[("mediapipe", jname)][j2][0],
-                                        joint_positions[("mediapipe", jname)][j2][1],
-                                        joint_positions[("mediapipe", jname)][j2][2],
-                                    ]
-                                )
-                            )
-                            if prev_data["mediapipe"]:
-                                smoothed_data["frames"][time]["mediapipe"][jname] = {
-                                    "x": prev_data["mediapipe"][jname]["x"],
-                                    "y": prev_data["mediapipe"][jname]["y"],
-                                    "z": prev_data["mediapipe"][jname]["z"],
-                                    "visibility": prev_data["mediapipe"][jname][
-                                        "visibility"
-                                    ],
-                                    "presence": prev_data["mediapipe"][jname][
-                                        "presence"
-                                    ],
-                                }
+            #     if frame_data["mediapipe"]:
+            #         for jname, joint in frame_data["mediapipe"].items():
+            #             joint_positions[("mediapipe", jname)].append(
+            #                 np.array([joint["x"], joint["y"], joint["z"]])
+            #             )
+            #             smoothed_data["frames"][time]["mediapipe"][jname] = {
+            #                 "x": frame_data["mediapipe"][jname]["x"],
+            #                 "y": frame_data["mediapipe"][jname]["y"],
+            #                 "z": frame_data["mediapipe"][jname]["z"],
+            #                 "visibility": frame_data["mediapipe"][jname]["visibility"],
+            #                 "presence": frame_data["mediapipe"][jname]["presence"],
+            #             }
+            #     else:
+            #         if 0 < len(joint_positions[("mediapipe", "left wrist")]):
+            #             j2 = len(joint_positions[("mediapipe", "left wrist")]) - 1
+            #             prev_data = data["frames"][str(j - 1)]
+            #             for jname in MP_JOINT_NAMES:
+            #                 joint_positions[("mediapipe", jname)].append(
+            #                     np.array(
+            #                         [
+            #                             joint_positions[("mediapipe", jname)][j2][0],
+            #                             joint_positions[("mediapipe", jname)][j2][1],
+            #                             joint_positions[("mediapipe", jname)][j2][2],
+            #                         ]
+            #                     )
+            #                 )
+            #                 if prev_data["mediapipe"]:
+            #                     smoothed_data["frames"][time]["mediapipe"][jname] = {
+            #                         "x": prev_data["mediapipe"][jname]["x"],
+            #                         "y": prev_data["mediapipe"][jname]["y"],
+            #                         "z": prev_data["mediapipe"][jname]["z"],
+            #                         "visibility": prev_data["mediapipe"][jname][
+            #                             "visibility"
+            #                         ],
+            #                         "presence": prev_data["mediapipe"][jname][
+            #                             "presence"
+            #                         ],
+            #                     }
 
             j = int(time) + 1
 
@@ -504,22 +504,22 @@ def smooth(output_dir_path: str):
                         smoothed_data["frames"][j2]["camera"]["z"] = (
                             joint_pose[2] + start_camera_z
                         )
-                elif "mediapipe" == type_name:
-                    if joint_name not in smoothed_data["frames"][j2][type_name]:
-                        smoothed_data["frames"][mj][type_name][joint_name] = {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0,
-                        }
-                    smoothed_data["frames"][mj][type_name][joint_name]["x"] = (
-                        joint_pose[0]
-                    )
-                    smoothed_data["frames"][mj][type_name][joint_name]["y"] = (
-                        joint_pose[1]
-                    )
-                    smoothed_data["frames"][mj][type_name][joint_name]["z"] = (
-                        joint_pose[2]
-                    )
+                # elif "mediapipe" == type_name:
+                #     if joint_name not in smoothed_data["frames"][j2][type_name]:
+                #         smoothed_data["frames"][mj][type_name][joint_name] = {
+                #             "x": 0.0,
+                #             "y": 0.0,
+                #             "z": 0.0,
+                #         }
+                #     smoothed_data["frames"][mj][type_name][joint_name]["x"] = (
+                #         joint_pose[0]
+                #     )
+                #     smoothed_data["frames"][mj][type_name][joint_name]["y"] = (
+                #         joint_pose[1]
+                #     )
+                #     smoothed_data["frames"][mj][type_name][joint_name]["z"] = (
+                #         joint_pose[2]
+                #     )
                 else:
                     smoothed_data["frames"][j2][type_name][joint_name] = {
                         "x": joint_pose[0],
@@ -527,7 +527,7 @@ def smooth(output_dir_path: str):
                         "z": joint_pose[2],
                     }
 
-        smooth_json_path = json_path.replace("_mp.json", "_smooth.json")
+        smooth_json_path = json_path.replace("_original.json", "_smooth.json")
         with open(smooth_json_path, "w") as f:
             json.dump(smoothed_data, f, indent=4)
 

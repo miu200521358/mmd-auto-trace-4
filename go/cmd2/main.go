@@ -299,7 +299,7 @@ func main() {
 							return
 						}
 
-						var allMoveMotions, allMpMoveMotions []*vmd.VmdMotion
+						var allMoveMotions []*vmd.VmdMotion
 						if moveMotionPaths != nil && moveMpMotionPaths != nil {
 							// 回転 ------------
 							mlog.I("Read Move Motion ================")
@@ -309,15 +309,15 @@ func main() {
 								return
 							}
 
-							mlog.I("Read Move Mp Motion ================")
-							allMpMoveMotions, err = utils.ReadVmdFiles(moveMpMotionPaths)
-							if err != nil {
-								mlog.E("Failed to read move mp motion: %v", err)
-								return
-							}
+							// mlog.I("Read Move Mp Motion ================")
+							// allMpMoveMotions, err = utils.ReadVmdFiles(moveMpMotionPaths)
+							// if err != nil {
+							// 	mlog.E("Failed to read move mp motion: %v", err)
+							// 	return
+							// }
 
 							mlog.I("Rotate Motion ================")
-							allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, allMpMoveMotions, modelPath)
+							allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, modelPath)
 
 							{
 								for i, motion := range allRotateMotions {
@@ -336,7 +336,7 @@ func main() {
 						} else {
 							// 移動 ------------
 							mlog.I("Move Motion ================")
-							allMoveMotions, allMpMoveMotions := usecase.Move(allFrames)
+							allMoveMotions := usecase.Move(allFrames)
 
 							// モーションを出力する
 							{
@@ -351,18 +351,18 @@ func main() {
 									}
 								}
 							}
-							{
-								for i, motion := range allMpMoveMotions {
-									mlog.I("Output mediapipe Move Motion [%d/%d] ...", i, len(allMpMoveMotions))
+							// {
+							// 	for i, motion := range allMpMoveMotions {
+							// 		mlog.I("Output mediapipe Move Motion [%d/%d] ...", i, len(allMpMoveMotions))
 
-									motionName := fmt.Sprintf("%02d_2_mp-move.vmd", i+1)
-									motion.Path = filepath.Join(dirPath, motionName)
-									err := vmd.Write(motion)
-									if err != nil {
-										mlog.E("Failed to write mp-move vmd: %v", err)
-									}
-								}
-							}
+							// 		motionName := fmt.Sprintf("%02d_2_mp-move.vmd", i+1)
+							// 		motion.Path = filepath.Join(dirPath, motionName)
+							// 		err := vmd.Write(motion)
+							// 		if err != nil {
+							// 			mlog.E("Failed to write mp-move vmd: %v", err)
+							// 		}
+							// 	}
+							// }
 
 							return
 						}

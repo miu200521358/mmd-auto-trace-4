@@ -16,11 +16,11 @@ import (
 
 const RATIO = 1 / 0.09
 
-func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
+func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 	mlog.I("Start: Move =============================")
 
 	allMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
-	allMpMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
+	// allMpMoveMotions := make([]*vmd.VmdMotion, len(allFrames))
 
 	minFno := getMinFrame(allFrames[0].Frames)
 	minFrame := allFrames[0].Frames[minFno]
@@ -49,11 +49,11 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_move.vmd", -1))
 			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
-			mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_mp-move.vmd", -1))
-			mpMovMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
+			// mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_mp-move.vmd", -1))
+			// mpMovMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
-			jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_joint-move.vmd", -1))
-			jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
+			// jointMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_joint-move.vmd", -1))
+			// jointMotion.SetName(fmt.Sprintf("MAT4 Joint Move %02d", i+1))
 
 			for fno, frame := range frames.Frames {
 				bar.Increment()
@@ -68,7 +68,7 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					bf.Position.SetX(pos.X * RATIO)
 					bf.Position.SetY(pos.Y * RATIO)
 					bf.Position.SetZ(pos.Z * RATIO)
-					jointMotion.AppendRegisteredBoneFrame(string(jointName), bf)
+					// jointMotion.AppendRegisteredBoneFrame(string(jointName), bf)
 
 					// ボーン名がある場合、ボーン移動モーションにも出力
 					if boneName, ok := joint2bones[string(jointName)]; ok {
@@ -80,13 +80,13 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					}
 				}
 
-				{
-					bf := vmd.NewBoneFrame(fno)
-					bf.Position.SetX(frame.Camera.X * RATIO)
-					bf.Position.SetY(frame.Camera.Y * RATIO)
-					bf.Position.SetZ((frame.Camera.Z - rootPos.Z) * 0.5)
-					jointMotion.AppendRegisteredBoneFrame("Camera", bf)
-				}
+				// {
+				// 	bf := vmd.NewBoneFrame(fno)
+				// 	bf.Position.SetX(frame.Camera.X * RATIO)
+				// 	bf.Position.SetY(frame.Camera.Y * RATIO)
+				// 	bf.Position.SetZ((frame.Camera.Z - rootPos.Z) * 0.5)
+				// 	jointMotion.AppendRegisteredBoneFrame("Camera", bf)
+				// }
 				{
 					bf := vmd.NewBoneFrame(fno)
 					bf.Position.SetX(frame.Camera.X * RATIO)
@@ -126,59 +126,59 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 					}
 				}
 
-				for jointName, posVis := range frame.Mediapipe {
-					// mediapipeのジョイント移動モーション出力
-					// ボーン名がある場合、ボーン移動モーションにも出力
-					if boneName, ok := mpJoint2bones[string(jointName)]; ok {
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position.SetX(posVis.X)
-						bf.Position.SetY(posVis.Y)
-						bf.Position.SetZ(posVis.Z)
-						mpMovMotion.AppendRegisteredBoneFrame(boneName, bf)
-					}
-				}
+				// for jointName, posVis := range frame.Mediapipe {
+				// 	// mediapipeのジョイント移動モーション出力
+				// 	// ボーン名がある場合、ボーン移動モーションにも出力
+				// 	if boneName, ok := mpJoint2bones[string(jointName)]; ok {
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position.SetX(posVis.X)
+				// 		bf.Position.SetY(posVis.Y)
+				// 		bf.Position.SetZ(posVis.Z)
+				// 		mpMovMotion.AppendRegisteredBoneFrame(boneName, bf)
+				// 	}
+				// }
 
-				{
-					// 追加で計算するボーン
-					{
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.Get(pmx.LEG.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.Get(pmx.LEG.Left()).Get(fno).Position).DivedScalar(2)
-						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
-					}
-					{
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.Get(pmx.ARM.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.Get(pmx.ARM.Left()).Get(fno).Position).DivedScalar(2)
-						mpMovMotion.AppendRegisteredBoneFrame(pmx.NECK.String(), bf)
-					}
-					{
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.Get(pmx.UPPER.String()).Get(fno).Position.Added(
-							mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.UPPER.String()).Get(fno).Position).DivedScalar(2),
-						)
-						mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
-					}
-					{
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Added(
-							mpMovMotion.BoneFrames.Get(pmx.ARM.Left()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
-						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
-					}
-					{
-						bf := vmd.NewBoneFrame(fno)
-						bf.Position = mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Added(
-							mpMovMotion.BoneFrames.Get(pmx.ARM.Right()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
-						mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
-					}
-				}
+				// {
+				// 	// 追加で計算するボーン
+				// 	{
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position = mpMovMotion.BoneFrames.Get(pmx.LEG.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.Get(pmx.LEG.Left()).Get(fno).Position).DivedScalar(2)
+				// 		mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
+				// 	}
+				// 	{
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position = mpMovMotion.BoneFrames.Get(pmx.ARM.Right()).Get(fno).Position.Added(mpMovMotion.BoneFrames.Get(pmx.ARM.Left()).Get(fno).Position).DivedScalar(2)
+				// 		mpMovMotion.AppendRegisteredBoneFrame(pmx.NECK.String(), bf)
+				// 	}
+				// 	{
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position = mpMovMotion.BoneFrames.Get(pmx.UPPER.String()).Get(fno).Position.Added(
+				// 			mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.UPPER.String()).Get(fno).Position).DivedScalar(2),
+				// 		)
+				// 		mpMovMotion.AppendRegisteredBoneFrame(pmx.UPPER.String(), bf)
+				// 	}
+				// 	{
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position = mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Added(
+				// 			mpMovMotion.BoneFrames.Get(pmx.ARM.Left()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
+				// 		mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Left(), bf)
+				// 	}
+				// 	{
+				// 		bf := vmd.NewBoneFrame(fno)
+				// 		bf.Position = mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position.Added(
+				// 			mpMovMotion.BoneFrames.Get(pmx.ARM.Right()).Get(fno).Position.Subed(mpMovMotion.BoneFrames.Get(pmx.NECK.String()).Get(fno).Position).DivedScalar(2))
+				// 		mpMovMotion.AppendRegisteredBoneFrame(pmx.SHOULDER.Right(), bf)
+				// 	}
+				// }
 
 			}
 
-			if mlog.IsDebug() {
-				err := vmd.Write(jointMotion)
-				if err != nil {
-					mlog.E("Failed to write joint vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(jointMotion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write joint vmd: %v", err)
+			// 	}
+			// }
 
 			if mlog.IsDebug() {
 				err := vmd.Write(movMotion)
@@ -187,15 +187,15 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 				}
 			}
 
-			if mlog.IsDebug() {
-				err := vmd.Write(mpMovMotion)
-				if err != nil {
-					mlog.E("Failed to write mp move vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(mpMovMotion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write mp move vmd: %v", err)
+			// 	}
+			// }
 
 			allMoveMotions[i] = movMotion
-			allMpMoveMotions[i] = mpMovMotion
+			// allMpMoveMotions[i] = mpMovMotion
 		}(i, frames)
 	}
 
@@ -204,7 +204,7 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 
 	mlog.I("End: Move =============================")
 
-	return allMoveMotions, allMpMoveMotions
+	return allMoveMotions
 }
 
 func getMinFrame(m map[int]model.Frame) int {
