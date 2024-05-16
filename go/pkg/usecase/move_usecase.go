@@ -11,6 +11,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 const RATIO = 1 / 0.09
@@ -26,12 +27,12 @@ func Move(allFrames []*model.Frames) ([]*vmd.VmdMotion, []*vmd.VmdMotion) {
 	rootPos := model.Position{X: minFrame.Camera.X, Y: minFrame.Camera.Y, Z: minFrame.Camera.Z}
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allFrames)
+	totalFrames := 0
 	for _, frames := range allFrames {
 		totalFrames += len(frames.Frames)
 	}
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup

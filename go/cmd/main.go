@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
+	"github.com/miu200521358/mlib_go/pkg/vmd"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
 )
 
@@ -57,11 +60,66 @@ func main() {
 	mlog.I("Convert Arm Ik Motion ================")
 	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, nil, modelPath, 100000)
 
+	// モーションを出力する
+	{
+		for i, motion := range allArmIkMotions {
+			mlog.I("Output Full Motion [%d/%d] ...", i, len(allArmIkMotions))
+
+			motionName := fmt.Sprintf("%02d_full.vmd", i+1)
+			motion.Path = filepath.Join(dirPath, motionName)
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write full vmd: %v", err)
+			}
+		}
+	}
+
 	mlog.I("Reduce Motion [narrow] ================")
-	usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
+	narrowReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
+
+	// モーションを出力する
+	{
+		for i, motion := range narrowReduceMotions {
+			mlog.I("Output Narrow Reduce Motion [%d/%d] ...", i, len(narrowReduceMotions))
+
+			motionName := fmt.Sprintf("%02d_reduce_narrow.vmd", i+1)
+			motion.Path = filepath.Join(dirPath, motionName)
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write narrow reduce vmd: %v", err)
+			}
+		}
+	}
 
 	mlog.I("Reduce Motion [wide] ================")
-	usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
+	wideReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
+
+	// モーションを出力する
+	{
+		for i, motion := range wideReduceMotions {
+			mlog.I("Output Wide Reduce Motion [%d/%d] ...", i, len(wideReduceMotions))
+
+			motionName := fmt.Sprintf("%02d_reduce_wide.vmd", i+1)
+			motion.Path = filepath.Join(dirPath, motionName)
+			err := vmd.Write(motion)
+			if err != nil {
+				mlog.E("Failed to write wide reduce vmd: %v", err)
+			}
+		}
+	}
+
+	// complete ファイルを出力する
+	{
+		completePath := filepath.Join(dirPath, "complete")
+		mlog.I("Output Complete File %s", completePath)
+		f, err := os.Create(completePath)
+		if err != nil {
+			mlog.E("Failed to create complete file: %v", err)
+			return
+		}
+		defer f.Close()
+	}
 
 	mlog.I("Done!")
+
 }

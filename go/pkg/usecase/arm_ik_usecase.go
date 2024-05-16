@@ -10,6 +10,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMotion, modelPath string, arm_ik_block int) []*vmd.VmdMotion {
@@ -32,7 +33,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 	// 全体のタスク数をカウント
 	totalMinFrames := make([]int, len(allPrevMotions))
 	totalMaxFrames := make([]int, len(allPrevMotions))
-	totalFrames := len(allPrevMotions)
+	totalFrames := 0
 	for i, prevMotion := range allPrevMotions {
 		minFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
 		maxFrame := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
@@ -64,7 +65,7 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 	wristTwistIkModel := wristTwistIkData.(*pmx.PmxModel)
 	wristTwistIkModel.SetUp()
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup
@@ -80,14 +81,17 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, prevArmIkMotions []*vmd.VmdMo
 			defer wg.Done()
 			defer mlog.I("[%d/%d] Convert Arm Ik ...", i, len(allPrevMotions))
 
+			bar.Set("prefix", fmt.Sprintf("[%d/%d] Convert Arm Ik ...", i, len(allPrevMotions)))
+
 			armIkMotion := allArmIkMotions[i]
 			minFrame := totalMinFrames[i]
 			maxFrame := totalMaxFrames[i]
 
 			for fno := minFrame; fno <= maxFrame; fno++ {
 				bar.Increment()
-				if fno%100 == 0 {
-					mlog.I("[%d/%d] Convert Arm Ik [%d/%d] ...", i, len(allPrevMotions), fno, int(maxFrame))
+				if fno%200 == 0 {
+					// Colabだと出てこないので明示的に出力する
+					mlog.I(bar.String())
 				}
 
 				var wg sync.WaitGroup
@@ -171,7 +175,7 @@ func convertArmIkMotion(
 	armTwistIkBf := vmd.NewBoneFrame(fno)
 	wristOffDelta := armIkOffDeltas.GetItem(wristBoneName, fno)
 	armTwistIkBf.Position = wristOffDelta.Position.Subed(
-		&armTwistIkModel.Bones.GetItemByName(armTwistIkBoneName).Position)
+		armTwistIkModel.Bones.GetItemByName(armTwistIkBoneName).Position)
 	armIkMotion.AppendBoneFrame(armTwistIkBoneName, armTwistIkBf)
 
 	middleTailOffDelta := armIkOffDeltas.GetItem(middleTailBoneName, fno)
@@ -179,19 +183,19 @@ func convertArmIkMotion(
 	// 腕の捩りを除去する
 	armOffDelta := armIkOffDeltas.GetItem(armBoneName, fno)
 	_, _, _, armYZQuat := armOffDelta.FrameRotation.SeparateByAxis(
-		&armTwistIkModel.Bones.GetItemByName(armBoneName).NormalizedLocalAxisX)
+		armTwistIkModel.Bones.GetItemByName(armBoneName).NormalizedLocalAxisX)
 	armBf := vmd.NewBoneFrame(fno)
-	armBf.Rotation.SetQuaternion(armYZQuat)
+	armBf.Rotation = mmath.NewRotationByQuaternion(armYZQuat)
 	armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 	// ひじをローカルY軸に対して曲げる
 	elbowOffDelta := armIkOffDeltas.GetItem(elbowBoneName, fno)
 	_, _, _, elbowYZQuat := elbowOffDelta.FrameRotation.SeparateByAxis(
-		&armTwistIkModel.Bones.GetItemByName(elbowBoneName).NormalizedLocalAxisX)
+		armTwistIkModel.Bones.GetItemByName(elbowBoneName).NormalizedLocalAxisX)
 	elbowBf := vmd.NewBoneFrame(fno)
 	elbowQuat := mmath.NewMQuaternionFromAxisAngles(
-		&armTwistIkModel.Bones.GetItemByName(elbowBoneName).NormalizedLocalAxisY, elbowYZQuat.ToRadian())
-	elbowBf.Rotation.SetQuaternion(&elbowQuat)
+		armTwistIkModel.Bones.GetItemByName(elbowBoneName).NormalizedLocalAxisY, elbowYZQuat.ToRadian())
+	elbowBf.Rotation = mmath.NewRotationByQuaternion(elbowQuat)
 	armIkMotion.AppendRegisteredBoneFrame(elbowBoneName, elbowBf)
 
 	if mlog.IsIkVerbose() {
@@ -258,12 +262,12 @@ func convertArmIkMotion(
 	wristTwistIkBf := vmd.NewBoneFrame(fno)
 	thumbZOffDelta := armIkOffDeltas.GetItem(thumbZBoneName, fno)
 	wristTwistIkBf.Position = thumbZOffDelta.Position.Subed(
-		&wristTwistIkModel.Bones.GetItemByName(wristTwistIkBoneName).Position)
+		wristTwistIkModel.Bones.GetItemByName(wristTwistIkBoneName).Position)
 	armIkMotion.AppendBoneFrame(wristTwistIkBoneName, wristTwistIkBf)
 
 	// 手首の捩りを除去する
 	_, _, _, wristYZQuat := wristOffDelta.FrameRotation.SeparateByAxis(
-		&armTwistIkModel.Bones.GetItemByName(wristBoneName).NormalizedLocalAxisX)
+		armTwistIkModel.Bones.GetItemByName(wristBoneName).NormalizedLocalAxisX)
 	wristBf := vmd.NewBoneFrame(fno)
 	wristBf.Rotation.SetQuaternion(wristYZQuat)
 	armIkMotion.AppendRegisteredBoneFrame(wristBoneName, wristBf)

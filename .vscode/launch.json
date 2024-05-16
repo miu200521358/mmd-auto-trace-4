@@ -114,7 +114,8 @@
                 "-logLevel=DEBUG",
                 "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
-                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
+                "-dirPath=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240512_015543/20240516_150558_2"
+                // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/0507_2"
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
@@ -131,19 +132,6 @@
             "args": [
                 "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4",
                 // "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_20240511_114117"
-            ]
-        },
-        {
-            "name": "exec Each Block",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/main.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "justMyCode": false,
-            "args": [
-                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4",
-                "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps_20240511_150939"
             ]
         },
         {

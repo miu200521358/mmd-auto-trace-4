@@ -10,6 +10,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int, reduceName string) []*vmd.VmdMotion {
@@ -18,12 +19,12 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allPrevMotions)
+	totalFrames := 0
 	for _, rotMotion := range allPrevMotions {
 		totalFrames += int(rotMotion.GetMaxFrame()-rotMotion.GetMinFrame()+1.0) * 2
 	}
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 	var wg sync.WaitGroup
 
 	for i := range allPrevMotions {
@@ -41,7 +42,7 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 			if mlog.IsDebug() {
 				err := vmd.Write(motion)
 				if err != nil {
-					mlog.E("Failed to write leg ik vmd: %v", err)
+					mlog.E("Failed to write reduce vmd: %v", err)
 				}
 			}
 

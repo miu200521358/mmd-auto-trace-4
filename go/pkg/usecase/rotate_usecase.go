@@ -12,6 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
@@ -20,7 +21,7 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allPrevMotions)
+	totalFrames := 0
 	for range len(allPrevMotions) {
 		totalFrames += len(boneConfigs)
 	}
@@ -33,7 +34,7 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, allMpPre
 	}
 	pmxModel := data.(*pmx.PmxModel)
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup
@@ -102,8 +103,8 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			boneUpFrom := model.Bones.GetItemByName(boneConfig.UpFrom).Position
 			boneUpTo := model.Bones.GetItemByName(boneConfig.UpTo).Position
 
-			boneDirectionVector := boneDirectionTo.Subed(&boneDirectionFrom).Normalize()
-			boneUpVector := boneUpTo.Subed(&boneUpFrom).Normalize()
+			boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
+			boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
 			boneCrossVector := boneUpVector.Cross(boneDirectionVector).Normalize()
 
 			boneQuat := mmath.NewMQuaternionFromDirection(boneDirectionVector, boneCrossVector)
@@ -132,13 +133,13 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			// キャンセルボーン角度
 			cancelQuat := mmath.NewMQuaternion()
 			for _, cancelBoneName := range boneConfig.Cancels {
-				cancelQuat = *cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Get(fno).Rotation.GetQuaternion())
+				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Get(fno).Rotation.GetQuaternion())
 			}
 
 			// 調整角度
 			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
 
-			quat := cancelQuat.Invert().Mul(&motionQuat).Mul(boneQuat.Invert()).Mul(&invertQuat).Normalize()
+			quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
 
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)

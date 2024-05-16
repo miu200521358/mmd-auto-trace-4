@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 // Unpack jsonデータを読み込んで、構造体に展開する
@@ -27,7 +27,7 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 
 	// 全体のタスク数をカウント
 	totalFrames := len(jsonPaths)
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
@@ -93,16 +93,4 @@ func getJSONFilePaths(dirPath string) ([]string, error) {
 		return nil, err
 	}
 	return paths, nil
-}
-
-func newProgressBar(total int) *pb.ProgressBar {
-	// ShowElapsedTime, ShowTimeLeft が経過時間と残り時間を表示するためのオプションです
-
-	// プログレスバーのカスタムテンプレートを設定
-	template := `{{ string . "prefix" }} {{counters . "%s/%s" "%s/?"}} {{bar . }} {{percent . "%.03f%%" "?"}} {{etime . "%s elapsed"}} {{rtime . "%s remain" "%s total" "???"}}`
-
-	// プログレスバーの作成
-	bar := pb.ProgressBarTemplate(template).Start(total)
-
-	return bar
 }

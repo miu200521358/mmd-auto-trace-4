@@ -11,6 +11,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
@@ -19,12 +20,12 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allPrevMotions)
+	totalFrames := 0
 	for _, rotMotion := range allPrevMotions {
-		totalFrames += int(rotMotion.GetMaxFrame() - rotMotion.GetMinFrame() + 1.0)
+		totalFrames += int(rotMotion.GetMaxFrame()-rotMotion.GetMinFrame()+1.0) * 2
 	}
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 	var wg sync.WaitGroup
 
 	for i := range allPrevMotions {
@@ -96,18 +97,18 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 			leftLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno)
 			prevLeftAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(prevFno).Position
 			nowLeftAnklePos3 := leftLegIkBf.Position
-			leftAnkleDiff3 = *prevLeftAnklePos3.Subed(nowLeftAnklePos3)
+			leftAnkleDiff3 = prevLeftAnklePos3.Subed(nowLeftAnklePos3)
 			leftAnkleDiff3.SetY(0)
 			if leftAnkleDiff2.Length() < stopThreshold {
 				// 完全停止
-				leftLegIkBf.Position.Add(&leftAnkleDiff3)
+				leftLegIkBf.Position.Add(leftAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					fno, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
 			} else {
 				// 緩やかに停止
-				leftAnkleDiff3 = *leftAnkleDiff3.MulScalar(lt)
-				leftLegIkBf.Position.Add(&leftAnkleDiff3)
+				leftAnkleDiff3 = leftAnkleDiff3.MulScalar(lt)
+				leftLegIkBf.Position.Add(leftAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Left(), leftLegIkBf)
 				mlog.V("[LEFT MINI STOP][%d] lt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					fno, lt, prevLeftAnklePos2, leftAnklePos2, leftAnkleDiff2.Length(), prevLeftAnklePos3, nowLeftAnklePos3, leftAnkleDiff3)
@@ -118,18 +119,18 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 			rightLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno)
 			prevRightAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(prevFno).Position
 			nowRightAnklePos3 := rightLegIkBf.Position
-			rightAnkleDiff3 = *prevRightAnklePos3.Subed(nowRightAnklePos3)
+			rightAnkleDiff3 = prevRightAnklePos3.Subed(nowRightAnklePos3)
 			rightAnkleDiff3.SetY(0)
 			if rightAnkleDiff2.Length() < stopThreshold {
 				// 完全停止
-				rightLegIkBf.Position.Add(&rightAnkleDiff3)
+				rightLegIkBf.Position.Add(rightAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT STOP][%d] prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					fno, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)
 			} else {
 				// 緩やかに停止
-				rightAnkleDiff3 = *rightAnkleDiff3.MulScalar(rt)
-				rightLegIkBf.Position.Add(&rightAnkleDiff3)
+				rightAnkleDiff3 = rightAnkleDiff3.MulScalar(rt)
+				rightLegIkBf.Position.Add(rightAnkleDiff3)
 				motion.AppendRegisteredBoneFrame(pmx.LEG_IK.Right(), rightLegIkBf)
 				mlog.V("[RIGHT MINI STOP][%d] rt: %f, prevAnklePos2: %v, AnklePos2: %v, AnkleDiff2: %v, prevAnklePos3: %v, nowAnklePos3: %v, AnkleDiff3: %v",
 					fno, rt, prevRightAnklePos2, rightAnklePos2, rightAnkleDiff2.Length(), prevRightAnklePos3, nowRightAnklePos3, rightAnkleDiff3)

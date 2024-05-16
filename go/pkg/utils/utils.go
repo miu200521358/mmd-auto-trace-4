@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
 )
@@ -45,4 +46,16 @@ func ReadVmdFiles(allVmdPaths []string) ([]*vmd.VmdMotion, error) {
 	}
 
 	return allPrevMotions, nil
+}
+
+func NewProgressBar(total int) *pb.ProgressBar {
+	// ShowElapsedTime, ShowTimeLeft が経過時間と残り時間を表示するためのオプションです
+
+	// プログレスバーのカスタムテンプレートを設定
+	template := `{{ string . "prefix" }} {{counters . "%s/%s" "%s/?"}} {{bar . }} {{percent . "%.03f%%" "?"}} {{etime . "%s elapsed"}} {{rtime . "%s remain" "%s total" "???"}}`
+
+	// プログレスバーの作成
+	bar := pb.ProgressBarTemplate(template).Start(total)
+
+	return bar
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
@@ -20,7 +21,7 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 	allGroundMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
-	totalFrames := len(allPrevMotions)
+	totalFrames := 0
 	for _, prevMotion := range allPrevMotions {
 
 		minFno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
@@ -38,7 +39,7 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 	model := data.(*pmx.PmxModel)
 	model.SetUp()
 
-	bar := newProgressBar(totalFrames)
+	bar := utils.NewProgressBar(totalFrames)
 
 	// Create a WaitGroup
 	var wg sync.WaitGroup
@@ -192,11 +193,11 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 				ankleHQuat := mmath.NewMQuaternionFromAxisAngles(ankleHAxis, ankleHRad)
 
 				// 足首の向きを調整する角度
-				ankleQuat := ankleHQuat.Muled(&ankleVQuat).Muled(motion.BoneFrames.GetItem(ankleBoneName).Get(fno).Rotation.GetQuaternion())
+				ankleQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.GetItem(ankleBoneName).Get(fno).Rotation.GetQuaternion())
 				motion.BoneFrames.GetItem(ankleBoneName).Get(fno).Rotation.SetQuaternion(ankleQuat)
 
 				// 足ＩＫの向きを調整する角度
-				legIkQuat := ankleHQuat.Muled(&ankleVQuat).Muled(motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Rotation.GetQuaternion())
+				legIkQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Rotation.GetQuaternion())
 				motion.BoneFrames.GetItem(legIkBoneName).Get(fno).Rotation.SetQuaternion(legIkQuat)
 			}
 		}
