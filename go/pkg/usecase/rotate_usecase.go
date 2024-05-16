@@ -65,10 +65,10 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
 	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
 
-	for _, fno := range movMotion.BoneFrames.GetItem("Camera").RegisteredIndexes.List() {
+	for _, fno := range movMotion.BoneFrames.Get("Camera").RegisteredIndexes.List() {
 		{
 			bf := vmd.NewBoneFrame(fno)
-			bf.Position = movMotion.BoneFrames.GetItem("Camera").Get(fno).Position
+			bf.Position = movMotion.BoneFrames.Get("Camera").Get(fno).Position
 			rotMotion.AppendRegisteredBoneFrame(pmx.CENTER.String(), bf)
 		}
 	}
@@ -90,7 +90,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			}
 		}
 
-		for _, fno := range movMotion.BoneFrames.GetItem(boneConfig.Name).RegisteredIndexes.List() {
+		for _, fno := range movMotion.BoneFrames.Get(boneConfig.Name).RegisteredIndexes.List() {
 			if boneConfig.Name == pmx.WRIST.Left() && frames.Frames[fno].Mediapipe["left wrist"].Visibility < 0.85 {
 				continue
 			} else if boneConfig.Name == pmx.WRIST.Right() && frames.Frames[fno].Mediapipe["right wrist"].Visibility < 0.85 {
@@ -98,10 +98,10 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			}
 
 			// モデルのボーン角度
-			boneDirectionFrom := model.Bones.GetItemByName(boneConfig.DirectionFrom).Position
-			boneDirectionTo := model.Bones.GetItemByName(boneConfig.DirectionTo).Position
-			boneUpFrom := model.Bones.GetItemByName(boneConfig.UpFrom).Position
-			boneUpTo := model.Bones.GetItemByName(boneConfig.UpTo).Position
+			boneDirectionFrom := model.Bones.GetByName(boneConfig.DirectionFrom).Position
+			boneDirectionTo := model.Bones.GetByName(boneConfig.DirectionTo).Position
+			boneUpFrom := model.Bones.GetByName(boneConfig.UpFrom).Position
+			boneUpTo := model.Bones.GetByName(boneConfig.UpTo).Position
 
 			boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
 			boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
@@ -113,15 +113,15 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
 			if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
 				// 手首だけはmediapipeから取る
-				motionDirectionFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).Get(fno).Position
-				motionDirectionToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.DirectionTo).Get(fno).Position
-				motionUpFromPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpFrom).Get(fno).Position
-				motionUpToPos = mpMovMotion.BoneFrames.GetItem(boneConfig.UpTo).Get(fno).Position
+				motionDirectionFromPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
+				motionDirectionToPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
+				motionUpFromPos = mpMovMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
+				motionUpToPos = mpMovMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
 			} else {
-				motionDirectionFromPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionFrom).Get(fno).Position
-				motionDirectionToPos = movMotion.BoneFrames.GetItem(boneConfig.DirectionTo).Get(fno).Position
-				motionUpFromPos = movMotion.BoneFrames.GetItem(boneConfig.UpFrom).Get(fno).Position
-				motionUpToPos = movMotion.BoneFrames.GetItem(boneConfig.UpTo).Get(fno).Position
+				motionDirectionFromPos = movMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
+				motionDirectionToPos = movMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
+				motionUpFromPos = movMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
+				motionUpToPos = movMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
 			}
 
 			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
@@ -133,7 +133,7 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 			// キャンセルボーン角度
 			cancelQuat := mmath.NewMQuaternion()
 			for _, cancelBoneName := range boneConfig.Cancels {
-				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.GetItem(cancelBoneName).Get(fno).Rotation.GetQuaternion())
+				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.Get(cancelBoneName).Get(fno).Rotation.GetQuaternion())
 			}
 
 			// 調整角度

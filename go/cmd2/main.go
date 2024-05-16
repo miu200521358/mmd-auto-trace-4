@@ -75,7 +75,7 @@ func main() {
 				for i, motion := range narrowReduceMotions {
 					mlog.I("Output Narrow Reduce Motion [%d/%d] ...", i, len(narrowReduceMotions))
 
-					motionName := fmt.Sprintf("%02d_reduce_narrow.vmd", i+1)
+					motionName := fmt.Sprintf("%02d_8_reduce_narrow.vmd", i+1)
 					motion.Path = filepath.Join(dirPath, motionName)
 					err := vmd.Write(motion)
 					if err != nil {
@@ -92,7 +92,7 @@ func main() {
 				for i, motion := range wideReduceMotions {
 					mlog.I("Output Wide Reduce Motion [%d/%d] ...", i, len(wideReduceMotions))
 
-					motionName := fmt.Sprintf("%02d_reduce_wide.vmd", i+1)
+					motionName := fmt.Sprintf("%02d_9_reduce_wide.vmd", i+1)
 					motion.Path = filepath.Join(dirPath, motionName)
 					err := vmd.Write(motion)
 					if err != nil {
@@ -150,13 +150,13 @@ func main() {
 			}
 
 			mlog.I("Convert Arm Ik Motion ================")
-			allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath, 500)
+			allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath, 100000)
 
 			{
 				for i, motion := range allArmIkMotions {
 					mlog.I("Output Full Motion [%d/%d] ...", i, len(allArmIkMotions))
 
-					motionName := fmt.Sprintf("%02d_arm_ik.vmd", i+1)
+					motionName := fmt.Sprintf("%02d_7_arm_ik.vmd", i+1)
 					motion.Path = filepath.Join(dirPath, motionName)
 					err := vmd.Write(motion)
 					if err != nil {
@@ -190,7 +190,7 @@ func main() {
 					for i, motion := range allHeelMotions {
 						mlog.I("Output Heel Motion [%d/%d] ...", i, len(allHeelMotions))
 
-						motionName := fmt.Sprintf("%02d_heel.vmd", i+1)
+						motionName := fmt.Sprintf("%02d_6_heel.vmd", i+1)
 						motion.Path = filepath.Join(dirPath, motionName)
 						err := vmd.Write(motion)
 						if err != nil {
@@ -224,7 +224,7 @@ func main() {
 						for i, motion := range allGroundMotions {
 							mlog.I("Output Ground Motion [%d/%d] ...", i, len(allGroundMotions))
 
-							motionName := fmt.Sprintf("%02d_ground.vmd", i+1)
+							motionName := fmt.Sprintf("%02d_5_ground.vmd", i+1)
 							motion.Path = filepath.Join(dirPath, motionName)
 							err := vmd.Write(motion)
 							if err != nil {
@@ -275,7 +275,7 @@ func main() {
 							for i, motion := range allLegIkMotions {
 								mlog.I("Output Leg IK Motion [%d/%d] ...", i, len(allLegIkMotions))
 
-								motionName := fmt.Sprintf("%02d_leg_ik.vmd", i+1)
+								motionName := fmt.Sprintf("%02d_4_leg_ik.vmd", i+1)
 								motion.Path = filepath.Join(dirPath, motionName)
 								err := vmd.Write(motion)
 								if err != nil {
@@ -323,7 +323,7 @@ func main() {
 								for i, motion := range allRotateMotions {
 									mlog.I("Output Rotate Motion [%d/%d] ...", i, len(allRotateMotions))
 
-									motionName := fmt.Sprintf("%02d_rotate.vmd", i+1)
+									motionName := fmt.Sprintf("%02d_3_rotate.vmd", i+1)
 									motion.Path = filepath.Join(dirPath, motionName)
 									err := vmd.Write(motion)
 									if err != nil {
@@ -343,7 +343,7 @@ func main() {
 								for i, motion := range allMoveMotions {
 									mlog.I("Output Move Motion [%d/%d] ...", i, len(allMoveMotions))
 
-									motionName := fmt.Sprintf("%02d_move.vmd", i+1)
+									motionName := fmt.Sprintf("%02d_1_move.vmd", i+1)
 									motion.Path = filepath.Join(dirPath, motionName)
 									err := vmd.Write(motion)
 									if err != nil {
@@ -355,7 +355,7 @@ func main() {
 								for i, motion := range allMpMoveMotions {
 									mlog.I("Output mediapipe Move Motion [%d/%d] ...", i, len(allMpMoveMotions))
 
-									motionName := fmt.Sprintf("%02d_mp-move.vmd", i+1)
+									motionName := fmt.Sprintf("%02d_2_mp-move.vmd", i+1)
 									motion.Path = filepath.Join(dirPath, motionName)
 									err := vmd.Write(motion)
 									if err != nil {

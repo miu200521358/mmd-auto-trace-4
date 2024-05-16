@@ -61,8 +61,8 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64, space int, bar *pb.ProgressBar) *vmd.VmdMotion {
 	motion := vmd.NewVmdMotion(strings.Replace(prevMotion.Path, "_heel.vmd", "_fix.vmd", -1))
 
-	minFno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMinFrame()
-	maxFno := prevMotion.BoneFrames.GetItem(pmx.CENTER.String()).GetMaxFrame()
+	minFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
+	maxFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 
 	{
 		// 移動
@@ -91,17 +91,17 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 
 			for boneName := range prevMotion.BoneFrames.Data {
 				if _, ok := moveXs[boneName]; ok {
-					bf := prevMotion.BoneFrames.GetItem(boneName).Get(fno)
+					bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
 					moveXs[boneName][i] = bf.Position.GetX()
 					moveYs[boneName][i] = bf.Position.GetY()
 					moveZs[boneName][i] = bf.Position.GetZ()
 				}
 				if _, ok := rots[boneName]; ok {
-					bf := prevMotion.BoneFrames.GetItem(boneName).Get(fno)
+					bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
 					if i == 0 {
 						rots[boneName][i] = 1.0
 					} else {
-						rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.GetItem(boneName).Get(fno - 1).Rotation.GetQuaternion())
+						rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.Get(boneName).Get(fno - 1).Rotation.GetQuaternion())
 					}
 					quats[boneName][i] = bf.Rotation.GetQuaternion()
 				}
@@ -191,8 +191,8 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 }
 
 func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno int, xs, ys, zs []float64, quats []*mmath.MQuaternion) {
-	startBf := motion.BoneFrames.GetItem(boneName).Get(startFno)
-	endBf := motion.BoneFrames.GetItem(boneName).Get(endFno)
+	startBf := motion.BoneFrames.Get(boneName).Get(startFno)
+	endBf := motion.BoneFrames.Get(boneName).Get(endFno)
 
 	if xs != nil && ys == nil && zs != nil {
 		startBf.Position = &mmath.MVec3{xs[0], 0, zs[0]}
@@ -227,7 +227,7 @@ func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno i
 		endBf.Curves.Rotate = mmath.NewCurveFromValues(rotTs)
 	}
 
-	if !motion.BoneFrames.GetItem(boneName).Contains(startFno) {
+	if !motion.BoneFrames.Get(boneName).Contains(startFno) {
 		// まだキーフレがない場合のみ開始キーフレ追加
 		motion.AppendRegisteredBoneFrame(boneName, startBf)
 	}

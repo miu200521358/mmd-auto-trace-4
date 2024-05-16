@@ -64,7 +64,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 	var prevLeftAnklePos2 *mmath.MVec2
 	var prevRightAnklePos2 *mmath.MVec2
 
-	for i, fno := range motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes.List() {
+	for i, fno := range motion.BoneFrames.Get(pmx.CENTER.String()).RegisteredIndexes.List() {
 		bar.Increment()
 
 		// 2d-jointの足首の位置を取得
@@ -84,7 +84,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 		leftAnkleDiff2 := leftAnklePos2.Subed(prevLeftAnklePos2)
 		rightAnkleDiff2 := rightAnklePos2.Subed(prevRightAnklePos2)
 
-		prevFno := motion.BoneFrames.GetItem(pmx.CENTER.String()).RegisteredIndexes.Prev(i)
+		prevFno := motion.BoneFrames.Get(pmx.CENTER.String()).RegisteredIndexes.Prev(i)
 
 		leftAnkleDiff3 := mmath.NewMVec3()
 		rightAnkleDiff3 := mmath.NewMVec3()
@@ -94,8 +94,8 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 
 		// ほぼ動いていない場合、足IKを止める
 		if 0.0 < lt && lt < 1.0 {
-			leftLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(fno)
-			prevLeftAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Left()).Get(prevFno).Position
+			leftLegIkBf := motion.BoneFrames.Get(pmx.LEG_IK.Left()).Get(fno)
+			prevLeftAnklePos3 := motion.BoneFrames.Get(pmx.LEG_IK.Left()).Get(prevFno).Position
 			nowLeftAnklePos3 := leftLegIkBf.Position
 			leftAnkleDiff3 = prevLeftAnklePos3.Subed(nowLeftAnklePos3)
 			leftAnkleDiff3.SetY(0)
@@ -116,8 +116,8 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 		}
 
 		if 0.0 < rt && rt < 1.0 {
-			rightLegIkBf := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(fno)
-			prevRightAnklePos3 := motion.BoneFrames.GetItem(pmx.LEG_IK.Right()).Get(prevFno).Position
+			rightLegIkBf := motion.BoneFrames.Get(pmx.LEG_IK.Right()).Get(fno)
+			prevRightAnklePos3 := motion.BoneFrames.Get(pmx.LEG_IK.Right()).Get(prevFno).Position
 			nowRightAnklePos3 := rightLegIkBf.Position
 			rightAnkleDiff3 = prevRightAnklePos3.Subed(nowRightAnklePos3)
 			rightAnkleDiff3.SetY(0)
@@ -142,7 +142,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 			ratioLeftAnkleDiff3 := leftAnkleDiff3.MuledScalar(lt)
 			ratioRightAnkleDiff3 := rightAnkleDiff3.MuledScalar(rt)
 			meanAnkleDiff := ratioLeftAnkleDiff3.Add(ratioRightAnkleDiff3).MulScalar(0.5)
-			centerBf := motion.BoneFrames.GetItem(pmx.CENTER.String()).Get(fno)
+			centerBf := motion.BoneFrames.Get(pmx.CENTER.String()).Get(fno)
 			centerBf.Position.Add(meanAnkleDiff)
 			motion.AppendRegisteredBoneFrame(pmx.CENTER.String(), centerBf)
 
