@@ -81,12 +81,20 @@ def convert(all_lib_data: list[dict], output_dir_path):
             break
 
     prev_last_key = 0
+    max_track_id = 0
+    track_ids = []
+
     for lib_data in all_lib_data:
         for k1 in tqdm(sorted(lib_data.keys())):
             v1 = lib_data[k1]
             time = v1["time"] + prev_last_key
 
-            for t, tracked_id in enumerate(v1["tracked_ids"]):
+            for t, tid in enumerate(v1["tracked_ids"]):
+                tracked_id = int(tid) + max_track_id
+
+                if tracked_id not in track_ids:
+                    track_ids.append(tracked_id)
+
                 if tracked_id not in all_data:
                     all_data[tracked_id] = {}
                 all_data[tracked_id][time] = {}
@@ -95,7 +103,9 @@ def convert(all_lib_data: list[dict], output_dir_path):
                         v1["tracked_bbox"][t].astype(np.float64).tolist()
                     )
                 if t < len(v1["conf"]):
-                    all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(np.float64)
+                    all_data[tracked_id][time]["conf"] = v1["conf"][t].astype(
+                        np.float64
+                    )
 
                 if t < len(v1["camera"]):
                     cam_pos = v1["camera"][t].astype(np.float64).tolist()
@@ -120,13 +130,18 @@ def convert(all_lib_data: list[dict], output_dir_path):
                     for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                         all_data[tracked_id][time]["global_3d_joints"][jname] = {
                             "x": joint[0] + all_data[tracked_id][time]["camera"]["x"],
-                            "y": -(joint[1] + all_data[tracked_id][time]["camera"]["y"]),
+                            "y": -(
+                                joint[1] + all_data[tracked_id][time]["camera"]["y"]
+                            ),
                             "z": joint[2]
-                            + (all_data[tracked_id][time]["camera"]["z"] - start_z) * 0.05,
+                            + (all_data[tracked_id][time]["camera"]["z"] - start_z)
+                            * 0.05,
                         }
 
                 if t < len(v1["2d_joints"]):
-                    joints = v1["2d_joints"][t].reshape(-1, 2).astype(np.float64).tolist()
+                    joints = (
+                        v1["2d_joints"][t].reshape(-1, 2).astype(np.float64).tolist()
+                    )
 
                     all_data[tracked_id][time]["2d_joints"] = {}
                     for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
@@ -134,6 +149,10 @@ def convert(all_lib_data: list[dict], output_dir_path):
                             "x": joint[0],
                             "y": joint[1],
                         }
+
+        # pkl単位で分割
+        max_track_id = max(track_ids)
+
         # 終わったら最後のキーを保持
         prev_last_key = int(sorted(lib_data.keys())[-1])
 
@@ -141,11 +160,12 @@ def convert(all_lib_data: list[dict], output_dir_path):
         log.error("No data to convert!")
         return
 
-    for tracked_id in sorted(all_data.keys()):
+    for tracked_id in tqdm(sorted(all_data.keys())):
         json_path = os.path.join(output_dir_path, f"{tracked_id:02d}_original.json")
         with open(json_path, "w") as f:
             json.dump({"frames": all_data[tracked_id]}, f, indent=4)
-        log.info(f"Saved: {json_path}")
+        # log.info(f"Saved: {json_path}")
+
 
 def main(output_dir_path):
     log.info("Start: pkl to json =============================")
@@ -159,7 +179,6 @@ def main(output_dir_path):
 
     log.info("End: pkl to json =============================")
 
+
 if __name__ == "__main__":
-
     main(sys.argv[1])
-

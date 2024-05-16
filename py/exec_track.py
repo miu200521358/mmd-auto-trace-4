@@ -183,15 +183,15 @@ class HMR2_4dhuman(PHALP):
                 lib_data = joblib.load(f)
                 last_frame = sorted(lib_data.keys())[-1]
                 log.info(f"Prev Last Frame: {last_frame}")
-                cfg.phalp.start_frame = last_frame
+                cfg.phalp.start_frame = last_frame - 2
         else:
             # まだpklファイルが出ていない場合、end_of_frameファイルを削除
-            cfg.phalp.start_frame = 0
+            cfg.phalp.start_frame = -1
             if os.path.exists(os.path.join(cfg.video.output_dir, "end_of_frame")):
                 os.remove(os.path.join(cfg.video.output_dir, "end_of_frame"))
 
         # 単位で区切る
-        cfg.phalp.end_frame = cfg.phalp.start_frame + cfg.block_frame_num
+        cfg.phalp.end_frame = cfg.phalp.start_frame + cfg.block_frame_num + 1
 
         super().__init__(cfg)
 

@@ -38,30 +38,4 @@ for i in "${!output_dirs[@]}"; do
     echo "convert -----------------"
     python py/exec_cpu.py "${dir_path}"
 
-    # # pkl2json
-    # echo "pkl2json -----------------"
-    # python py/convert_pkl2json.py "${dir_path}"
-    # # mediapipe
-    # echo "mediapipe -----------------"
-    # python py/exec_mediapipe.py --video "${paths[i]}" --output_dir "${dir_path}"
-
-    # # jsonをコピー
-    # echo "copy json -----------------"
-    # cp ${output_dirs[i]}/*.json "${dir_path}"
-
-    # # 平滑化
-    # echo "smooth -----------------"
-    # python py/smooth.py "${dir_path}"
-
-    # # jsonをコピー
-    # echo "copy json -----------------"
-    # cp ${output_dirs[i]}/*.json "${dir_path}"
-
-    # # vmdをコピー
-    # echo "copy json -----------------"
-    # cp ${output_dirs[i]}/*.vmd "${dir_path}"
-
-    # # vmd変換処理(一括)
-    # echo "vmd convert -----------------"
-    # ./build/mat4 -modelPath=$model_path -dirPath="${dir_path}"
 done
