@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-import convert_pkl2json
+import py.exec_pkl2json as exec_pkl2json
 import exec_mediapipe
 import exec_smooth
 import exec_track
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         )
         if not original_json_paths:
             # まだjson変換出来ていない場合、変換
-            convert_pkl2json.main(output_dir_path)
+            exec_pkl2json.main(output_dir_path)
         else:
             mp_json_paths = glob(os.path.join(cfg.video.output_dir, "*_mp.json"))
             if not mp_json_paths:

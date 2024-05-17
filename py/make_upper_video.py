@@ -7,7 +7,7 @@ import joblib
 import numpy as np
 from tqdm import tqdm
 from phalp.utils.trace_io import TraceFrameExtractor
-from convert_pkl2json import JOINT_INDEXES
+from py.exec_pkl2json import JOINT_INDEXES
 
 
 def make_upper_video(video_path, pkl_path):

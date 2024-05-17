@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"sync"
@@ -44,10 +43,10 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 
 		go func(i int, frames *model.Frames) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Convert Move ...", i, len(allFrames))
+			defer mlog.I("[%d/%d] Convert Move ...", i+1, len(allFrames))
 
 			movMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_move.vmd", -1))
-			movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
+			// movMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
 
 			// mpMovMotion := vmd.NewVmdMotion(strings.Replace(frames.Path, "_smooth.json", "_mp-move.vmd", -1))
 			// mpMovMotion.SetName(fmt.Sprintf("MAT4 Move %02d", i+1))
@@ -64,10 +63,10 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 
 				for jointName, pos := range frame.Joint3D {
 					// 4D-Humansのジョイント移動モーション出力
-					bf := vmd.NewBoneFrame(fno)
-					bf.Position.SetX(pos.X * RATIO)
-					bf.Position.SetY(pos.Y * RATIO)
-					bf.Position.SetZ(pos.Z * RATIO)
+					// bf := vmd.NewBoneFrame(fno)
+					// bf.Position.SetX(pos.X * RATIO)
+					// bf.Position.SetY(pos.Y * RATIO)
+					// bf.Position.SetZ(pos.Z * RATIO)
 					// jointMotion.AppendRegisteredBoneFrame(string(jointName), bf)
 
 					// ボーン名がある場合、ボーン移動モーションにも出力
@@ -180,12 +179,12 @@ func Move(allFrames []*model.Frames) []*vmd.VmdMotion {
 			// 	}
 			// }
 
-			if mlog.IsDebug() {
-				err := vmd.Write(movMotion)
-				if err != nil {
-					mlog.E("Failed to write move vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(movMotion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write move vmd: %v", err)
+			// 	}
+			// }
 
 			// if mlog.IsDebug() {
 			// 	err := vmd.Write(mpMovMotion)

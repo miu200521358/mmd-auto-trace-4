@@ -2,13 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
-	"github.com/miu200521358/mlib_go/pkg/vmd"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
+	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
 var logLevel string
@@ -45,33 +44,45 @@ func main() {
 	mlog.I("Move Motion ================")
 	allMoveMotions := usecase.Move(allFrames)
 
+	// モーションを出力する
+	if mlog.IsDebug() {
+		utils.WriteVmdMotions(allFrames, allMoveMotions, dirPath, "1_move", "Move")
+	}
+
 	mlog.I("Rotate Motion ================")
-	allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, modelPath)
+	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
+
+	if mlog.IsDebug() {
+		utils.WriteVmdMotions(allFrames, allRotateMotions, dirPath, "2_rotate", "Rotate")
+	}
 
 	mlog.I("Convert Leg Ik Motion ================")
-	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, nil, modelPath, 100000)
+	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
+
+	if mlog.IsDebug() {
+		utils.WriteVmdMotions(allFrames, allLegIkMotions, dirPath, "3_leg_ik", "Leg Ik")
+	}
 
 	mlog.I("Fix Ground Motion ================")
 	allGroundMotions := usecase.FixGround(allLegIkMotions, modelPath)
 
+	if mlog.IsDebug() {
+		utils.WriteVmdMotions(allFrames, allGroundMotions, dirPath, "4_ground", "Ground")
+	}
+
 	mlog.I("Fix Heel Motion ================")
 	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
+	if mlog.IsDebug() {
+		utils.WriteVmdMotions(allFrames, allHeelMotions, dirPath, "5_heel", "Heel")
+	}
+
 	mlog.I("Convert Arm Ik Motion ================")
-	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, nil, modelPath, 100000)
+	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
 
 	// モーションを出力する
 	{
-		for i, motion := range allArmIkMotions {
-			mlog.I("Output Full Motion [%d/%d] ...", i, len(allArmIkMotions))
-
-			motionName := fmt.Sprintf("%02d_full.vmd", i+1)
-			motion.Path = filepath.Join(dirPath, motionName)
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write full vmd: %v", err)
-			}
-		}
+		utils.WriteVmdMotions(allFrames, allArmIkMotions, dirPath, "full", "Full")
 	}
 
 	mlog.I("Reduce Motion [narrow] ================")
@@ -79,16 +90,7 @@ func main() {
 
 	// モーションを出力する
 	{
-		for i, motion := range narrowReduceMotions {
-			mlog.I("Output Narrow Reduce Motion [%d/%d] ...", i, len(narrowReduceMotions))
-
-			motionName := fmt.Sprintf("%02d_reduce_narrow.vmd", i+1)
-			motion.Path = filepath.Join(dirPath, motionName)
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write narrow reduce vmd: %v", err)
-			}
-		}
+		utils.WriteVmdMotions(allFrames, narrowReduceMotions, dirPath, "reduce_narrow", "Narrow Reduce")
 	}
 
 	mlog.I("Reduce Motion [wide] ================")
@@ -96,16 +98,7 @@ func main() {
 
 	// モーションを出力する
 	{
-		for i, motion := range wideReduceMotions {
-			mlog.I("Output Wide Reduce Motion [%d/%d] ...", i, len(wideReduceMotions))
-
-			motionName := fmt.Sprintf("%02d_reduce_wide.vmd", i+1)
-			motion.Path = filepath.Join(dirPath, motionName)
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write wide reduce vmd: %v", err)
-			}
-		}
+		utils.WriteVmdMotions(allFrames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce")
 	}
 
 	// complete ファイルを出力する

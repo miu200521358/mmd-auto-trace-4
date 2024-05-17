@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -11,11 +10,10 @@ import (
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
 	"github.com/miu200521358/mlib_go/pkg/vmd"
-	"github.com/miu200521358/mmd-auto-trace-4/pkg/model"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
+func Rotate(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Rotate =============================")
 
 	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
@@ -40,16 +38,16 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPat
 	var wg sync.WaitGroup
 
 	// Iterate over allMoveMotions in parallel
-	for i, frames := range allFrames {
+	for i, prevMotion := range allPrevMotions {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
-		go func(i int, frames *model.Frames) {
+		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Convert Rotate ...", i, len(allPrevMotions))
+			defer mlog.I("[%d/%d] Convert Rotate ...", i+1, len(allPrevMotions))
 
-			allRotateMotions[i] = convertMov2Rotate(frames, pmxModel, allPrevMotions[i], i, bar)
-		}(i, frames)
+			allRotateMotions[i] = convertMov2Rotate(pmxModel, prevMotion, i, bar)
+		}(i, prevMotion)
 	}
 
 	wg.Wait()
@@ -60,10 +58,12 @@ func Rotate(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPat
 	return allRotateMotions
 }
 
-func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
+func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
 
 	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
-	rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
+	// rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
+
+	mlog.I("Convert Rotate Motion[%d] startFno: %d", i, movMotion.BoneFrames.Get("Camera").RegisteredIndexes.Min())
 
 	for _, fno := range movMotion.BoneFrames.Get("Camera").RegisteredIndexes.List() {
 		{
@@ -91,12 +91,6 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		// }
 
 		for _, fno := range movMotion.BoneFrames.Get(boneConfig.Name).RegisteredIndexes.List() {
-			if boneConfig.Name == pmx.WRIST.Left() && frames.Frames[fno].Mediapipe["left wrist"].Visibility < 0.85 {
-				continue
-			} else if boneConfig.Name == pmx.WRIST.Right() && frames.Frames[fno].Mediapipe["right wrist"].Visibility < 0.85 {
-				continue
-			}
-
 			// モデルのボーン角度
 			boneDirectionFrom := model.Bones.GetByName(boneConfig.DirectionFrom).Position
 			boneDirectionTo := model.Bones.GetByName(boneConfig.DirectionTo).Position
@@ -149,12 +143,12 @@ func convertMov2Rotate(frames *model.Frames, model *pmx.PmxModel, movMotion *vmd
 		}
 	}
 
-	if mlog.IsDebug() {
-		err := vmd.Write(rotMotion)
-		if err != nil {
-			mlog.E("Failed to write rotate vmd: %v", err)
-		}
-	}
+	// if mlog.IsDebug() {
+	// 	err := vmd.Write(rotMotion)
+	// 	if err != nil {
+	// 		mlog.E("Failed to write rotate vmd: %v", err)
+	// 	}
+	// }
 
 	return rotMotion
 }

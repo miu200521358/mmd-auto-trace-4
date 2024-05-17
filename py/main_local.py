@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-import convert_pkl2json
+import py.exec_pkl2json as exec_pkl2json
 import exec_mediapipe
 import exec_smooth
 import exec_track
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     time.sleep(3)
 
-    convert_pkl2json.main(output_dir_path)
+    exec_pkl2json.main(output_dir_path)
 
     time.sleep(3)
 

@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -32,19 +31,19 @@ func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, ro
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Reduce ...", i, len(allPrevMotions))
+			defer mlog.I("[%d/%d] Reduce ...", i+1, len(allPrevMotions))
 
 			motion := reduceMotion(prevMotion, moveTolerance, rotTolerance, space, bar)
 
-			motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)
-			motion.SetName(fmt.Sprintf("MAT4 Reduce %s %02d", reduceName, i+1))
+			// motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)
+			// motion.SetName(fmt.Sprintf("MAT4 Reduce %s %02d", reduceName, i+1))
 
-			if mlog.IsDebug() {
-				err := vmd.Write(motion)
-				if err != nil {
-					mlog.E("Failed to write reduce vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(motion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write reduce vmd: %v", err)
+			// 	}
+			// }
 
 			allMotions[i] = motion
 		}(i, allPrevMotions[i])
@@ -63,126 +62,125 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 
 	minFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
 	maxFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
+	fnoCounts := maxFno - minFno + 1
 
-	{
-		// 移動
-		moveXs := make(map[string][]float64)
-		moveYs := make(map[string][]float64)
-		moveZs := make(map[string][]float64)
-		for _, boneName := range []string{pmx.CENTER.String(), pmx.LEG_IK.Left(), pmx.LEG_IK.Right()} {
-			moveXs[boneName] = make([]float64, int(maxFno-minFno+1))
-			moveYs[boneName] = make([]float64, int(maxFno-minFno+1))
-			moveZs[boneName] = make([]float64, int(maxFno-minFno+1))
+	// 移動
+	moveXs := make(map[string][]float64)
+	moveYs := make(map[string][]float64)
+	moveZs := make(map[string][]float64)
+	for _, boneName := range []string{pmx.CENTER.String(), pmx.LEG_IK.Left(), pmx.LEG_IK.Right()} {
+		moveXs[boneName] = make([]float64, fnoCounts)
+		moveYs[boneName] = make([]float64, fnoCounts)
+		moveZs[boneName] = make([]float64, fnoCounts)
+	}
+
+	// 回転
+	rots := make(map[string][]float64)
+	quats := make(map[string][]*mmath.MQuaternion)
+	for boneName := range prevMotion.BoneFrames.Data {
+		if boneName != pmx.CENTER.String() {
+			rots[boneName] = make([]float64, fnoCounts)
+			quats[boneName] = make([]*mmath.MQuaternion, fnoCounts)
 		}
+	}
 
-		// 回転
-		rots := make(map[string][]float64)
-		quats := make(map[string][]*mmath.MQuaternion)
+	for i := range fnoCounts {
+		bar.Increment()
+		fno := i + minFno
+
 		for boneName := range prevMotion.BoneFrames.Data {
-			if boneName != pmx.CENTER.String() {
-				rots[boneName] = make([]float64, int(maxFno-minFno+1))
-				quats[boneName] = make([]*mmath.MQuaternion, int(maxFno-minFno+1))
+			if _, ok := moveXs[boneName]; ok {
+				bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
+				moveXs[boneName][i] = bf.Position.GetX()
+				moveYs[boneName][i] = bf.Position.GetY()
+				moveZs[boneName][i] = bf.Position.GetZ()
 			}
-		}
-
-		for i := 0; i <= int(maxFno-minFno); i += 1 {
-			bar.Increment()
-			fno := int(i) + minFno
-
-			for boneName := range prevMotion.BoneFrames.Data {
-				if _, ok := moveXs[boneName]; ok {
-					bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
-					moveXs[boneName][i] = bf.Position.GetX()
-					moveYs[boneName][i] = bf.Position.GetY()
-					moveZs[boneName][i] = bf.Position.GetZ()
+			if _, ok := rots[boneName]; ok {
+				bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
+				if i == 0 {
+					rots[boneName][i] = 1.0
+				} else {
+					rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.Get(boneName).Get(fno - 1).Rotation.GetQuaternion())
 				}
-				if _, ok := rots[boneName]; ok {
-					bf := prevMotion.BoneFrames.Get(boneName).Get(fno)
-					if i == 0 {
-						rots[boneName][i] = 1.0
-					} else {
-						rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.Get(boneName).Get(fno - 1).Rotation.GetQuaternion())
-					}
-					quats[boneName][i] = bf.Rotation.GetQuaternion()
-				}
+				quats[boneName][i] = bf.Rotation.GetQuaternion()
 			}
 		}
+	}
 
-		moveXInflections := make(map[string]map[int]int)
-		moveYInflections := make(map[string]map[int]int)
-		moveZInflections := make(map[string]map[int]int)
+	moveXInflections := make(map[string]map[int]int)
+	moveYInflections := make(map[string]map[int]int)
+	moveZInflections := make(map[string]map[int]int)
 
-		for boneName := range moveXs {
-			if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
-				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], moveTolerance, space)
-				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], moveTolerance, space)
-				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], moveTolerance, space)
-			} else {
-				moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], 0.12, space)
-				moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], 0.12, space)
-				moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], 0.12, space)
-			}
+	for boneName := range moveXs {
+		if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
+			moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], moveTolerance, space)
+			moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], moveTolerance, space)
+			moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], moveTolerance, space)
+		} else {
+			moveXInflections[boneName] = mmath.FindInflectionPoints(moveXs[boneName], 0.12, space)
+			moveYInflections[boneName] = mmath.FindInflectionPoints(moveYs[boneName], 0.12, space)
+			moveZInflections[boneName] = mmath.FindInflectionPoints(moveZs[boneName], 0.12, space)
 		}
+	}
 
-		rotInflections := make(map[string]map[int]int)
+	rotInflections := make(map[string]map[int]int)
 
-		for boneName := range rots {
-			if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
-				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], rotTolerance, space)
-			} else {
-				rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], 0.001, space)
-			}
+	for boneName := range rots {
+		if boneName != pmx.LEG_IK.Left() && boneName != pmx.LEG_IK.Right() {
+			rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], rotTolerance, space)
+		} else {
+			rotInflections[boneName] = mmath.FindInflectionPoints(rots[boneName], 0.001, space)
 		}
+	}
 
-		centerXZInflections := mmath.MergeInflectionPoints(moveXs[pmx.CENTER.String()],
-			[]map[int]int{moveXInflections[pmx.CENTER.String()], moveZInflections[pmx.CENTER.String()]}, space)
-		leftLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Left()],
-			[]map[int]int{moveXInflections[pmx.LEG_IK.Left()], moveYInflections[pmx.LEG_IK.Left()],
-				moveZInflections[pmx.LEG_IK.Left()], rotInflections[pmx.LEG_IK.Left()]}, space)
-		rightLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Right()],
-			[]map[int]int{moveXInflections[pmx.LEG_IK.Right()], moveYInflections[pmx.LEG_IK.Right()],
-				moveZInflections[pmx.LEG_IK.Right()], rotInflections[pmx.LEG_IK.Right()]}, space)
+	centerXZInflections := mmath.MergeInflectionPoints(moveXs[pmx.CENTER.String()],
+		[]map[int]int{moveXInflections[pmx.CENTER.String()], moveZInflections[pmx.CENTER.String()]}, space)
+	leftLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Left()],
+		[]map[int]int{moveXInflections[pmx.LEG_IK.Left()], moveYInflections[pmx.LEG_IK.Left()],
+			moveZInflections[pmx.LEG_IK.Left()], rotInflections[pmx.LEG_IK.Left()]}, space)
+	rightLegIkInflections := mmath.MergeInflectionPoints(moveXs[pmx.LEG_IK.Right()],
+		[]map[int]int{moveXInflections[pmx.LEG_IK.Right()], moveYInflections[pmx.LEG_IK.Right()],
+			moveZInflections[pmx.LEG_IK.Right()], rotInflections[pmx.LEG_IK.Right()]}, space)
 
-		delete(rotInflections, pmx.LEG_IK.Left())
-		delete(rotInflections, pmx.LEG_IK.Right())
+	delete(rotInflections, pmx.LEG_IK.Left())
+	delete(rotInflections, pmx.LEG_IK.Right())
 
-		for i := 0; i <= int(maxFno-minFno); i += 1 {
-			fno := int(i) + minFno
-			bar.Increment()
+	for i := range fnoCounts {
+		fno := int(i) + minFno
+		bar.Increment()
 
-			if _, ok := centerXZInflections[i]; ok {
-				// XZ (センター)
-				inflectionIndex := centerXZInflections[i]
-				appendCurveFrame(motion, pmx.CENTER.String(), fno, int(inflectionIndex)+minFno,
-					moveXs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, moveZs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil)
-			}
-			if _, ok := moveYInflections[pmx.CENTER.String()][i]; ok {
-				// Y (グルーブ)
-				inflectionIndex := moveYInflections[pmx.CENTER.String()][i]
-				appendCurveFrame(motion, pmx.GROOVE.String(), fno, int(inflectionIndex)+minFno,
-					nil, moveYs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, nil)
-			}
-			if _, ok := leftLegIkInflections[i]; ok {
-				// 左足IK
-				inflectionIndex := leftLegIkInflections[i]
-				appendCurveFrame(motion, pmx.LEG_IK.Left(), fno, int(inflectionIndex)+minFno,
-					moveXs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)],
-					quats[pmx.LEG_IK.Left()][i:(inflectionIndex+1)])
-			}
-			if _, ok := rightLegIkInflections[i]; ok {
-				// 右足IK
-				inflectionIndex := rightLegIkInflections[i]
-				appendCurveFrame(motion, pmx.LEG_IK.Right(), fno, int(inflectionIndex)+minFno,
-					moveXs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)],
-					quats[pmx.LEG_IK.Right()][i:(inflectionIndex+1)])
-			}
-			for boneName, rotInflection := range rotInflections {
-				// 回転ボーン
-				if _, ok := rotInflection[i]; ok {
-					inflectionIndex := rotInflection[i]
-					appendCurveFrame(motion, boneName, fno, int(inflectionIndex)+minFno,
-						nil, nil, nil, quats[boneName][i:(inflectionIndex+1)])
-				}
+		if _, ok := centerXZInflections[i]; ok {
+			// XZ (センター)
+			inflectionIndex := centerXZInflections[i]
+			appendCurveFrame(motion, pmx.CENTER.String(), fno, int(inflectionIndex)+minFno,
+				moveXs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, moveZs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil)
+		}
+		if _, ok := moveYInflections[pmx.CENTER.String()][i]; ok {
+			// Y (グルーブ)
+			inflectionIndex := moveYInflections[pmx.CENTER.String()][i]
+			appendCurveFrame(motion, pmx.GROOVE.String(), fno, int(inflectionIndex)+minFno,
+				nil, moveYs[pmx.CENTER.String()][i:(inflectionIndex+1)], nil, nil)
+		}
+		if _, ok := leftLegIkInflections[i]; ok {
+			// 左足IK
+			inflectionIndex := leftLegIkInflections[i]
+			appendCurveFrame(motion, pmx.LEG_IK.Left(), fno, int(inflectionIndex)+minFno,
+				moveXs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Left()][i:(inflectionIndex+1)],
+				quats[pmx.LEG_IK.Left()][i:(inflectionIndex+1)])
+		}
+		if _, ok := rightLegIkInflections[i]; ok {
+			// 右足IK
+			inflectionIndex := rightLegIkInflections[i]
+			appendCurveFrame(motion, pmx.LEG_IK.Right(), fno, int(inflectionIndex)+minFno,
+				moveXs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveYs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)], moveZs[pmx.LEG_IK.Right()][i:(inflectionIndex+1)],
+				quats[pmx.LEG_IK.Right()][i:(inflectionIndex+1)])
+		}
+		for boneName, rotInflection := range rotInflections {
+			// 回転ボーン
+			if _, ok := rotInflection[i]; ok {
+				inflectionIndex := rotInflection[i]
+				appendCurveFrame(motion, boneName, fno, int(inflectionIndex)+minFno,
+					nil, nil, nil, quats[boneName][i:(inflectionIndex+1)])
 			}
 		}
 	}
@@ -212,8 +210,9 @@ func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno i
 	}
 
 	if quats != nil {
-		startBf.Rotation.SetQuaternion(quats[0])
-		endBf.Rotation.SetQuaternion(quats[len(quats)-1])
+		startBf.Rotation = mmath.NewRotationByQuaternion(quats[0])
+		endBf.Rotation = mmath.NewRotationByQuaternion(quats[len(quats)-1])
+
 		rotTs := make([]float64, len(quats))
 		for i, rot := range quats {
 			if i == 0 {

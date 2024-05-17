@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -49,7 +48,7 @@ func main() {
 	// 処理の後ろから順に読んでいって、1つ処理が終わったら終了
 	// 全てのトレース作業完了したら、complete ファイルを出力する
 
-	armIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_arm_ik")
+	armIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_full")
 	if err != nil {
 		mlog.E("Failed to get arm ik vmd file paths: %v", err)
 		return
@@ -71,35 +70,13 @@ func main() {
 			narrowReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
 
 			// モーションを出力する
-			{
-				for i, motion := range narrowReduceMotions {
-					mlog.I("Output Narrow Reduce Motion [%d/%d] ...", i, len(narrowReduceMotions))
-
-					motionName := fmt.Sprintf("%02d_8_reduce_narrow.vmd", i+1)
-					motion.Path = filepath.Join(dirPath, motionName)
-					err := vmd.Write(motion)
-					if err != nil {
-						mlog.E("Failed to write narrow reduce vmd: %v", err)
-					}
-				}
-			}
+			utils.WriteVmdMotions(allFrames, narrowReduceMotions, dirPath, "reduce_narrow", "Narrow Reduce")
 
 			mlog.I("Reduce Motion [wide] ================")
 			wideReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
 
 			// モーションを出力する
-			{
-				for i, motion := range wideReduceMotions {
-					mlog.I("Output Wide Reduce Motion [%d/%d] ...", i, len(wideReduceMotions))
-
-					motionName := fmt.Sprintf("%02d_9_reduce_wide.vmd", i+1)
-					motion.Path = filepath.Join(dirPath, motionName)
-					err := vmd.Write(motion)
-					if err != nil {
-						mlog.E("Failed to write wide reduce vmd: %v", err)
-					}
-				}
-			}
+			utils.WriteVmdMotions(allFrames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce")
 
 			// complete ファイルを出力する
 			{
@@ -132,38 +109,10 @@ func main() {
 				return
 			}
 
-			prevArmIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_arm_ik-process")
-			if err != nil {
-				mlog.E("Failed to get arm vmd file paths: %v", err)
-				return
-			}
-
-			var prevArmIkMotions []*vmd.VmdMotion
-			if prevArmIkMotionPaths != nil {
-				// 腕IK(途中VMD) ------------
-				mlog.I("Read Arm Ik Process Motion ================")
-				prevArmIkMotions, err = utils.ReadVmdFiles(prevArmIkMotionPaths)
-				if err != nil {
-					mlog.E("Failed to read arm ik process motion: %v", err)
-					return
-				}
-			}
-
 			mlog.I("Convert Arm Ik Motion ================")
-			allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, prevArmIkMotions, modelPath, 100000)
+			allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
 
-			{
-				for i, motion := range allArmIkMotions {
-					mlog.I("Output Full Motion [%d/%d] ...", i, len(allArmIkMotions))
-
-					motionName := fmt.Sprintf("%02d_7_arm_ik.vmd", i+1)
-					motion.Path = filepath.Join(dirPath, motionName)
-					err := vmd.Write(motion)
-					if err != nil {
-						mlog.E("Failed to write full vmd: %v", err)
-					}
-				}
-			}
+			utils.WriteVmdMotions(allFrames, allArmIkMotions, dirPath, "full", "Full")
 
 			return
 		} else {
@@ -186,18 +135,7 @@ func main() {
 				mlog.I("Fix Heel Motion ================")
 				allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
 
-				{
-					for i, motion := range allHeelMotions {
-						mlog.I("Output Heel Motion [%d/%d] ...", i, len(allHeelMotions))
-
-						motionName := fmt.Sprintf("%02d_6_heel.vmd", i+1)
-						motion.Path = filepath.Join(dirPath, motionName)
-						err := vmd.Write(motion)
-						if err != nil {
-							mlog.E("Failed to write heel vmd: %v", err)
-						}
-					}
-				}
+				utils.WriteVmdMotions(allFrames, allHeelMotions, dirPath, "5_heel", "Heel")
 
 				return
 			} else {
@@ -220,18 +158,7 @@ func main() {
 					mlog.I("Fix Ground Motion ================")
 					allGroundMotions := usecase.FixGround(allLegIkMotions, modelPath)
 
-					{
-						for i, motion := range allGroundMotions {
-							mlog.I("Output Ground Motion [%d/%d] ...", i, len(allGroundMotions))
-
-							motionName := fmt.Sprintf("%02d_5_ground.vmd", i+1)
-							motion.Path = filepath.Join(dirPath, motionName)
-							err := vmd.Write(motion)
-							if err != nil {
-								mlog.E("Failed to write ground vmd: %v", err)
-							}
-						}
-					}
+					utils.WriteVmdMotions(allFrames, allGroundMotions, dirPath, "4_ground", "Ground")
 
 					return
 				} else {
@@ -251,38 +178,10 @@ func main() {
 							return
 						}
 
-						prevLegIkMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_leg_ik-process")
-						if err != nil {
-							mlog.E("Failed to get leg ik process vmd file paths: %v", err)
-							return
-						}
-
-						var prevLegIkMotions []*vmd.VmdMotion
-						if prevLegIkMotionPaths != nil {
-							// 足IK(途中VMD) ------------
-							mlog.I("Read Leg Ik Process Motion ================")
-							prevLegIkMotions, err = utils.ReadVmdFiles(prevLegIkMotionPaths)
-							if err != nil {
-								mlog.E("Failed to read leg ik process motion: %v", err)
-								return
-							}
-						}
-
 						mlog.I("Convert Leg Ik Motion ================")
-						allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, prevLegIkMotions, modelPath, 100000)
+						allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
 
-						{
-							for i, motion := range allLegIkMotions {
-								mlog.I("Output Leg IK Motion [%d/%d] ...", i, len(allLegIkMotions))
-
-								motionName := fmt.Sprintf("%02d_4_leg_ik.vmd", i+1)
-								motion.Path = filepath.Join(dirPath, motionName)
-								err := vmd.Write(motion)
-								if err != nil {
-									mlog.E("Failed to write leg ik vmd: %v", err)
-								}
-							}
-						}
+						utils.WriteVmdMotions(allFrames, allLegIkMotions, dirPath, "3_leg_ik", "Leg Ik")
 
 						return
 
@@ -293,14 +192,8 @@ func main() {
 							return
 						}
 
-						moveMpMotionPaths, err := utils.GetVmdFilePaths(dirPath, "_mp-move")
-						if err != nil {
-							mlog.E("Failed to get move vmd file paths: %v", err)
-							return
-						}
-
 						var allMoveMotions []*vmd.VmdMotion
-						if moveMotionPaths != nil && moveMpMotionPaths != nil {
+						if moveMotionPaths != nil {
 							// 回転 ------------
 							mlog.I("Read Move Motion ================")
 							allMoveMotions, err = utils.ReadVmdFiles(moveMotionPaths)
@@ -309,28 +202,10 @@ func main() {
 								return
 							}
 
-							// mlog.I("Read Move Mp Motion ================")
-							// allMpMoveMotions, err = utils.ReadVmdFiles(moveMpMotionPaths)
-							// if err != nil {
-							// 	mlog.E("Failed to read move mp motion: %v", err)
-							// 	return
-							// }
-
 							mlog.I("Rotate Motion ================")
-							allRotateMotions := usecase.Rotate(allFrames, allMoveMotions, modelPath)
+							allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
 
-							{
-								for i, motion := range allRotateMotions {
-									mlog.I("Output Rotate Motion [%d/%d] ...", i, len(allRotateMotions))
-
-									motionName := fmt.Sprintf("%02d_3_rotate.vmd", i+1)
-									motion.Path = filepath.Join(dirPath, motionName)
-									err := vmd.Write(motion)
-									if err != nil {
-										mlog.E("Failed to write rotate vmd: %v", err)
-									}
-								}
-							}
+							utils.WriteVmdMotions(allFrames, allRotateMotions, dirPath, "2_rotate", "Rotate")
 
 							return
 						} else {
@@ -339,31 +214,7 @@ func main() {
 							allMoveMotions := usecase.Move(allFrames)
 
 							// モーションを出力する
-							{
-								for i, motion := range allMoveMotions {
-									mlog.I("Output Move Motion [%d/%d] ...", i, len(allMoveMotions))
-
-									motionName := fmt.Sprintf("%02d_1_move.vmd", i+1)
-									motion.Path = filepath.Join(dirPath, motionName)
-									err := vmd.Write(motion)
-									if err != nil {
-										mlog.E("Failed to write move vmd: %v", err)
-									}
-								}
-							}
-							// {
-							// 	for i, motion := range allMpMoveMotions {
-							// 		mlog.I("Output mediapipe Move Motion [%d/%d] ...", i, len(allMpMoveMotions))
-
-							// 		motionName := fmt.Sprintf("%02d_2_mp-move.vmd", i+1)
-							// 		motion.Path = filepath.Join(dirPath, motionName)
-							// 		err := vmd.Write(motion)
-							// 		if err != nil {
-							// 			mlog.E("Failed to write mp-move vmd: %v", err)
-							// 		}
-							// 	}
-							// }
-
+							utils.WriteVmdMotions(allFrames, allMoveMotions, dirPath, "1_move", "Move")
 							return
 						}
 					}

@@ -4,7 +4,7 @@ import sys
 import time
 
 import exec_smooth
-import convert_pkl2json
+import exec_pkl2json
 
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     original_json_paths = glob(os.path.join(output_dir_path, "*_original.json"))
     if not original_json_paths:
         # まだjson変換出来ていない場合、変換
-        convert_pkl2json.main(output_dir_path)
+        exec_pkl2json.main(output_dir_path)
 
     time.sleep(3)
 

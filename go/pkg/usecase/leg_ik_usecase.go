@@ -13,38 +13,23 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMotion, modelPath string, leg_ik_block int) []*vmd.VmdMotion {
+func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
 	mlog.I("Start: Leg Ik =============================")
-
-	var allLegIkMotions []*vmd.VmdMotion
-	if prevLegIkMotions == nil {
-		// 始めてこのステップに到達した場合、全ての前のモーションをコピー
-		allLegIkMotions = make([]*vmd.VmdMotion, len(allPrevMotions))
-		for i, prevMotion := range allPrevMotions {
-			allLegIkMotions[i] = prevMotion.Copy().(*vmd.VmdMotion)
-		}
-	} else {
-		// 途中までのがあったらそのまま置き換え
-		allLegIkMotions = prevLegIkMotions
-	}
 
 	// mlog.SetLevel(mlog.IK_VERBOSE)
 
 	// 全体のタスク数をカウント
-	totalMinFrames := make([]int, len(allPrevMotions))
-	totalMaxFrames := make([]int, len(allPrevMotions))
+	allLegIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
+	totalMinFrames := make([]int, len(allLegIkMotions))
+	totalMaxFrames := make([]int, len(allLegIkMotions))
 	totalFrames := 0
 	for i, prevMotion := range allPrevMotions {
 		minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
 		maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
-		if prevLegIkMotions != nil {
-			// 途中までのがあったらそこからの範囲を取得
-			minFrame = max(allLegIkMotions[i].BoneFrames.Get(pmx.LEG_IK.Right()).GetMaxFrame(), minFrame)
-		}
-		maxFrame = min(minFrame+leg_ik_block, maxFrame)
 		totalFrames += int(maxFrame - minFrame + 1.0)
 		totalMinFrames[i] = minFrame
 		totalMaxFrames[i] = maxFrame
+		allLegIkMotions[i] = prevMotion.Copy().(*vmd.VmdMotion)
 	}
 
 	pr := &pmx.PmxReader{}
@@ -73,43 +58,39 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 	loopLimit := 100
 
 	// Iterate over allRotateMotions in parallel
-	for i, prevMotion := range allPrevMotions {
+	for i, legIkMotion := range allLegIkMotions {
 		// Increment the WaitGroup counter
 		wg.Add(1)
 
-		go func(i int, prevMotion *vmd.VmdMotion) {
+		go func(i int, prevMotion, legIkMotion *vmd.VmdMotion, minFrame, maxFrame int) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Convert Leg Ik ...", i, len(allPrevMotions))
+			defer mlog.I("[%d/%d] Convert Leg Ik ...", i+1, len(allLegIkMotions))
 
-			bar.Set("prefix", fmt.Sprintf("[%d/%d] Convert Leg Ik ...", i, len(allPrevMotions)))
-
-			legIkMotion := allLegIkMotions[i]
-			minFrame := totalMinFrames[i]
-			maxFrame := totalMaxFrames[i]
+			bar.Set("prefix", fmt.Sprintf("[%d/%d] Convert Leg Ik ...", i+1, len(allLegIkMotions)))
 
 			for fno := minFrame; fno <= maxFrame; fno++ {
 				bar.Increment()
 
-				if fno%500 == 0 {
+				if (fno-minFrame)%1000 == 0 {
 					// Colabだと出てこないので明示的に出力する
 					mlog.I(bar.String())
 				}
 
-				var wg sync.WaitGroup
+				var wg2 sync.WaitGroup
 				errChan := make(chan error, 2) // エラーを受け取るためのチャネル
 
-				calcIk := func(prevMotion *vmd.VmdMotion, legIkMotion *vmd.VmdMotion, direction string) {
-					defer wg.Done()
+				calcIk := func(prevMotion, legIkMotion *vmd.VmdMotion, direction string) {
+					defer wg2.Done()
 
 					convertLegIkMotion(prevMotion, legIkMotion, direction, fno, legIkModel, toeIkModel, loopLimit)
 				}
 
-				wg.Add(2) // 2つのゴルーチンを待つ
+				wg2.Add(2) // 2つのゴルーチンを待つ
 
 				go calcIk(prevMotion, legIkMotion, "右")
 				go calcIk(prevMotion, legIkMotion, "左")
 
-				wg.Wait()      // すべてのゴルーチンが完了するのを待つ
+				wg2.Wait()     // すべてのゴルーチンが完了するのを待つ
 				close(errChan) // チャネルを閉じる
 
 				// エラーがあれば出力
@@ -127,23 +108,18 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 			legIkMotion.BoneFrames.Delete("右足首ＩＫ")
 			legIkMotion.BoneFrames.Delete("右足首捩ＩＫ")
 
-			if maxFrame == prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame() {
-				legIkMotion.Path = strings.Replace(prevMotion.Path, "_rotate.vmd", "_leg_ik.vmd", -1)
-			} else {
-				legIkMotion.Path = strings.Replace(prevMotion.Path, "_rotate.vmd", "_leg_ik-process.vmd", -1)
-			}
-			legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
+			// legIkMotion.Path = strings.Replace(prevMotion.Path, "_rotate.vmd", "_leg_ik.vmd", -1)
+			// legIkMotion.SetName(fmt.Sprintf("MAT4 LegIk %02d", i+1))
 
-			if mlog.IsDebug() {
-				err := vmd.Write(legIkMotion)
-				if err != nil {
-					mlog.E("Failed to write leg ik vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(legIkMotion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write leg ik vmd: %v", err)
+			// 	}
+			// }
 
-			allLegIkMotions[i] = legIkMotion
 			bar.Increment()
-		}(i, prevMotion)
+		}(i, allPrevMotions[i], legIkMotion, totalMinFrames[i], totalMaxFrames[i])
 	}
 
 	wg.Wait()
@@ -155,8 +131,7 @@ func ConvertLegIk(allPrevMotions []*vmd.VmdMotion, prevLegIkMotions []*vmd.VmdMo
 }
 
 func convertLegIkMotion(
-	prevMotion *vmd.VmdMotion, legIkMotion *vmd.VmdMotion, direction string, fno int,
-	legIkModel *pmx.PmxModel, toeIkModel *pmx.PmxModel, loopLimit int,
+	prevMotion, legIkMotion *vmd.VmdMotion, direction string, fno int, legIkModel *pmx.PmxModel, toeIkModel *pmx.PmxModel, loopLimit int,
 ) {
 	legBoneName := pmx.LEG.StringFromDirection(direction)
 	kneeBoneName := pmx.KNEE.StringFromDirection(direction)
@@ -202,13 +177,13 @@ func convertLegIkMotion(
 	// 初期時点の足首の位置
 	ankleByLegPos := legIkOffDeltas.Get(ankleBoneName, fno).Position
 
-	if mlog.IsVerbose() {
-		legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_0.vmd", -1)
-		err := vmd.Write(legIkMotion)
-		if err != nil {
-			mlog.E("Failed to write leg ik vmd: %v", err)
-		}
-	}
+	// if mlog.IsVerbose() {
+	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_0.vmd", -1)
+	// 	err := vmd.Write(legIkMotion)
+	// 	if err != nil {
+	// 		mlog.E("Failed to write leg ik vmd: %v", err)
+	// 	}
+	// }
 
 	var legIkOnDeltas *vmd.BoneDeltas
 	var legQuat *mmath.MQuaternion
@@ -260,13 +235,13 @@ func convertLegIkMotion(
 	legBf.Rotation.SetQuaternion(legQuat)
 	legIkMotion.AppendRegisteredBoneFrame(legBoneName, legBf)
 
-	if mlog.IsVerbose() {
-		legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_1.vmd", -1)
-		err := vmd.Write(legIkMotion)
-		if err != nil {
-			mlog.E("Failed to write leg ik vmd: %v", err)
-		}
-	}
+	// if mlog.IsVerbose() {
+	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_1.vmd", -1)
+	// 	err := vmd.Write(legIkMotion)
+	// 	if err != nil {
+	// 		mlog.E("Failed to write leg ik vmd: %v", err)
+	// 	}
+	// }
 
 	// 足系解決後の足首位置を取得
 	toeIkOffDeltas := legIkMotion.AnimateBone(fno, toeIkModel, []string{ankleBoneName}, false)
@@ -296,13 +271,13 @@ func convertLegIkMotion(
 	legIkBf := vmd.NewBoneFrame(fno)
 	legIkBf.Position = ankleOffDelta.Position.Added(ankleDiffVec).Subed(toeIkModel.Bones.GetByName(ankleBoneName).Position)
 
-	if mlog.IsVerbose() {
-		legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_2.vmd", -1)
-		err := vmd.Write(legIkMotion)
-		if err != nil {
-			mlog.E("Failed to write leg ik vmd: %v", err)
-		}
-	}
+	// if mlog.IsVerbose() {
+	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_2.vmd", -1)
+	// 	err := vmd.Write(legIkMotion)
+	// 	if err != nil {
+	// 		mlog.E("Failed to write leg ik vmd: %v", err)
+	// 	}
+	// }
 
 	ankleKey := math.MaxFloat64
 	var ankleIkQuat *mmath.MQuaternion

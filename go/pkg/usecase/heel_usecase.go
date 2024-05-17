@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/cheggaaa/pb/v3"
@@ -20,9 +18,17 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
 
 	// 全体のタスク数をカウント
+
+	// 全体のタスク数をカウント
+	totalMinFrames := make([]int, len(allPrevMotions))
+	totalMaxFrames := make([]int, len(allPrevMotions))
 	totalFrames := 0
-	for _, rotMotion := range allPrevMotions {
-		totalFrames += int(rotMotion.GetMaxFrame()-rotMotion.GetMinFrame()+1.0) * 2
+	for i, prevMotion := range allPrevMotions {
+		minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
+		maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
+		totalFrames += int(maxFrame - minFrame + 1.0)
+		totalMinFrames[i] = minFrame
+		totalMaxFrames[i] = maxFrame
 	}
 
 	bar := utils.NewProgressBar(totalFrames)
@@ -31,24 +37,22 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 	for i := range allPrevMotions {
 		wg.Add(1)
 
-		go func(i int, frames *model.Frames, prevMotion *vmd.VmdMotion) {
+		go func(i int, frames *model.Frames, prevMotion *vmd.VmdMotion, minFrame, maxFrame int) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Fix Heel ...", i, len(allPrevMotions))
+			defer mlog.I("[%d/%d] Fix Heel ...", i+1, len(allPrevMotions))
 
-			motion := fixMoveMotion(frames, prevMotion, bar)
+			// motion.Path = strings.Replace(motion.Path, "_ground.vmd", "_heel.vmd", -1)
+			// motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
 
-			motion.Path = strings.Replace(motion.Path, "_ground.vmd", "_heel.vmd", -1)
-			motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(motion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write heel vmd: %v", err)
+			// 	}
+			// }
 
-			if mlog.IsDebug() {
-				err := vmd.Write(motion)
-				if err != nil {
-					mlog.E("Failed to write heel vmd: %v", err)
-				}
-			}
-
-			allMotions[i] = motion
-		}(i, allFrames[i], allPrevMotions[i])
+			allMotions[i] = fixMoveMotion(frames, prevMotion, minFrame, maxFrame, bar)
+		}(i, allFrames[i], allPrevMotions[i], totalMinFrames[i], totalMaxFrames[i])
 	}
 
 	wg.Wait()
@@ -57,15 +61,16 @@ func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPa
 	return allMotions
 }
 
-func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion {
+func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, minFrame, maxFrame int, bar *pb.ProgressBar) *vmd.VmdMotion {
 	threshold := 0.04
 	stopThreshold := threshold * 0.5
 
 	var prevLeftAnklePos2 *mmath.MVec2
 	var prevRightAnklePos2 *mmath.MVec2
 
-	for i, fno := range motion.BoneFrames.Get(pmx.CENTER.String()).RegisteredIndexes.List() {
+	for i := range maxFrame - minFrame + 1 {
 		bar.Increment()
+		fno := minFrame + i
 
 		// 2d-jointの足首の位置を取得
 		leftAnkleJoint := frames.Frames[fno].Joint2D["OP LAnkle"]
@@ -84,7 +89,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, bar *pb.Progress
 		leftAnkleDiff2 := leftAnklePos2.Subed(prevLeftAnklePos2)
 		rightAnkleDiff2 := rightAnklePos2.Subed(prevRightAnklePos2)
 
-		prevFno := motion.BoneFrames.Get(pmx.CENTER.String()).RegisteredIndexes.Prev(i)
+		prevFno := motion.BoneFrames.Get(pmx.CENTER.String()).RegisteredIndexes.Prev(fno)
 
 		leftAnkleDiff3 := mmath.NewMVec3()
 		rightAnkleDiff3 := mmath.NewMVec3()

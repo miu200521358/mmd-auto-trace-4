@@ -3,7 +3,6 @@ package usecase
 import (
 	"fmt"
 	"math"
-	"strings"
 	"sync"
 
 	"github.com/cheggaaa/pb/v3"
@@ -51,19 +50,19 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 
 		go func(i int, prevMotion *vmd.VmdMotion) {
 			defer wg.Done()
-			defer mlog.I("[%d/%d] Fix Ground ...", i, len(allPrevMotions))
+			defer mlog.I("[%d/%d] Fix Ground ...", i+1, len(allPrevMotions))
 
 			motion := setGroundedFootMotion(model, prevMotion, bar)
 
-			motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)
-			motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
+			// motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)
+			// motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
 
-			if mlog.IsDebug() {
-				err := vmd.Write(motion)
-				if err != nil {
-					mlog.E("Failed to write ground vmd: %v", err)
-				}
-			}
+			// if mlog.IsDebug() {
+			// 	err := vmd.Write(motion)
+			// 	if err != nil {
+			// 		mlog.E("Failed to write ground vmd: %v", err)
+			// 	}
+			// }
 
 			allGroundMotions[i] = motion
 		}(i, prevMotion)
