@@ -44,7 +44,6 @@ func main() {
 	mlog.I("Move Motion ================")
 	allMoveMotions := usecase.Move(allFrames)
 
-	// モーションを出力する
 	if mlog.IsDebug() {
 		utils.WriteVmdMotions(allFrames, allMoveMotions, dirPath, "1_move", "Move")
 	}
@@ -80,26 +79,17 @@ func main() {
 	mlog.I("Convert Arm Ik Motion ================")
 	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
 
-	// モーションを出力する
-	{
-		utils.WriteVmdMotions(allFrames, allArmIkMotions, dirPath, "full", "Full")
-	}
+	utils.WriteVmdMotions(allFrames, allArmIkMotions, dirPath, "full", "Full")
 
 	mlog.I("Reduce Motion [narrow] ================")
 	narrowReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
 
-	// モーションを出力する
-	{
-		utils.WriteVmdMotions(allFrames, narrowReduceMotions, dirPath, "reduce_narrow", "Narrow Reduce")
-	}
+	utils.WriteVmdMotions(allFrames, narrowReduceMotions, dirPath, "reduce_narrow", "Narrow Reduce")
 
 	mlog.I("Reduce Motion [wide] ================")
 	wideReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
 
-	// モーションを出力する
-	{
-		utils.WriteVmdMotions(allFrames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce")
-	}
+	utils.WriteVmdMotions(allFrames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce")
 
 	// complete ファイルを出力する
 	{
