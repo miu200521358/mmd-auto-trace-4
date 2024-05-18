@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 2:
         output_dir_path = sys.argv[2]
-        cfg.block_frame_num = sys.argv[3]
+        cfg.block_frame_num = int(sys.argv[3])
     else:
         # 出力ディレクトリ絶対パス未指定の場合、日時込みで作成する
         output_dir_path = os.path.join(
