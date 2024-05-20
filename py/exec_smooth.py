@@ -2,6 +2,7 @@ from glob import glob
 import json
 import os
 import sys
+import time
 
 import numpy as np
 from pykalman import UnscentedKalmanFilter
@@ -105,7 +106,7 @@ JOINT_NOISE = {
 }
 
 
-def smooth_frames(i: int, json_path: str, start_camera_z: float = None):
+def smooth_frames(i: int, all: int, json_path: str, start_camera_z: float = None):
     with open(json_path, "r") as f:
         data = json.load(f)
 
@@ -126,7 +127,7 @@ def smooth_frames(i: int, json_path: str, start_camera_z: float = None):
     start_fno = -1
     start_camera_z = 0.0
     j = 0
-    for time, frame_data in tqdm(data["frames"].items(), desc=f"Prepare[{i:02d}] ..."):
+    for time, frame_data in tqdm(data["frames"].items(), desc=f"Prepare[{i:02d}/{all:02d}] ..."):
         if start_fno == -1:
             start_fno = int(time)
             start_camera_z = frame_data["camera"]["z"]
@@ -445,7 +446,7 @@ def smooth_frames(i: int, json_path: str, start_camera_z: float = None):
         return state[:3] + noise
 
     for (type_name, joint_name), joint_poses in tqdm(
-        joint_positions.items(), desc=f"Smoothing [{i:02d}] ..."
+        joint_positions.items(), desc=f"Smoothing [{i:02d}/{all:02d}] ..."
     ):
         if np.sum(joint_poses) == 0:
             continue
@@ -515,11 +516,19 @@ def smooth_frames(i: int, json_path: str, start_camera_z: float = None):
     with open(smooth_json_path, "w") as f:
         json.dump(smoothed_data, f, indent=4)
 
+
 def smooth(output_dir_path: str):
-    for i, json_path in enumerate(
-        glob(os.path.join(output_dir_path, "*_original.json"))
-    ):
-        smooth_frames(i, json_path)
+    original_json_paths = glob(os.path.join(output_dir_path, "*_original.json"))
+    start_time = time.time()
+
+    for i, json_path in enumerate(original_json_paths):
+        if not os.path.exists(json_path.replace("_original.json", "_smooth.json")):
+            # まだ出来てないのだけ実行
+            smooth_frames(i, len(original_json_paths), json_path)
+
+            # 開始から30分過ぎてたら一旦終了
+            if 30 * 60 < time.time() - start_time:
+                return
 
 if __name__ == "__main__":
     log.debug("Start: smooth =============================")

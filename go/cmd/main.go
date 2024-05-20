@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/usecase"
@@ -13,6 +14,8 @@ import (
 var logLevel string
 var modelPath string
 var dirPath string
+
+const LIMIT_MINUTES = 30
 
 func init() {
 	flag.StringVar(&logLevel, "logLevel", "INFO", "set log level")
@@ -41,59 +44,52 @@ func main() {
 		return
 	}
 
-	mlog.I("Move Motion ================")
-	allMoveMotions := usecase.Move(allFrames)
+	startTime := time.Now()
 
-	if mlog.IsDebug() {
-		utils.WriteVmdMotions(allFrames, allMoveMotions, dirPath, "1_move", "Move")
+	allNum := len(allFrames)
+	for i, frames := range allFrames {
+		motionNum := i + 1
+
+		if _, err := os.Stat(filepath.Join(filepath.Dir(frames.Path), utils.GetCompleteName(frames.Path))); err == nil {
+			mlog.I("[%d/%d] Finished Convert Motion ===========================", motionNum, allNum)
+			continue
+		}
+
+		mlog.I("[%d/%d] Convert Motion ===========================", motionNum, allNum)
+
+		moveMotion := usecase.Move(frames, motionNum, allNum)
+
+		rotateMotion := usecase.Rotate(moveMotion, modelPath, motionNum, allNum)
+
+		legIkMotion := usecase.ConvertLegIk(rotateMotion, modelPath, motionNum, allNum)
+
+		groundMotion := usecase.FixGround(legIkMotion, modelPath, motionNum, allNum)
+
+		heelMotion := usecase.FixHeel(frames, groundMotion, modelPath, motionNum, allNum)
+
+		armIkMotion := usecase.ConvertArmIk(heelMotion, modelPath, motionNum, allNum)
+
+		utils.WriteVmdMotions(frames, armIkMotion, dirPath, "full", "Full", motionNum, allNum)
+
+		narrowReduceMotion := usecase.Reduce(armIkMotion, modelPath, 0.05, 0.00001, 0, "narrow", motionNum, allNum)
+
+		utils.WriteVmdMotions(frames, narrowReduceMotion, dirPath, "reduce_narrow", "Narrow Reduce", motionNum, allNum)
+
+		wideReduceMotions := usecase.Reduce(armIkMotion, modelPath, 0.07, 0.00005, 2, "wide", motionNum, allNum)
+
+		utils.WriteVmdMotions(frames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce", motionNum, allNum)
+
+		utils.WriteComplete(dirPath, frames.Path)
+
+		// 開始時間から30分過ぎてたら終了
+		if time.Since(startTime) > LIMIT_MINUTES*time.Minute {
+			return
+		}
 	}
-
-	mlog.I("Rotate Motion ================")
-	allRotateMotions := usecase.Rotate(allMoveMotions, modelPath)
-
-	if mlog.IsDebug() {
-		utils.WriteVmdMotions(allFrames, allRotateMotions, dirPath, "2_rotate", "Rotate")
-	}
-
-	mlog.I("Convert Leg Ik Motion ================")
-	allLegIkMotions := usecase.ConvertLegIk(allRotateMotions, modelPath)
-
-	if mlog.IsDebug() {
-		utils.WriteVmdMotions(allFrames, allLegIkMotions, dirPath, "3_leg_ik", "Leg Ik")
-	}
-
-	mlog.I("Fix Ground Motion ================")
-	allGroundMotions := usecase.FixGround(allLegIkMotions, modelPath)
-
-	if mlog.IsDebug() {
-		utils.WriteVmdMotions(allFrames, allGroundMotions, dirPath, "4_ground", "Ground")
-	}
-
-	mlog.I("Fix Heel Motion ================")
-	allHeelMotions := usecase.FixHeel(allFrames, allGroundMotions, modelPath)
-
-	if mlog.IsDebug() {
-		utils.WriteVmdMotions(allFrames, allHeelMotions, dirPath, "5_heel", "Heel")
-	}
-
-	mlog.I("Convert Arm Ik Motion ================")
-	allArmIkMotions := usecase.ConvertArmIk(allHeelMotions, modelPath)
-
-	utils.WriteVmdMotions(allFrames, allArmIkMotions, dirPath, "full", "Full")
-
-	mlog.I("Reduce Motion [narrow] ================")
-	narrowReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.05, 0.00001, 0, "narrow")
-
-	utils.WriteVmdMotions(allFrames, narrowReduceMotions, dirPath, "reduce_narrow", "Narrow Reduce")
-
-	mlog.I("Reduce Motion [wide] ================")
-	wideReduceMotions := usecase.Reduce(allArmIkMotions, modelPath, 0.07, 0.00005, 2, "wide")
-
-	utils.WriteVmdMotions(allFrames, wideReduceMotions, dirPath, "reduce_wide", "Wide Reduce")
 
 	// complete ファイルを出力する
 	{
-		completePath := filepath.Join(dirPath, "complete")
+		completePath := filepath.Join(dirPath, "all_complete")
 		mlog.I("Output Complete File %s", completePath)
 		f, err := os.Create(completePath)
 		if err != nil {
@@ -104,5 +100,4 @@ func main() {
 	}
 
 	mlog.I("Done!")
-
 }

@@ -2,9 +2,7 @@ package usecase
 
 import (
 	"strings"
-	"sync"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
@@ -12,57 +10,16 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func Reduce(allPrevMotions []*vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int, reduceName string) []*vmd.VmdMotion {
-	mlog.I("Start: Reduce =============================")
+func Reduce(prevMotion *vmd.VmdMotion, modelPath string, moveTolerance, rotTolerance float64, space int, reduceName string, motionNum, allNum int) *vmd.VmdMotion {
+	mlog.I("[%d/%d] Reduce ...", motionNum, allNum)
 
-	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
-
-	// 全体のタスク数をカウント
-	totalFrames := 0
-	for _, rotMotion := range allPrevMotions {
-		totalFrames += int(rotMotion.GetMaxFrame()-rotMotion.GetMinFrame()+1.0) * 2
-	}
-
-	bar := utils.NewProgressBar(totalFrames)
-	var wg sync.WaitGroup
-
-	for i := range allPrevMotions {
-		wg.Add(1)
-
-		go func(i int, prevMotion *vmd.VmdMotion) {
-			defer wg.Done()
-			defer mlog.I("[%d/%d] Reduce ...", i+1, len(allPrevMotions))
-
-			motion := reduceMotion(prevMotion, moveTolerance, rotTolerance, space, bar)
-
-			// motion.Path = strings.Replace(allPrevMotions[i].Path, "_arm_ik.vmd", fmt.Sprintf("_reduce_%s.vmd", reduceName), -1)
-			// motion.SetName(fmt.Sprintf("MAT4 Reduce %s %02d", reduceName, i+1))
-
-			// if mlog.IsDebug() {
-			// 	err := vmd.Write(motion)
-			// 	if err != nil {
-			// 		mlog.E("Failed to write reduce vmd: %v", err)
-			// 	}
-			// }
-
-			allMotions[i] = motion
-		}(i, allPrevMotions[i])
-	}
-
-	wg.Wait()
-	bar.Finish()
-
-	mlog.I("End: Reduce =============================")
-
-	return allMotions
-}
-
-func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64, space int, bar *pb.ProgressBar) *vmd.VmdMotion {
 	motion := vmd.NewVmdMotion(strings.Replace(prevMotion.Path, "_heel.vmd", "_fix.vmd", -1))
 
 	minFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
 	maxFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 	fnoCounts := maxFno - minFno + 1
+
+	bar := utils.NewProgressBar(fnoCounts)
 
 	// 移動
 	moveXs := make(map[string][]float64)
@@ -184,6 +141,8 @@ func reduceMotion(prevMotion *vmd.VmdMotion, moveTolerance, rotTolerance float64
 			}
 		}
 	}
+
+	bar.Finish()
 
 	return motion
 }

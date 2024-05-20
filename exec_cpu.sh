@@ -36,6 +36,6 @@ for i in "${!output_dirs[@]}"; do
     cp ${output_dirs[i]}/end_of_frame "${dir_path}"
 
     echo "convert -----------------"
-    python py/exec_cpu.py "${dir_path}"
+    python py/exec_local.py "${dir_path}"
 
 done

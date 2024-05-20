@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"sync"
 
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -13,24 +12,8 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	mlog.I("Start: Arm Ik =============================")
-
-	// mlog.SetLevel(mlog.IK_VERBOSE)
-
-	// 全体のタスク数をカウント
-	allArmIkMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
-	totalMinFrames := make([]int, len(allPrevMotions))
-	totalMaxFrames := make([]int, len(allPrevMotions))
-	totalFrames := 0
-	for i, prevMotion := range allPrevMotions {
-		minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
-		maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
-		totalFrames += int(maxFrame - minFrame + 1.0)
-		totalMinFrames[i] = minFrame
-		totalMaxFrames[i] = maxFrame
-		allArmIkMotions[i] = prevMotion.Copy().(*vmd.VmdMotion)
-	}
+func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
+	mlog.I("[%d/%d] Convert Arm Ik ...", motionNum, allNum)
 
 	pr := &pmx.PmxReader{}
 
@@ -42,87 +25,29 @@ func ConvertArmIk(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdM
 	armTwistIkModel := armTwistIkData.(*pmx.PmxModel)
 	armTwistIkModel.SetUp()
 
-	// // 手捩IK用モデルを読み込み
-	// wristTwistIkData, err := pr.ReadByFilepath(strings.Replace(modelPath, ".pmx", "_wrist_twist_ik.pmx", -1))
-	// if err != nil {
-	// 	mlog.E("Failed to read pmx: %v", err)
-	// }
-	// wristTwistIkModel := wristTwistIkData.(*pmx.PmxModel)
-	// wristTwistIkModel.SetUp()
-
-	bar := utils.NewProgressBar(totalFrames)
-
-	// Create a WaitGroup
-	var wg sync.WaitGroup
+	minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
+	maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 
 	loopLimit := 100
+	bar := utils.NewProgressBar(maxFrame - minFrame)
 
-	// Iterate over allRotateMotions in parallel
-	for i, armIkMotion := range allArmIkMotions {
-		// Increment the WaitGroup counter
-		wg.Add(1)
+	armIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
 
-		go func(i int, prevMotion, armIkMotion *vmd.VmdMotion, minFrame, maxFrame int) {
-			defer wg.Done()
-			defer mlog.I("[%d/%d] Convert Arm Ik ...", i+1, len(allArmIkMotions))
+	for fno := minFrame; fno <= maxFrame; fno++ {
+		bar.Increment()
 
-			bar.Set("prefix", fmt.Sprintf("[%d/%d] Convert Arm Ik ...", i+1, len(allArmIkMotions)))
-
-			for fno := minFrame; fno <= maxFrame; fno++ {
-				bar.Increment()
-				if (fno-minFrame)%1000 == 0 {
-					// Colabだと出てこないので明示的に出力する
-					mlog.I(bar.String())
-				}
-
-				var wg2 sync.WaitGroup
-				errChan := make(chan error, 2) // エラーを受け取るためのチャネル
-
-				calcIk := func(prevMotion, armIkMotion *vmd.VmdMotion, direction string) {
-					defer wg2.Done()
-
-					convertArmIkMotion(prevMotion, armIkMotion, direction, fno, armTwistIkModel, loopLimit)
-				}
-
-				wg2.Add(2) // 2つのゴルーチンを待つ
-
-				go calcIk(prevMotion, armIkMotion, "右")
-				go calcIk(prevMotion, armIkMotion, "左")
-
-				wg2.Wait()     // すべてのゴルーチンが完了するのを待つ
-				close(errChan) // チャネルを閉じる
-
-				// エラーがあれば出力
-				for err := range errChan {
-					mlog.E(err.Error())
-				}
-			}
-
-			armIkMotion.BoneFrames.Delete("左腕捩ＩＫ")
-			armIkMotion.BoneFrames.Delete("左手捩ＩＫ")
-			armIkMotion.BoneFrames.Delete("右腕捩ＩＫ")
-			armIkMotion.BoneFrames.Delete("右手捩ＩＫ")
-
-			// armIkMotion.Path = strings.Replace(prevMotion.Path, "_heel.vmd", "_arm_ik.vmd", -1)
-			// armIkMotion.SetName(fmt.Sprintf("MAT4 ArmIk %02d", i+1))
-
-			// if mlog.IsDebug() {
-			// 	err := vmd.Write(armIkMotion)
-			// 	if err != nil {
-			// 		mlog.E("Failed to write arm ik vmd: %v", err)
-			// 	}
-			// }
-
-			bar.Increment()
-		}(i, allPrevMotions[i], armIkMotion, totalMinFrames[i], totalMaxFrames[i])
+		convertArmIkMotion(prevMotion, armIkMotion, "右", fno, armTwistIkModel, loopLimit)
+		convertArmIkMotion(prevMotion, armIkMotion, "左", fno, armTwistIkModel, loopLimit)
 	}
 
-	wg.Wait()
+	armIkMotion.BoneFrames.Delete("左腕捩ＩＫ")
+	armIkMotion.BoneFrames.Delete("左手捩ＩＫ")
+	armIkMotion.BoneFrames.Delete("右腕捩ＩＫ")
+	armIkMotion.BoneFrames.Delete("右手捩ＩＫ")
+
 	bar.Finish()
 
-	mlog.I("End: Arm Ik =============================")
-
-	return allArmIkMotions
+	return armIkMotion
 }
 
 func convertArmIkMotion(
@@ -148,7 +73,7 @@ func convertArmIkMotion(
 
 	// 腕捩ＩＫは手首の位置を基準とする
 	armTwistIkBf := vmd.NewBoneFrame(fno)
-	wristOffDelta := armIkOffDeltas.Get(wristBoneName, fno)
+	wristOffDelta := armIkOffDeltas.Get(wristBoneName)
 	armTwistIkBf.Position = wristOffDelta.Position.Subed(
 		armTwistIkModel.Bones.GetByName(armTwistIkBoneName).Position)
 	armIkMotion.AppendBoneFrame(armTwistIkBoneName, armTwistIkBf)
@@ -156,7 +81,7 @@ func convertArmIkMotion(
 	// middleTailOffDelta := armIkOffDeltas.Get(middleTailBoneName, fno)
 
 	// 腕の捩りを除去する
-	armOffDelta := armIkOffDeltas.Get(armBoneName, fno)
+	armOffDelta := armIkOffDeltas.Get(armBoneName)
 	_, _, _, armYZQuat := armOffDelta.FrameRotation.SeparateByAxis(
 		armTwistIkModel.Bones.GetByName(armBoneName).NormalizedLocalAxisX)
 	armBf := vmd.NewBoneFrame(fno)
@@ -164,7 +89,7 @@ func convertArmIkMotion(
 	armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 	// ひじをローカルY軸に対して曲げる
-	elbowOffDelta := armIkOffDeltas.Get(elbowBoneName, fno)
+	elbowOffDelta := armIkOffDeltas.Get(elbowBoneName)
 	_, _, _, elbowYZQuat := elbowOffDelta.FrameRotation.SeparateByAxis(
 		armTwistIkModel.Bones.GetByName(elbowBoneName).NormalizedLocalAxisX)
 	elbowBf := vmd.NewBoneFrame(fno)
@@ -190,9 +115,9 @@ func convertArmIkMotion(
 			[]string{armBoneName, elbowBoneName, wristBoneName, middleTailBoneName, thumbZBoneName,
 				armTwistBoneName, wristTwistBoneName, armTwistIkBoneName}, true)
 
-		armTwistOnDelta := wristIkOnDeltas.Get(armTwistBoneName, fno)
-		elbowOnDelta := wristIkOnDeltas.Get(elbowBoneName, fno)
-		wristOnDelta := wristIkOnDeltas.Get(wristBoneName, fno)
+		armTwistOnDelta := wristIkOnDeltas.Get(armTwistBoneName)
+		elbowOnDelta := wristIkOnDeltas.Get(elbowBoneName)
+		wristOnDelta := wristIkOnDeltas.Get(wristBoneName)
 		elbowDistance := elbowOnDelta.Position.Distance(elbowOffDelta.Position)
 		wristDistance := wristOnDelta.Position.Distance(wristOffDelta.Position)
 

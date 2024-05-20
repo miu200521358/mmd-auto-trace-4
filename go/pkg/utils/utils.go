@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -62,34 +61,36 @@ func NewProgressBar(total int) *pb.ProgressBar {
 	return bar
 }
 
-func WriteVmdMotions(allFrames []*model.Frames, motions []*vmd.VmdMotion, dirPath, fileSuffix, logPrefix string) error {
-	errCh := make(chan error, len(motions))
-	var wg sync.WaitGroup
+func WriteVmdMotions(frames *model.Frames, motion *vmd.VmdMotion, dirPath, fileSuffix, logPrefix string, motionNum, allNum int) error {
+	mlog.I("Output %s Motion [%d/%d] ...", logPrefix, motionNum, allNum)
 
-	for i, frames := range allFrames {
-		wg.Add(1)
-		go func(i int, frames *model.Frames, motion *vmd.VmdMotion) {
-			defer mlog.I("Output %s Motion [%d/%d] ...", logPrefix, i+1, len(motions))
-			defer wg.Done()
+	motion.Path = filepath.Join(dirPath, GetVmdName(frames, fileSuffix))
+	motion.SetName("MMD Motion Auto Trace v4 Model")
 
-			fileName := strings.Replace(filepath.Base(frames.Path), "smooth.json", fmt.Sprintf("%s.vmd", fileSuffix), -1)
-			motion.Path = filepath.Join(dirPath, fileName)
-			motion.SetName("MMD Motion Auto Trace v4 Model")
-
-			err := vmd.Write(motion)
-			if err != nil {
-				mlog.E("Failed to write %s vmd: %v", logPrefix, err)
-				errCh <- err
-			}
-		}(i, frames, motions[i])
+	err := vmd.Write(motion)
+	if err != nil {
+		mlog.E("Failed to write %s vmd %d: %v", logPrefix, motionNum, err)
 	}
-
-	wg.Wait()
-	close(errCh)
-
-	if len(errCh) > 0 {
-		return <-errCh
-	}
-
 	return nil
+}
+
+func GetVmdName(frames *model.Frames, fileSuffix string) string {
+	return strings.Replace(filepath.Base(frames.Path), "smooth.json", fmt.Sprintf("%s.vmd", fileSuffix), -1)
+}
+
+func GetCompleteName(framePath string) string {
+	return strings.Replace(filepath.Base(framePath), "smooth.json", "complete", -1)
+}
+
+func WriteComplete(dirPath, framePath string) {
+	// complete ファイルを出力する
+	completePath := filepath.Join(dirPath, GetCompleteName(framePath))
+	mlog.I("Output Complete File %s", completePath)
+
+	f, err := os.Create(completePath)
+	if err != nil {
+		mlog.E("Failed to create complete file: %v", err)
+		return
+	}
+	defer f.Close()
 }

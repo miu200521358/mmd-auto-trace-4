@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 
@@ -29,44 +28,31 @@ func Unpack(dirPath string) ([]*model.Frames, error) {
 	totalFrames := len(jsonPaths)
 	bar := utils.NewProgressBar(totalFrames)
 
-	// Create a wait group to wait for all goroutines to finish
-	var wg sync.WaitGroup
+	for i, path := range jsonPaths {
+		bar.Increment()
+		mlog.I("[%d/%d] Unpack ...", i+1, len(jsonPaths))
 
-	// Iterate over the JSON file paths
-	for i, json_path := range jsonPaths {
-		// Increment the wait group counter
-		wg.Add(1)
+		// JSONデータを読み込んで展開
+		file, err := os.Open(path)
+		if err != nil {
+			mlog.E("[%s] Failed to open file: %v", path, err)
+			break
+		}
+		defer file.Close()
 
-		// Launch a goroutine to process each JSON file
-		go func(i int, path string) {
-			// Decrement the wait group counter when the goroutine finishes
-			defer wg.Done()
-			defer bar.Increment()
-			defer mlog.I("[%d/%d] Unpack ...", i+1, len(jsonPaths))
+		frames := new(model.Frames)
+		frames.Path = path
+		decoder := json.NewDecoder(file)
+		err = decoder.Decode(frames)
+		if err != nil {
+			mlog.E("[%s] Failed to decode json: %v", path, err)
+			break
+		}
 
-			// JSONデータを読み込んで展開
-			file, err := os.Open(path)
-			if err != nil {
-				mlog.E("[%s] Failed to open file: %v", path, err)
-				return
-			}
-			defer file.Close()
-
-			frames := new(model.Frames)
-			frames.Path = path
-			decoder := json.NewDecoder(file)
-			err = decoder.Decode(frames)
-			if err != nil {
-				mlog.E("[%s] Failed to decode json: %v", path, err)
-				return
-			}
-
-			// Send the frames to the result channel
-			allFrames[i] = frames
-		}(i, json_path)
+		// Send the frames to the result channel
+		allFrames[i] = frames
 	}
 
-	wg.Wait()
 	bar.Finish()
 
 	mlog.I("End: Unpack =============================")

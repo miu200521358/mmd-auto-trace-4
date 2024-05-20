@@ -3,9 +3,7 @@ package usecase
 import (
 	"fmt"
 	"math"
-	"sync"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -14,20 +12,8 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	mlog.I("Start: Ground =============================")
-
-	allGroundMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
-
-	// 全体のタスク数をカウント
-	totalFrames := 0
-	for _, prevMotion := range allPrevMotions {
-
-		minFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
-		maxFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
-
-		totalFrames += int(maxFno-minFno+1.0) * 3
-	}
+func FixGround(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
+	mlog.I("[%d/%d] Fix Ground ...", motionNum, allNum)
 
 	// モデル読み込み
 	pr := &pmx.PmxReader{}
@@ -38,51 +24,18 @@ func FixGround(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMoti
 	model := data.(*pmx.PmxModel)
 	model.SetUp()
 
-	bar := utils.NewProgressBar(totalFrames)
-
-	// Create a WaitGroup
-	var wg sync.WaitGroup
-
-	// Iterate over allMoveMotions in parallel
-	for i, prevMotion := range allPrevMotions {
-		// Increment the WaitGroup counter
-		wg.Add(1)
-
-		go func(i int, prevMotion *vmd.VmdMotion) {
-			defer wg.Done()
-			defer mlog.I("[%d/%d] Fix Ground ...", i+1, len(allPrevMotions))
-
-			motion := setGroundedFootMotion(model, prevMotion, bar)
-
-			// motion.Path = strings.Replace(motion.Path, "_leg_ik.vmd", "_ground.vmd", -1)
-			// motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
-
-			// if mlog.IsDebug() {
-			// 	err := vmd.Write(motion)
-			// 	if err != nil {
-			// 		mlog.E("Failed to write ground vmd: %v", err)
-			// 	}
-			// }
-
-			allGroundMotions[i] = motion
-		}(i, prevMotion)
-	}
-
-	wg.Wait()
-	bar.Finish()
-
-	mlog.I("End: Ground =============================")
-
-	return allGroundMotions
+	return setGroundedFootMotion(model, prevMotion)
 }
 
-func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.ProgressBar) *vmd.VmdMotion {
-	minFno := motion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
-	maxFno := motion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
+func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdMotion {
+	minFrame := motion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
+	maxFrame := motion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 
-	legIkYs := make([]float64, 0, int(maxFno)-int(minFno)+1)
+	bar := utils.NewProgressBar((maxFrame - minFrame) * 3)
 
-	for fno := minFno; fno <= maxFno; fno++ {
+	legIkYs := make([]float64, 0, int(maxFrame)-int(minFrame)+1)
+
+	for fno := minFrame; fno <= maxFrame; fno++ {
 		bar.Increment()
 
 		leftY := motion.BoneFrames.Get(pmx.LEG_IK.Left()).Get(fno).Position.GetY()
@@ -97,7 +50,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 	groundY := percentile(legIkYs, 0.9)
 	mlog.V("groundY: %f", groundY)
 
-	for fno := minFno; fno <= maxFno; fno++ {
+	for fno := minFrame; fno <= maxFrame; fno++ {
 		bar.Increment()
 
 		newLeftY := motion.BoneFrames.Get(pmx.LEG_IK.Left()).Get(fno).Position.GetY() - groundY
@@ -132,7 +85,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 		motion.AppendRegisteredBoneFrame(pmx.CENTER.String(), centerBf)
 	}
 
-	for fno := minFno; fno <= maxFno; fno++ {
+	for fno := minFrame; fno <= maxFrame; fno++ {
 		bar.Increment()
 
 		// IFをONにした状態での位置関係を取得
@@ -161,8 +114,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 			legIkBoneName := pmx.LEG_IK.StringFromDirection(direction)
 
 			if motion.BoneFrames.Get(legIkBoneName).Get(fno).Position.GetY() == 0.0 {
-				heelPos := deltas.Get(heelBoneName, fno).Position
-				toePos := deltas.Get(toeBoneName, fno).Position
+				heelPos := deltas.Get(heelBoneName).Position
+				toePos := deltas.Get(toeBoneName).Position
 				toeHorizontalPos := mmath.MVec3{toePos.GetX(), heelPos.GetY(), toePos.GetZ()}
 
 				toeLocalPos := toePos.Subed(heelPos).Normalize()
@@ -177,8 +130,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 
 				// -----------
 
-				toeBigPos := deltas.Get(toeBigBoneName, fno).Position
-				toeSmallPos := deltas.Get(toeSmallBoneName, fno).Position
+				toeBigPos := deltas.Get(toeBigBoneName).Position
+				toeSmallPos := deltas.Get(toeSmallBoneName).Position
 				toeSmallHorizontalPos := mmath.MVec3{toeSmallPos.GetX(), toeBigPos.GetY(), toeSmallPos.GetZ()}
 
 				toeSmallLocalPos := toeSmallPos.Subed(toeBigPos).Normalize()
@@ -202,6 +155,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion, bar *pb.P
 		}
 
 	}
+
+	bar.Finish()
 
 	return motion
 }

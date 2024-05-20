@@ -2,9 +2,6 @@ package usecase
 
 import (
 	"strings"
-	"sync"
-
-	"github.com/cheggaaa/pb/v3"
 
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -13,16 +10,8 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func Rotate(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	mlog.I("Start: Rotate =============================")
-
-	allRotateMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
-
-	// 全体のタスク数をカウント
-	totalFrames := 0
-	for range len(allPrevMotions) {
-		totalFrames += len(boneConfigs)
-	}
+func Rotate(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
+	mlog.I("[%d/%d] Convert Rotate ...", motionNum, allNum)
 
 	// モデル読み込み
 	pr := &pmx.PmxReader{}
@@ -32,43 +21,14 @@ func Rotate(allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion 
 	}
 	pmxModel := data.(*pmx.PmxModel)
 
-	bar := utils.NewProgressBar(totalFrames)
+	bar := utils.NewProgressBar(len(boneConfigs))
 
-	// Create a WaitGroup
-	var wg sync.WaitGroup
+	rotMotion := vmd.NewVmdMotion(strings.Replace(prevMotion.Path, "_move.vmd", "_rotate.vmd", -1))
 
-	// Iterate over allMoveMotions in parallel
-	for i, prevMotion := range allPrevMotions {
-		// Increment the WaitGroup counter
-		wg.Add(1)
-
-		go func(i int, prevMotion *vmd.VmdMotion) {
-			defer wg.Done()
-			defer mlog.I("[%d/%d] Convert Rotate ...", i+1, len(allPrevMotions))
-
-			allRotateMotions[i] = convertMov2Rotate(pmxModel, prevMotion, i, bar)
-		}(i, prevMotion)
-	}
-
-	wg.Wait()
-	bar.Finish()
-
-	mlog.I("End: Rotate =============================")
-
-	return allRotateMotions
-}
-
-func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar *pb.ProgressBar) *vmd.VmdMotion {
-
-	rotMotion := vmd.NewVmdMotion(strings.Replace(movMotion.Path, "_move.vmd", "_rotate.vmd", -1))
-	// rotMotion.SetName(fmt.Sprintf("MAT4 Rot %02d", i+1))
-
-	mlog.I("Convert Rotate Motion[%d] startFno: %d", i, movMotion.BoneFrames.Get("Camera").RegisteredIndexes.Min())
-
-	for _, fno := range movMotion.BoneFrames.Get("Camera").RegisteredIndexes.List() {
+	for _, fno := range prevMotion.BoneFrames.Get("Camera").RegisteredIndexes.List() {
 		{
 			bf := vmd.NewBoneFrame(fno)
-			bf.Position = movMotion.BoneFrames.Get("Camera").Get(fno).Position
+			bf.Position = prevMotion.BoneFrames.Get("Camera").Get(fno).Position
 			rotMotion.AppendRegisteredBoneFrame(pmx.CENTER.String(), bf)
 		}
 	}
@@ -76,26 +36,18 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 	for _, boneConfig := range boneConfigs {
 		bar.Increment()
 
-		// if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
-		// 	if !mpMovMotion.BoneFrames.Contains(boneConfig.Name) ||
-		// 		!mpMovMotion.BoneFrames.Contains(boneConfig.DirectionFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.DirectionTo) ||
-		// 		!mpMovMotion.BoneFrames.Contains(boneConfig.UpFrom) || !mpMovMotion.BoneFrames.Contains(boneConfig.UpTo) {
-		// 		continue
-		// 	}
-		// } else {
-		if !movMotion.BoneFrames.Contains(boneConfig.Name) || !movMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
-			!movMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !movMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
-			!movMotion.BoneFrames.Contains(boneConfig.UpTo) {
+		if !prevMotion.BoneFrames.Contains(boneConfig.Name) || !prevMotion.BoneFrames.Contains(boneConfig.DirectionFrom) ||
+			!prevMotion.BoneFrames.Contains(boneConfig.DirectionTo) || !prevMotion.BoneFrames.Contains(boneConfig.UpFrom) ||
+			!prevMotion.BoneFrames.Contains(boneConfig.UpTo) {
 			continue
 		}
-		// }
 
-		for _, fno := range movMotion.BoneFrames.Get(boneConfig.Name).RegisteredIndexes.List() {
+		for _, fno := range prevMotion.BoneFrames.Get(boneConfig.Name).RegisteredIndexes.List() {
 			// モデルのボーン角度
-			boneDirectionFrom := model.Bones.GetByName(boneConfig.DirectionFrom).Position
-			boneDirectionTo := model.Bones.GetByName(boneConfig.DirectionTo).Position
-			boneUpFrom := model.Bones.GetByName(boneConfig.UpFrom).Position
-			boneUpTo := model.Bones.GetByName(boneConfig.UpTo).Position
+			boneDirectionFrom := pmxModel.Bones.GetByName(boneConfig.DirectionFrom).Position
+			boneDirectionTo := pmxModel.Bones.GetByName(boneConfig.DirectionTo).Position
+			boneUpFrom := pmxModel.Bones.GetByName(boneConfig.UpFrom).Position
+			boneUpTo := pmxModel.Bones.GetByName(boneConfig.UpTo).Position
 
 			boneDirectionVector := boneDirectionTo.Subed(boneDirectionFrom).Normalize()
 			boneUpVector := boneUpTo.Subed(boneUpFrom).Normalize()
@@ -105,18 +57,10 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 
 			// モーションのボーン角度
 			var motionDirectionFromPos, motionDirectionToPos, motionUpFromPos, motionUpToPos *mmath.MVec3
-			// if boneConfig.Name == pmx.WRIST.Left() || boneConfig.Name == pmx.WRIST.Right() {
-			// 	// 手首だけはmediapipeから取る
-			// 	motionDirectionFromPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
-			// 	motionDirectionToPos = mpMovMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
-			// 	motionUpFromPos = mpMovMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
-			// 	motionUpToPos = mpMovMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
-			// } else {
-			motionDirectionFromPos = movMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
-			motionDirectionToPos = movMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
-			motionUpFromPos = movMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
-			motionUpToPos = movMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
-			// }
+			motionDirectionFromPos = prevMotion.BoneFrames.Get(boneConfig.DirectionFrom).Get(fno).Position
+			motionDirectionToPos = prevMotion.BoneFrames.Get(boneConfig.DirectionTo).Get(fno).Position
+			motionUpFromPos = prevMotion.BoneFrames.Get(boneConfig.UpFrom).Get(fno).Position
+			motionUpToPos = prevMotion.BoneFrames.Get(boneConfig.UpTo).Get(fno).Position
 
 			motionDirectionVector := motionDirectionToPos.Subed(motionDirectionFromPos).Normalize()
 			motionUpVector := motionUpToPos.Subed(motionUpFromPos).Normalize()
@@ -143,12 +87,7 @@ func convertMov2Rotate(model *pmx.PmxModel, movMotion *vmd.VmdMotion, i int, bar
 		}
 	}
 
-	// if mlog.IsDebug() {
-	// 	err := vmd.Write(rotMotion)
-	// 	if err != nil {
-	// 		mlog.E("Failed to write rotate vmd: %v", err)
-	// 	}
-	// }
+	bar.Finish()
 
 	return rotMotion
 }

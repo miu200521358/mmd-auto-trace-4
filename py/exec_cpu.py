@@ -22,20 +22,19 @@ if __name__ == "__main__":
         # まだjson変換出来ていない場合、変換
         exec_pkl2json.main(output_dir_path)
 
+        print("pkl to json done!")
+        sys.exit()
+
     time.sleep(3)
 
     smooth_json_paths = glob(os.path.join(output_dir_path, "*_smooth.json"))
-    if not smooth_json_paths:
-        # まだスムージング実行出来ていない場合、実行
+    if not smooth_json_paths or len(smooth_json_paths) < len(original_json_paths):
+        # まだスムージング実行終わっていない場合、実行
         exec_smooth.smooth(output_dir_path)
 
-        time.sleep(3)
-
-        with open(os.path.join(output_dir_path, "gpu_complete"), "w") as f:
-            # 最後までいったら終了
-            f.write("gpu complete")
-
-    if os.path.exists(os.path.join(output_dir_path, "gpu_complete")):
+        print("smoothing done!")
+        sys.exit()
+    else:
         os.system(
             f"./build/mat4 -modelPath='./data/pmx/v4_trace_model.pmx' -dirPath='{output_dir_path}'"
         )

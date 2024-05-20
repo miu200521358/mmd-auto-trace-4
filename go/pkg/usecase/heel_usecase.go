@@ -1,9 +1,6 @@
 package usecase
 
 import (
-	"sync"
-
-	"github.com/cheggaaa/pb/v3"
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
 	"github.com/miu200521358/mlib_go/pkg/pmx"
@@ -12,56 +9,14 @@ import (
 	"github.com/miu200521358/mmd-auto-trace-4/pkg/utils"
 )
 
-func FixHeel(allFrames []*model.Frames, allPrevMotions []*vmd.VmdMotion, modelPath string) []*vmd.VmdMotion {
-	mlog.I("Start: Heel =============================")
+func FixHeel(frames *model.Frames, motion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
+	mlog.I("[%d/%d] Fix Heel ...", motionNum, allNum)
 
-	allMotions := make([]*vmd.VmdMotion, len(allPrevMotions))
+	minFrame := motion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
+	maxFrame := motion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 
-	// 全体のタスク数をカウント
+	bar := utils.NewProgressBar(maxFrame - minFrame)
 
-	// 全体のタスク数をカウント
-	totalMinFrames := make([]int, len(allPrevMotions))
-	totalMaxFrames := make([]int, len(allPrevMotions))
-	totalFrames := 0
-	for i, prevMotion := range allPrevMotions {
-		minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
-		maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
-		totalFrames += int(maxFrame - minFrame + 1.0)
-		totalMinFrames[i] = minFrame
-		totalMaxFrames[i] = maxFrame
-	}
-
-	bar := utils.NewProgressBar(totalFrames)
-	var wg sync.WaitGroup
-
-	for i := range allPrevMotions {
-		wg.Add(1)
-
-		go func(i int, frames *model.Frames, prevMotion *vmd.VmdMotion, minFrame, maxFrame int) {
-			defer wg.Done()
-			defer mlog.I("[%d/%d] Fix Heel ...", i+1, len(allPrevMotions))
-
-			// motion.Path = strings.Replace(motion.Path, "_ground.vmd", "_heel.vmd", -1)
-			// motion.SetName(fmt.Sprintf("MAT4 Ground %02d", i+1))
-
-			// if mlog.IsDebug() {
-			// 	err := vmd.Write(motion)
-			// 	if err != nil {
-			// 		mlog.E("Failed to write heel vmd: %v", err)
-			// 	}
-			// }
-
-			allMotions[i] = fixMoveMotion(frames, prevMotion, minFrame, maxFrame, bar)
-		}(i, allFrames[i], allPrevMotions[i], totalMinFrames[i], totalMaxFrames[i])
-	}
-
-	wg.Wait()
-	bar.Finish()
-
-	return allMotions
-}
-
-func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, minFrame, maxFrame int, bar *pb.ProgressBar) *vmd.VmdMotion {
 	threshold := 0.04
 	stopThreshold := threshold * 0.5
 
@@ -156,7 +111,7 @@ func fixMoveMotion(frames *model.Frames, motion *vmd.VmdMotion, minFrame, maxFra
 		}
 	}
 
-	mlog.I("End: Heel =============================")
+	bar.Finish()
 
 	return motion
 }
