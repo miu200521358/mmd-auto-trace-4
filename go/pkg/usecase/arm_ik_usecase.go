@@ -3,7 +3,9 @@ package usecase
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/miu200521358/mlib_go/pkg/mmath"
 	"github.com/miu200521358/mlib_go/pkg/mutils/mlog"
@@ -23,7 +25,6 @@ func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 		mlog.E("Failed to read pmx: %v", err)
 	}
 	armTwistIkModel := armTwistIkData.(*pmx.PmxModel)
-	armTwistIkModel.SetUp()
 
 	minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
 	maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
@@ -53,44 +54,40 @@ func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 func convertArmIkMotion(
 	prevMotion, armIkMotion *vmd.VmdMotion, direction string, fno int, armTwistIkModel *pmx.PmxModel, loopLimit int,
 ) {
+	mlog.SetLevel(mlog.IK_VERBOSE)
 
 	armBoneName := pmx.ARM.StringFromDirection(direction)
 	elbowBoneName := pmx.ELBOW.StringFromDirection(direction)
 	wristBoneName := pmx.WRIST.StringFromDirection(direction)
-	middleTailBoneName := pmx.MIDDLE_TAIL.StringFromDirection(direction)
 	armTwistBoneName := pmx.ARM_TWIST.StringFromDirection(direction)
-	wristTwistBoneName := pmx.WRIST_TWIST.StringFromDirection(direction)
 	armTwistIkBoneName := fmt.Sprintf("%s腕捩ＩＫ", direction)
-	// wristTwistIkBoneName := fmt.Sprintf("%s手捩ＩＫ", direction)
-	thumbZBoneName := fmt.Sprintf("%s親指Z垂線", direction)
 
 	// IKなしの変化量を取得
-	armIkOffDeltas := prevMotion.AnimateBone(fno, armTwistIkModel,
-		[]string{armBoneName, elbowBoneName, wristBoneName, middleTailBoneName, thumbZBoneName,
-			armTwistBoneName, wristTwistBoneName, armTwistIkBoneName}, false)
+	armIkOffDeltas := prevMotion.BoneFrames.Deform(fno, armTwistIkModel,
+		[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armTwistIkBoneName}, false, true, false, nil)
 
 	// 腕IK --------------------
 
 	// 腕捩ＩＫは手首の位置を基準とする
 	armTwistIkBf := vmd.NewBoneFrame(fno)
-	wristOffDelta := armIkOffDeltas.Get(wristBoneName)
-	armTwistIkBf.Position = wristOffDelta.Position.Subed(
+	wristOffDelta := armIkOffDeltas.GetByName(wristBoneName)
+	armTwistIkBf.Position = wristOffDelta.GlobalPosition().Subed(
 		armTwistIkModel.Bones.GetByName(armTwistIkBoneName).Position)
 	armIkMotion.AppendBoneFrame(armTwistIkBoneName, armTwistIkBf)
 
 	// middleTailOffDelta := armIkOffDeltas.Get(middleTailBoneName, fno)
 
 	// 腕の捩りを除去する
-	armOffDelta := armIkOffDeltas.Get(armBoneName)
-	_, _, _, armYZQuat := armOffDelta.FrameRotation.SeparateByAxis(
+	armOffDelta := armIkOffDeltas.GetByName(armBoneName)
+	armXQuat, armYZQuat := armOffDelta.GlobalRotation().SeparateTwistByAxis(
 		armTwistIkModel.Bones.GetByName(armBoneName).NormalizedLocalAxisX)
 	armBf := vmd.NewBoneFrame(fno)
 	armBf.Rotation = mmath.NewRotationByQuaternion(armYZQuat)
 	armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 	// ひじをローカルY軸に対して曲げる
-	elbowOffDelta := armIkOffDeltas.Get(elbowBoneName)
-	_, _, _, elbowYZQuat := elbowOffDelta.FrameRotation.SeparateByAxis(
+	elbowOffDelta := armIkOffDeltas.GetByName(elbowBoneName)
+	_, elbowYZQuat := elbowOffDelta.GlobalRotation().SeparateTwistByAxis(
 		armTwistIkModel.Bones.GetByName(elbowBoneName).NormalizedLocalAxisX)
 	elbowBf := vmd.NewBoneFrame(fno)
 	elbowQuat := mmath.NewMQuaternionFromAxisAngles(
@@ -98,36 +95,66 @@ func convertArmIkMotion(
 	elbowBf.Rotation = mmath.NewRotationByQuaternion(elbowQuat)
 	armIkMotion.AppendRegisteredBoneFrame(elbowBoneName, elbowBf)
 
-	// if mlog.IsIkVerbose() {
-	// 	armIkMotion.Path = strings.Replace(prevMotion.Path, "heel.vmd", direction+"_arm_ik_0.vmd", -1)
-	// 	err := vmd.Write(armIkMotion)
-	// 	if err != nil {
-	// 		mlog.E("Failed to write arm ik vmd: %v", err)
-	// 	}
-	// }
+	if mlog.IsIkVerbose() {
+		dirPath := fmt.Sprintf("%s/IK_step", filepath.Dir(armTwistIkModel.Path))
 
-	var wristIkOnDeltas *vmd.BoneDeltas
+		{
+			date := time.Now().Format("20060102_150405")
+			ikMotionPath := fmt.Sprintf("%s/%04d_%s_%s_X.vmd", dirPath, 1, date, armTwistBoneName)
+			motion := vmd.NewVmdMotion(ikMotionPath)
+
+			bf := vmd.NewBoneFrame(1)
+			bf.Rotation.SetQuaternion(armXQuat)
+			motion.AppendRegisteredBoneFrame(armBoneName, bf)
+			vmd.Write(motion)
+		}
+		{
+			date := time.Now().Format("20060102_150405")
+			ikMotionPath := fmt.Sprintf("%s/%04d_%s_%s.vmd", dirPath, 1, date, armTwistBoneName)
+			ikMotion := vmd.NewVmdMotion(ikMotionPath)
+
+			{
+				bf := armBf.Copy().(*vmd.BoneFrame)
+				bf.Index = 1
+				ikMotion.AppendRegisteredBoneFrame(armBoneName, bf)
+			}
+			{
+				bf := elbowBf.Copy().(*vmd.BoneFrame)
+				bf.Index = 1
+				ikMotion.AppendRegisteredBoneFrame(elbowBoneName, bf)
+			}
+
+			vmd.Write(ikMotion)
+		}
+	}
+
+	var armIkOnDeltas *vmd.BoneDeltas
 	var armTwistQuat *mmath.MQuaternion
 	armKey := math.MaxFloat64
 	for j := range loopLimit {
 		// IKありの変化量を取得
-		wristIkOnDeltas = armIkMotion.AnimateBoneContinueIk(fno, armTwistIkModel,
-			[]string{armBoneName, elbowBoneName, wristBoneName, middleTailBoneName, thumbZBoneName,
-				armTwistBoneName, wristTwistBoneName, armTwistIkBoneName}, true)
+		armIkOnDeltas = armIkMotion.BoneFrames.Deform(fno, armTwistIkModel,
+			[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armTwistIkBoneName}, true, true, false, nil)
 
-		armTwistOnDelta := wristIkOnDeltas.Get(armTwistBoneName)
-		elbowOnDelta := wristIkOnDeltas.Get(elbowBoneName)
-		wristOnDelta := wristIkOnDeltas.Get(wristBoneName)
-		elbowDistance := elbowOnDelta.Position.Distance(elbowOffDelta.Position)
-		wristDistance := wristOnDelta.Position.Distance(wristOffDelta.Position)
+		armTwistOnDelta := armIkOnDeltas.GetByName(armTwistBoneName)
+		elbowOnDelta := armIkOnDeltas.GetByName(elbowBoneName)
+		wristOnDelta := armIkOnDeltas.GetByName(wristBoneName)
+		elbowDistance := elbowOnDelta.GlobalPosition().Distance(elbowOffDelta.GlobalPosition())
+		wristDistance := wristOnDelta.GlobalPosition().Distance(wristOffDelta.GlobalPosition())
 
 		keySum := elbowDistance + wristDistance
-		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-			fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
+
+		// 腕捩りは初期値として設定する
+		armTwistBf := vmd.NewBoneFrame(fno)
+		armTwistBf.Rotation.SetQuaternion(armTwistOnDelta.GlobalRotation())
+		armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
+
+		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f, armTwist: %v",
+			fno, direction, j, elbowDistance, wristDistance, keySum, armKey, armTwistBf.Rotation.GetDegreesMMD())
 
 		if keySum < armKey {
 			armKey = keySum
-			armTwistQuat = armTwistOnDelta.FrameRotationWithoutEffect
+			armTwistQuat = armTwistOnDelta.GlobalRotation()
 
 			mlog.V("[Arm] Update IK [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
 				fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
@@ -148,75 +175,4 @@ func convertArmIkMotion(
 	armTwistBf.Rotation = mmath.NewRotationByQuaternion(armTwistQuat)
 	armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
 
-	// if mlog.IsIkVerbose() {
-	// 	armIkMotion.Path = strings.Replace(prevMotion.Path, "heel.vmd", direction+"_arm_ik_1.vmd", -1)
-	// 	err := vmd.Write(armIkMotion)
-	// 	if err != nil {
-	// 		mlog.E("Failed to write arm ik vmd: %v", err)
-	// 	}
-	// }
-
-	// // 手捩IK --------------------
-
-	// // 手捩IKは親指Z垂線の位置を基準とする
-	// wristTwistIkBf := vmd.NewBoneFrame(fno)
-	// thumbZOffDelta := armIkOffDeltas.Get(thumbZBoneName, fno)
-	// wristTwistIkBf.Position = thumbZOffDelta.Position.Subed(
-	// 	wristTwistIkModel.Bones.GetByName(wristTwistIkBoneName).Position)
-	// armIkMotion.AppendBoneFrame(wristTwistIkBoneName, wristTwistIkBf)
-
-	// // 手首の捩りを除去する
-	// _, _, _, wristYZQuat := wristOffDelta.FrameRotation.SeparateByAxis(
-	// 	armTwistIkModel.Bones.GetByName(wristBoneName).NormalizedLocalAxisX)
-	// wristBf := vmd.NewBoneFrame(fno)
-	// wristBf.Rotation.SetQuaternion(wristYZQuat)
-	// armIkMotion.AppendRegisteredBoneFrame(wristBoneName, wristBf)
-
-	// var wristTwistQuat *mmath.MQuaternion
-	// wristKey := math.MaxFloat64
-	// for j := range loopLimit {
-	// 	// IKありの変化量を取得
-	// 	wristIkOnDeltas = armIkMotion.AnimateBoneContinueIk(fno, wristTwistIkModel,
-	// 		[]string{wristBoneName, middleTailBoneName, thumbZBoneName, wristTwistBoneName, wristTwistIkBoneName}, true)
-
-	// 	wristTwistOnDelta := wristIkOnDeltas.Get(wristTwistBoneName, fno)
-	// 	middleOnDelta := wristIkOnDeltas.Get(middleTailBoneName, fno)
-	// 	thumbZOnDelta := wristIkOnDeltas.Get(thumbZBoneName, fno)
-	// 	middleDistance := middleOnDelta.Position.Distance(middleTailOffDelta.Position)
-	// 	thumbZDistance := thumbZOnDelta.Position.Distance(thumbZOffDelta.Position)
-
-	// 	keySum := middleDistance + thumbZDistance
-	// 	mlog.V("[Wrist] Distance [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-	// 		fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
-
-	// 	if keySum < wristKey {
-	// 		wristKey = keySum
-	// 		wristTwistQuat = wristTwistOnDelta.FrameRotationWithoutEffect
-
-	// 		mlog.V("[Wrist] Update IK [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-	// 			fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
-	// 	}
-
-	// 	if middleDistance < 1e-2 && thumbZDistance < 0.1 {
-	// 		mlog.V("*** [Wrist] Converged at [%d][%s][%d] middle: %f, thumbZ: %f, keySum: %f, armKey: %f",
-	// 			fno, direction, j, middleDistance, thumbZDistance, keySum, wristKey)
-	// 		break
-	// 	}
-	// }
-
-	// // 最も近いものを採用
-	// mlog.V("[Wrist] FIX Converged at [%d][%s] distance: %f", fno, direction, wristKey)
-
-	// // FKの各キーフレに値を設定
-	// wristTwistBf := vmd.NewBoneFrame(fno)
-	// wristTwistBf.Rotation.SetQuaternion(wristTwistQuat)
-	// armIkMotion.AppendRegisteredBoneFrame(wristTwistBoneName, wristTwistBf)
-
-	// if mlog.IsIkVerbose() {
-	// 	armIkMotion.Path = strings.Replace(prevMotion.Path, "heel.vmd", direction+"_arm_ik_2.vmd", -1)
-	// 	err := vmd.Write(armIkMotion)
-	// 	if err != nil {
-	// 		mlog.E("Failed to write arm ik vmd: %v", err)
-	// 	}
-	// }
 }

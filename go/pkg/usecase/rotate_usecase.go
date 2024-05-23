@@ -71,13 +71,16 @@ func Rotate(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) 
 			// キャンセルボーン角度
 			cancelQuat := mmath.NewMQuaternion()
 			for _, cancelBoneName := range boneConfig.Cancels {
-				cancelQuat = cancelQuat.Mul(rotMotion.BoneFrames.Get(cancelBoneName).Get(fno).Rotation.GetQuaternion())
+				cancelQuat = rotMotion.BoneFrames.Get(cancelBoneName).Get(fno).Rotation.GetQuaternion().Muled(cancelQuat)
 			}
 
 			// 調整角度
-			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
+			invertBeforeQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertBefore.GetX(), boneConfig.InvertBefore.GetY(), boneConfig.InvertBefore.GetZ())
+			invertAfterQuat := mmath.NewMQuaternionFromDegrees(boneConfig.InvertAfter.GetX(), boneConfig.InvertAfter.GetY(), boneConfig.InvertAfter.GetZ())
 
-			quat := cancelQuat.Invert().Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertQuat).Normalize()
+			quat := invertAfterQuat.Mul(boneQuat.Invert()).Mul(motionQuat).Mul(cancelQuat.Invert()).Mul(invertBeforeQuat).Normalize()
+
+			// quat := invertBeforeQuat.Muled(cancelQuat.Invert()).Mul(motionQuat).Mul(boneQuat.Invert()).Mul(invertAfterQuat).Normalize()
 
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)
@@ -161,15 +164,15 @@ var boneConfigs = []*boneConfig{
 		UpFrom:        "上半身2",
 		UpTo:          "首",
 		Cancels:       []string{"上半身", "上半身2"},
-		InvertBefore:  &mmath.MVec3{0, 0, 20},
+		InvertBefore:  &mmath.MVec3{0, 0, -20},
 		InvertAfter:   &mmath.MVec3{},
 	},
 	{
 		Name:          "左腕",
 		DirectionFrom: "左腕",
 		DirectionTo:   "左ひじ",
-		UpFrom:        "左肩",
-		UpTo:          "左腕",
+		UpFrom:        "左腕",
+		UpTo:          "右腕",
 		Cancels:       []string{"上半身", "上半身2", "左肩"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},
@@ -179,7 +182,7 @@ var boneConfigs = []*boneConfig{
 		DirectionFrom: "左ひじ",
 		DirectionTo:   "左手首",
 		UpFrom:        "左腕",
-		UpTo:          "左ひじ",
+		UpTo:          "右腕",
 		Cancels:       []string{"上半身", "上半身2", "左肩", "左腕"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},
@@ -201,14 +204,14 @@ var boneConfigs = []*boneConfig{
 		UpFrom:        "上半身2",
 		UpTo:          "首",
 		Cancels:       []string{"上半身", "上半身2"},
-		InvertBefore:  &mmath.MVec3{0, 0, -20},
+		InvertBefore:  &mmath.MVec3{0, 0, 20},
 		InvertAfter:   &mmath.MVec3{},
 	},
 	{
 		Name:          "右腕",
 		DirectionFrom: "右腕",
 		DirectionTo:   "右ひじ",
-		UpFrom:        "右肩",
+		UpFrom:        "左腕",
 		UpTo:          "右腕",
 		Cancels:       []string{"上半身", "上半身2", "右肩"},
 		InvertBefore:  &mmath.MVec3{},
@@ -218,8 +221,8 @@ var boneConfigs = []*boneConfig{
 		Name:          "右ひじ",
 		DirectionFrom: "右ひじ",
 		DirectionTo:   "右手首",
-		UpFrom:        "右腕",
-		UpTo:          "右ひじ",
+		UpFrom:        "左腕",
+		UpTo:          "右腕",
 		Cancels:       []string{"上半身", "上半身2", "右肩", "右腕"},
 		InvertBefore:  &mmath.MVec3{},
 		InvertAfter:   &mmath.MVec3{},

@@ -22,7 +22,6 @@ func FixGround(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum in
 		mlog.E("Failed to read pmx: %v", err)
 	}
 	model := data.(*pmx.PmxModel)
-	model.SetUp()
 
 	return setGroundedFootMotion(model, prevMotion)
 }
@@ -89,7 +88,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 		bar.Increment()
 
 		// IFをONにした状態での位置関係を取得
-		deltas := motion.AnimateBone(fno, model, []string{
+		deltas := motion.BoneFrames.Deform(fno, model, []string{
 			"左つま先親",
 			"左つま先子",
 			"左かかと",
@@ -102,7 +101,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 			pmx.ANKLE.Right(),
 			pmx.LEG_IK.Left(),
 			pmx.LEG_IK.Right(),
-		}, true)
+		}, true, true, true, nil)
 
 		// Yが0の場合、足首の向きを調整して接地させる
 		for _, direction := range []string{"右", "左"} {
@@ -114,8 +113,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 			legIkBoneName := pmx.LEG_IK.StringFromDirection(direction)
 
 			if motion.BoneFrames.Get(legIkBoneName).Get(fno).Position.GetY() == 0.0 {
-				heelPos := deltas.Get(heelBoneName).Position
-				toePos := deltas.Get(toeBoneName).Position
+				heelPos := deltas.GetByName(heelBoneName).GlobalPosition()
+				toePos := deltas.GetByName(toeBoneName).GlobalPosition()
 				toeHorizontalPos := mmath.MVec3{toePos.GetX(), heelPos.GetY(), toePos.GetZ()}
 
 				toeLocalPos := toePos.Subed(heelPos).Normalize()
@@ -130,8 +129,8 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 
 				// -----------
 
-				toeBigPos := deltas.Get(toeBigBoneName).Position
-				toeSmallPos := deltas.Get(toeSmallBoneName).Position
+				toeBigPos := deltas.GetByName(toeBigBoneName).GlobalPosition()
+				toeSmallPos := deltas.GetByName(toeSmallBoneName).GlobalPosition()
 				toeSmallHorizontalPos := mmath.MVec3{toeSmallPos.GetX(), toeBigPos.GetY(), toeSmallPos.GetZ()}
 
 				toeSmallLocalPos := toeSmallPos.Subed(toeBigPos).Normalize()

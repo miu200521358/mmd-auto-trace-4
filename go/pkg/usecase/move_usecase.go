@@ -38,7 +38,7 @@ func Move(frames *model.Frames, motionNum, allNum int) *vmd.VmdMotion {
 				bf := vmd.NewBoneFrame(fno)
 				bf.Position.SetX(pos.X * RATIO)
 				bf.Position.SetY(pos.Y * RATIO)
-				bf.Position.SetZ(pos.Z * RATIO)
+				bf.Position.SetZ(-pos.Z * RATIO)
 				movMotion.AppendRegisteredBoneFrame(boneName, bf)
 			}
 		}
@@ -47,7 +47,7 @@ func Move(frames *model.Frames, motionNum, allNum int) *vmd.VmdMotion {
 			bf := vmd.NewBoneFrame(fno)
 			bf.Position.SetX(frame.Camera.X * RATIO)
 			bf.Position.SetY(frame.Camera.Y * RATIO)
-			bf.Position.SetZ((frame.Camera.Z - rootPos.Z) * 0.5)
+			bf.Position.SetZ(-(frame.Camera.Z - rootPos.Z) * 0.5)
 			movMotion.AppendRegisteredBoneFrame("Camera", bf)
 		}
 

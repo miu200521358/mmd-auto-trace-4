@@ -59,13 +59,33 @@ func main() {
 
 		moveMotion := usecase.Move(frames, motionNum, allNum)
 
+		if mlog.IsVerbose() {
+			utils.WriteVmdMotions(frames, moveMotion, dirPath, "1_move", "Move", motionNum, allNum)
+		}
+
 		rotateMotion := usecase.Rotate(moveMotion, modelPath, motionNum, allNum)
+
+		if mlog.IsDebug() {
+			utils.WriteVmdMotions(frames, rotateMotion, dirPath, "2_rotate", "Rotate", motionNum, allNum)
+		}
 
 		legIkMotion := usecase.ConvertLegIk(rotateMotion, modelPath, motionNum, allNum)
 
+		if mlog.IsDebug() {
+			utils.WriteVmdMotions(frames, legIkMotion, dirPath, "3_legIk", "LegIK", motionNum, allNum)
+		}
+
 		groundMotion := usecase.FixGround(legIkMotion, modelPath, motionNum, allNum)
 
+		if mlog.IsDebug() {
+			utils.WriteVmdMotions(frames, groundMotion, dirPath, "4_ground", "Ground", motionNum, allNum)
+		}
+
 		heelMotion := usecase.FixHeel(frames, groundMotion, modelPath, motionNum, allNum)
+
+		if mlog.IsDebug() {
+			utils.WriteVmdMotions(frames, heelMotion, dirPath, "5_heel", "Heel", motionNum, allNum)
+		}
 
 		armIkMotion := usecase.ConvertArmIk(heelMotion, modelPath, motionNum, allNum)
 
