@@ -86,7 +86,7 @@ func convertLegIkMotion(
 	// IKなしの変化量を取得
 	legIkOffDeltas := prevMotion.BoneFrames.Deform(fno, legIkModel,
 		[]string{legBoneName, kneeBoneName, ankleBoneName, toeBoneName, heelBoneName, toeBigBoneName, toeSmallBoneName,
-			hipIkBoneName, kneeIkBoneName}, false, true, false, nil)
+			hipIkBoneName, kneeIkBoneName}, false, nil)
 
 	// 足IK --------------------
 
@@ -124,7 +124,7 @@ func convertLegIkMotion(
 	for j := range loopLimit {
 		// IKありの変化量を取得
 		legIkOnDeltas = legIkMotion.BoneFrames.Deform(fno, legIkModel,
-			[]string{legBoneName, kneeBoneName, ankleBoneName, hipIkBoneName, kneeIkBoneName}, true, true, false, nil)
+			[]string{legBoneName, kneeBoneName, ankleBoneName, hipIkBoneName, kneeIkBoneName}, true, nil)
 
 		kneeOnDelta := legIkOnDeltas.GetByName(kneeBoneName)
 		ankleOnDelta := legIkOnDeltas.GetByName(ankleBoneName)
@@ -170,8 +170,7 @@ func convertLegIkMotion(
 	legIkMotion.AppendRegisteredBoneFrame(legBoneName, legBf)
 
 	// 足IK結果の変化量を取得
-	legOnDeltas := legIkMotion.BoneFrames.Deform(fno, legIkModel,
-		[]string{ankleBoneName, toeBoneName}, true, true, false, nil)
+	legOnDeltas := legIkMotion.BoneFrames.Deform(fno, legIkModel, []string{ankleBoneName, toeBoneName}, true, nil)
 
 	// 足首の位置の差分を取得
 	ankleDiffPos := legOnDeltas.GetByName(ankleBoneName).GlobalPosition().Subed(legIkOffDeltas.GetByName(ankleBoneName).GlobalPosition())
@@ -227,7 +226,7 @@ func convertLegIkMotion(
 	for k := range loopLimit {
 		// IKありの変化量を取得
 		ikOnDeltas := legIkMotion.BoneFrames.Deform(fno, toeIkModel,
-			[]string{ankleBoneName, toeBoneName, toeSmallBoneName, heelBoneName, ankleIkBoneName, ankleTwistBoneName}, true, false, false, nil)
+			[]string{ankleBoneName, toeBoneName, toeSmallBoneName, heelBoneName, ankleIkBoneName, ankleTwistBoneName}, true, nil)
 
 		toeOnPos := ikOnDeltas.GetByName(toeBoneName).GlobalPosition()
 		toeDistance := toeOnPos.Distance(toeOffPos)

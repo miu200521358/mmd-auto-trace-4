@@ -101,7 +101,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 			pmx.ANKLE.Right(),
 			pmx.LEG_IK.Left(),
 			pmx.LEG_IK.Right(),
-		}, false, false, false, nil)
+		}, false, nil)
 
 		// Yが0の場合、足首の向きを調整して接地させる
 		for _, direction := range []string{"右", "左"} {

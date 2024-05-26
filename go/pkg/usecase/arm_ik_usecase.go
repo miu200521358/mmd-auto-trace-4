@@ -61,7 +61,7 @@ func convertArmIkMotion(
 
 	// IKなしの変化量を取得
 	armIkOffDeltas := prevMotion.BoneFrames.Deform(fno, armIkModel,
-		[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armIkBoneName, armTwistIkBoneName}, false, true, false, nil)
+		[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armIkBoneName, armTwistIkBoneName}, false, nil)
 
 	// 腕IK --------------------
 
@@ -137,7 +137,7 @@ func convertArmIkMotion(
 	for j := range loopLimit {
 		// IKありの変化量を取得
 		armIkOnDeltas = armIkMotion.BoneFrames.Deform(fno, armIkModel,
-			[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armIkBoneName, armTwistIkBoneName}, true, true, false, nil)
+			[]string{armBoneName, elbowBoneName, wristBoneName, armTwistBoneName, armIkBoneName, armTwistIkBoneName}, true, nil)
 
 		armOnDelta := armIkOnDeltas.GetByName(armBoneName)
 		armTwistOnDelta := armIkOnDeltas.GetByName(armTwistBoneName)
