@@ -75,13 +75,13 @@ func main() {
 			utils.WriteVmdMotions(frames, legIkMotion, dirPath, "3_legIk", "LegIK", motionNum, allNum)
 		}
 
-		return
-
 		groundMotion := usecase.FixGround(legIkMotion, modelPath, motionNum, allNum)
 
 		if mlog.IsDebug() {
 			utils.WriteVmdMotions(frames, groundMotion, dirPath, "4_ground", "Ground", motionNum, allNum)
 		}
+
+		return
 
 		heelMotion := usecase.FixHeel(frames, groundMotion, modelPath, motionNum, allNum)
 

@@ -250,7 +250,7 @@ func convertLegIkMotion(
 		keySum := toeDistance + toeSmallDistance + heelDistance
 		keyAvg := keySum / 3
 
-		mlog.D("[Toe] Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keySum: %f, keyAvg: %f, ankleKey: %f",
+		mlog.V("[Toe] Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keySum: %f, keyAvg: %f, ankleKey: %f",
 			fno, direction, k, toeDistance, toeSmallDistance, heelDistance, keySum, keyAvg, ankleKeySum)
 
 		if keySum < ankleKeySum && keyAvg < ankleKeyAvg {
@@ -258,19 +258,19 @@ func convertLegIkMotion(
 			ankleKeyAvg = keyAvg
 			ankleQuat = ankleBf.Rotation.GetQuaternion()
 			ankleIkQuat = ikOnDeltas.GetByName(ankleBoneName).LocalMatrix().Quaternion().Inverted()
-			mlog.D("** [Toe] Replaced Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keySum: %f, keyAvg: %f, ankleKey: %f",
+			mlog.V("** [Toe] Replaced Distance [%d][%s][%d] toe: %f toeSmall: %f heel: %f, keySum: %f, keyAvg: %f, ankleKey: %f",
 				fno, direction, k, toeDistance, toeSmallDistance, heelDistance, keySum, keyAvg, ankleKeySum)
 		}
 
 		if toeDistance < 1e-3 && toeSmallDistance < 0.1 && heelDistance < 0.1 {
-			mlog.D("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", fno, direction, k,
+			mlog.V("*** [Toe] Converged at [%d][%s][%d] toe: %f toeSmall: %f heel: %f", fno, direction, k,
 				toeDistance, toeSmallDistance, heelDistance)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.D("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, ankleKeySum, ankleQuat.MMD().ToDegrees().String())
+	mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, ankleKeySum, ankleQuat.MMD().ToDegrees().String())
 
 	// 足首
 	ankleBf := vmd.NewBoneFrame(fno)
