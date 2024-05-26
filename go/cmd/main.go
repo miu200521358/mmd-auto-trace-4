@@ -59,7 +59,7 @@ func main() {
 
 		moveMotion := usecase.Move(frames, motionNum, allNum)
 
-		if mlog.IsVerbose() {
+		if mlog.IsDebug() {
 			utils.WriteVmdMotions(frames, moveMotion, dirPath, "1_move", "Move", motionNum, allNum)
 		}
 
@@ -74,6 +74,8 @@ func main() {
 		if mlog.IsDebug() {
 			utils.WriteVmdMotions(frames, legIkMotion, dirPath, "3_legIk", "LegIK", motionNum, allNum)
 		}
+
+		return
 
 		groundMotion := usecase.FixGround(legIkMotion, modelPath, motionNum, allNum)
 

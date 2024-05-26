@@ -97,8 +97,8 @@
                 "-logLevel=DEBUG",
                 "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/04/addiction/addiction_mp4_20240517_164756",
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240517_140400",
-                "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712/20240526_001356"
+                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240517_140400",
+                // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712/20240526_001356"
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
