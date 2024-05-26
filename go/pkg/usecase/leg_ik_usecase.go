@@ -64,9 +64,6 @@ func ConvertLegIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 func convertLegIkMotion(
 	prevMotion, legIkMotion *vmd.VmdMotion, direction string, fno int, legIkModel, toeIkModel *pmx.PmxModel, loopLimit int,
 ) {
-
-	mlog.SetLevel(mlog.DEBUG)
-
 	legBoneName := pmx.LEG.StringFromDirection(direction)
 	kneeBoneName := pmx.KNEE.StringFromDirection(direction)
 	ankleBoneName := pmx.ANKLE.StringFromDirection(direction)
@@ -174,16 +171,6 @@ func convertLegIkMotion(
 
 	// 足首の位置の差分を取得
 	ankleDiffPos := legOnDeltas.GetByName(ankleBoneName).GlobalPosition().Subed(legIkOffDeltas.GetByName(ankleBoneName).GlobalPosition())
-
-	// // つま先ＩＫはつま先の位置を基準とする
-	// toeIkBf := vmd.NewBoneFrame(fno)
-	// toeOffPos := legIkOffDeltas.GetByName(toeBoneName).GlobalPosition()
-	// toeIkBf.Position = toeOffPos.Sub(toeIkModel.Bones.GetByName(toeIkBoneName).Position).Add(ankleDiffPos)
-	// legIkMotion.AppendBoneFrame(toeIkBoneName, toeIkBf)
-
-	// // IKありの変化量を取得
-	// toeIkOnDeltas := legIkMotion.BoneFrames.Deform(fno, toeIkModel,
-	// 	[]string{ankleBoneName, toeBoneName, toeIkBoneName}, true, true, false, nil)
 
 	// if mlog.IsVerbose() {
 	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_1.vmd", -1)

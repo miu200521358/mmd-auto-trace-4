@@ -34,7 +34,7 @@ for i in "${!output_dirs[@]}"; do
     # pklをコピー
     echo "copy pkl -----------------"
     cp ${output_dirs[i]}/*.pkl "${dir_path}"
-    cp ${output_dirs[i]}/end_of_frame "${dir_path}"
+    # cp ${output_dirs[i]}/end_of_frame "${dir_path}"
 
     echo "convert -----------------"
     python py/exec_cpu_local.py "${dir_path}"

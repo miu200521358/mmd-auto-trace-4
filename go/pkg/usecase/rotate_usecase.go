@@ -77,9 +77,6 @@ func Rotate(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) 
 			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.Invert.GetX(), boneConfig.Invert.GetY(), boneConfig.Invert.GetZ())
 
 			quat := invertQuat.Mul(cancelQuat.Invert()).Mul(motionQuat).Mul(boneQuat.Invert()).Normalize()
-			// mlog.D("configName: %s, invertQuat: %s, boneQuat: %s, motionQuat: %s, cancelQuat: %s, quat: %s",
-			// 	boneConfig.Name, invertQuat.ToMMDDegrees().String(), boneQuat.ToMMDDegrees().String(),
-			// 	motionQuat.ToMMDDegrees().String(), cancelQuat.ToMMDDegrees().String(), quat.ToMMDDegrees().String())
 
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)
