@@ -174,3 +174,5 @@ outputs_global/
 IK_step/
 /resize
 /.hydra
+
+__debug*

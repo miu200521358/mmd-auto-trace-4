@@ -81,8 +81,6 @@ func main() {
 			utils.WriteVmdMotions(frames, groundMotion, dirPath, "4_ground", "Ground", motionNum, allNum)
 		}
 
-		return
-
 		heelMotion := usecase.FixHeel(frames, groundMotion, modelPath, motionNum, allNum)
 
 		if mlog.IsDebug() {
