@@ -171,6 +171,6 @@ outputs_global/
 *.task
 
 *.exe
-/configs/pmx/IK_step
+IK_step/
 /resize
 /.hydra

@@ -132,8 +132,8 @@ func convertLegIkMotion(
 		// 足は足捩りと合成する
 		legBf := vmd.NewBoneFrame(fno)
 		legBf.Rotation.SetQuaternion(
-			legIkOnDeltas.GetByName(hipTwistBoneName).GlobalRotation().Mul(
-				legIkOnDeltas.GetByName(legBoneName).GlobalRotation()),
+			legIkOnDeltas.GetByName(legBoneName).GlobalRotation().Mul(
+				legIkOnDeltas.GetByName(hipTwistBoneName).GlobalRotation()),
 		)
 		legIkMotion.AppendRegisteredBoneFrame(legBoneName, legBf)
 
@@ -159,7 +159,7 @@ func convertLegIkMotion(
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, legKey, legQuat.ToDegrees().String())
+	mlog.V("[Leg] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, legKey, legQuat.MMD().ToDegrees().String())
 
 	// 足は足捩りと合成した値を設定
 	legBf := vmd.NewBoneFrame(fno)
@@ -210,6 +210,12 @@ func convertLegIkMotion(
 	// 	}
 	// }
 
+	// if direction == "右" {
+	// 	mlog.SetLevel(mlog.VERBOSE)
+	// } else {
+	// 	mlog.SetLevel(mlog.INFO)
+	// }
+
 	ankleKey := math.MaxFloat64
 	var ankleIkQuat *mmath.MQuaternion
 	for k := range loopLimit {
@@ -227,8 +233,8 @@ func convertLegIkMotion(
 		// 足首は足首捩りと合成する
 		ankleBf := vmd.NewBoneFrame(fno)
 		ankleBf.Rotation.SetQuaternion(
-			ikOnDeltas.GetByName(ankleTwistBoneName).GlobalRotation().Mul(
-				ikOnDeltas.GetByName(ankleBoneName).GlobalRotation()),
+			ikOnDeltas.GetByName(ankleBoneName).GlobalRotation().Mul(
+				ikOnDeltas.GetByName(ankleTwistBoneName).GlobalRotation()),
 		)
 		legIkMotion.AppendRegisteredBoneFrame(ankleBoneName, ankleBf)
 
@@ -243,7 +249,7 @@ func convertLegIkMotion(
 
 		if keySum < ankleKey {
 			ankleKey = keySum
-			ankleIkQuat = ikOnDeltas.GetByName(ankleBoneName).LocalMatrix().Quaternion()
+			ankleIkQuat = ikOnDeltas.GetByName(ankleBoneName).GlobalMatrix().Quaternion()
 		}
 
 		if toeDistance < 1e-3 && toeSmallDistance < 0.1 && heelDistance < 0.1 {
@@ -254,7 +260,7 @@ func convertLegIkMotion(
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, ankleKey, ankleIkQuat.ToDegrees().String())
+	mlog.V("[Toe] FIX Converged at [%d][%s] distance: %f(%s)", fno, direction, ankleKey, ankleIkQuat.MMD().ToDegrees().String())
 
 	// 足IKの回転は足首までの回転
 	legIkBf.Rotation.SetQuaternion(ankleIkQuat)

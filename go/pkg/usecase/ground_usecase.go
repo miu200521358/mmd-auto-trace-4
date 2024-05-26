@@ -87,7 +87,7 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 	for fno := minFrame; fno <= maxFrame; fno++ {
 		bar.Increment()
 
-		// IFをONにした状態での位置関係を取得
+		// IFをOFFにした状態での位置関係を取得
 		deltas := motion.BoneFrames.Deform(fno, model, []string{
 			"左つま先親",
 			"左つま先子",
@@ -101,55 +101,61 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 			pmx.ANKLE.Right(),
 			pmx.LEG_IK.Left(),
 			pmx.LEG_IK.Right(),
-		}, true, true, true, nil)
+		}, false, false, false, nil)
 
 		// Yが0の場合、足首の向きを調整して接地させる
 		for _, direction := range []string{"右", "左"} {
 			heelBoneName := fmt.Sprintf("%sかかと", direction)
-			toeBoneName := pmx.TOE.StringFromDirection(direction)
 			toeBigBoneName := fmt.Sprintf("%sつま先親", direction)
 			toeSmallBoneName := fmt.Sprintf("%sつま先子", direction)
 			ankleBoneName := pmx.ANKLE.StringFromDirection(direction)
 			legIkBoneName := pmx.LEG_IK.StringFromDirection(direction)
 
 			if motion.BoneFrames.Get(legIkBoneName).Get(fno).Position.GetY() == 0.0 {
-				heelPos := deltas.GetByName(heelBoneName).GlobalPosition()
-				toePos := deltas.GetByName(toeBoneName).GlobalPosition()
-				toeHorizontalPos := mmath.MVec3{toePos.GetX(), heelPos.GetY(), toePos.GetZ()}
-
-				toeLocalPos := toePos.Subed(heelPos).Normalize()
-				toeHorizontalLocalPos := toeHorizontalPos.Subed(heelPos).Normalize()
-
-				// 縦方向の回転角
-				ankleVRad := math.Acos(mmath.ClampFloat(toeLocalPos.Dot(toeHorizontalLocalPos), -1.0, 1.0))
-				// 縦方向の回転軸
-				ankleVAxis := toeLocalPos.Cross(toeHorizontalLocalPos).Normalize()
-				// 縦方向の回転角度
-				ankleVQuat := mmath.NewMQuaternionFromAxisAngles(ankleVAxis, ankleVRad)
-
-				// -----------
-
 				toeBigPos := deltas.GetByName(toeBigBoneName).GlobalPosition()
 				toeSmallPos := deltas.GetByName(toeSmallBoneName).GlobalPosition()
-				toeSmallHorizontalPos := mmath.MVec3{toeSmallPos.GetX(), toeBigPos.GetY(), toeSmallPos.GetZ()}
+				heelPos := deltas.GetByName(heelBoneName).GlobalPosition()
 
-				toeSmallLocalPos := toeSmallPos.Subed(toeBigPos).Normalize()
-				toeSmallHorizontalLocalPos := toeSmallHorizontalPos.Subed(toeBigPos).Normalize()
+				horizontalQuat := calcHorizontalQuat(toeBigPos, toeSmallPos, heelPos, direction)
+				ankleQuat := motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion()
 
-				// 横方向の回転角
-				ankleHRad := math.Acos(mmath.ClampFloat(toeSmallLocalPos.Dot(toeSmallHorizontalLocalPos), -1.0, 1.0))
-				// 横方向の回転軸
-				ankleHAxis := toeSmallLocalPos.Cross(toeSmallHorizontalLocalPos).Normalize()
-				// 横方向の回転角度
-				ankleHQuat := mmath.NewMQuaternionFromAxisAngles(ankleHAxis, ankleHRad)
+				mlog.D("fno: %d, direction: %s, ankle:%s(%s)(%s), horizontal: %s(%s)(%s)", fno, direction,
+					ankleQuat.ToDegrees().String(),
+					ankleQuat.String(),
+					ankleQuat.MMD().ToDegrees().String(),
+					horizontalQuat.ToDegrees().String(),
+					horizontalQuat.String(),
+					horizontalQuat.MMD().ToDegrees().String(),
+				)
+
+				mlog.D("fno: %d, direction: %s, ankleQuat1: %s(%s)(%s)", fno, direction,
+					motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion().ToDegrees().String(),
+					motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion().String(),
+					horizontalQuat.ToDegrees().String(),
+					horizontalQuat.String(),
+					ankleQuat.Muled(horizontalQuat).ToDegrees().String(),
+					ankleQuat.Muled(horizontalQuat).String(),
+					ankleQuat.Muled(horizontalQuat.Inverted()).ToDegrees().String(),
+					ankleQuat.Muled(horizontalQuat.Inverted()).String(),
+					ankleQuat.Inverted().Muled(horizontalQuat).ToDegrees().String(),
+					ankleQuat.Inverted().Muled(horizontalQuat).String(),
+					horizontalQuat.Muled(ankleQuat).ToDegrees().String(),
+					horizontalQuat.Muled(ankleQuat).String(),
+					horizontalQuat.Muled(ankleQuat.Inverted()).ToDegrees().String(),
+					horizontalQuat.Muled(ankleQuat.Inverted()).String(),
+					horizontalQuat.Inverted().Muled(ankleQuat).ToDegrees().String(),
+					horizontalQuat.Inverted().Muled(ankleQuat).String(),
+				)
 
 				// 足首の向きを調整する角度
-				ankleQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.SetQuaternion(ankleQuat)
+				groundAnkleQuat := motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion().Muled(horizontalQuat.Inverted())
+				motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.SetQuaternion(groundAnkleQuat)
 
 				// 足ＩＫの向きを調整する角度
-				legIkQuat := ankleHQuat.Muled(ankleVQuat).Muled(motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.SetQuaternion(legIkQuat)
+				groundLegIkQuat := motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.GetQuaternion().Muled(horizontalQuat.Inverted())
+				motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.SetQuaternion(groundLegIkQuat)
+
+				continue
 			}
 		}
 
@@ -162,7 +168,6 @@ func setGroundedFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdM
 
 func percentile(values []float64, percent float64) float64 {
 	mutils.SortFloat64s(values)
-
 	// percentに応じた中央値を取得
 	middle := int(float64(len(values)) * percent)
 	median := values[middle]
@@ -171,4 +176,30 @@ func percentile(values []float64, percent float64) float64 {
 	}
 
 	return median
+}
+
+func calcHorizontalQuat(bigToePos, smallToePos, heelPos *mmath.MVec3, direction string) *mmath.MQuaternion {
+	// Create vectors for the sides of the triangle
+	v1 := smallToePos.Subed(heelPos)
+	v2 := bigToePos.Subed(heelPos)
+
+	var up *mmath.MVec3
+	if direction == "右" {
+		up = mmath.MVec3UnitY
+	} else {
+		up = mmath.MVec3UnitYInv
+	}
+
+	normal := v1.Normalize().Cross(v2.Normalize()).Normalize()
+
+	// 回転軸
+	axis := normal.Cross(up).Normalize()
+	if math.Abs(axis.Length()) <= 1e-8 {
+		return mmath.NewMQuaternion()
+	}
+
+	// 回転角
+	rad := math.Acos(mmath.ClampFloat(normal.Dot(up), -1.0, 1.0))
+
+	return mmath.NewMQuaternionFromAxisAngles(axis, rad).MMD()
 }
