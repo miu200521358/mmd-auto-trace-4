@@ -517,7 +517,7 @@ def smooth_frames(i: int, all: int, json_path: str, start_camera_z: float = None
         json.dump(smoothed_data, f, indent=4)
 
 
-def smooth(output_dir_path: str):
+def smooth(output_dir_path: str, limit_minutes: int):
     original_json_paths = glob(os.path.join(output_dir_path, "*_original.json"))
     start_time = time.time()
 
@@ -527,7 +527,7 @@ def smooth(output_dir_path: str):
             smooth_frames(i, len(original_json_paths), json_path)
 
             # 開始から30分過ぎてたら一旦終了
-            if 30 * 60 < time.time() - start_time:
+            if limit_minutes * 60 < time.time() - start_time:
                 return
 
 if __name__ == "__main__":

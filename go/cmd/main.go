@@ -14,13 +14,13 @@ import (
 var logLevel string
 var modelPath string
 var dirPath string
-
-const LIMIT_MINUTES = 30
+var limitMinutes int
 
 func init() {
 	flag.StringVar(&logLevel, "logLevel", "INFO", "set log level")
 	flag.StringVar(&modelPath, "modelPath", "", "set model path")
 	flag.StringVar(&dirPath, "dirPath", "", "set directory path")
+	flag.IntVar(&limitMinutes, "limitMinutes", 30, "set directory path")
 	flag.Parse()
 
 	switch logLevel {
@@ -101,8 +101,8 @@ func main() {
 
 		utils.WriteComplete(dirPath, frames.Path)
 
-		// 開始時間から30分過ぎてたら終了
-		if time.Since(startTime) > LIMIT_MINUTES*time.Minute {
+		// 開始時間から指定時間過ぎてたら終了
+		if time.Since(startTime) > time.Duration(limitMinutes)*time.Minute {
 			return
 		}
 	}
