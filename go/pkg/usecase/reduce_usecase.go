@@ -19,7 +19,7 @@ func Reduce(prevMotion *vmd.VmdMotion, modelPath string, moveTolerance, rotToler
 	maxFno := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 	fnoCounts := maxFno - minFno + 1
 
-	bar := utils.NewProgressBar(fnoCounts)
+	bar := utils.NewProgressBar(fnoCounts * 2)
 
 	// 移動
 	moveXs := make(map[string][]float64)
@@ -57,9 +57,9 @@ func Reduce(prevMotion *vmd.VmdMotion, modelPath string, moveTolerance, rotToler
 				if i == 0 {
 					rots[boneName][i] = 1.0
 				} else {
-					rots[boneName][i] = bf.Rotation.GetQuaternion().Dot(prevMotion.BoneFrames.Get(boneName).Get(fno - 1).Rotation.GetQuaternion())
+					rots[boneName][i] = bf.Rotation.Dot(prevMotion.BoneFrames.Get(boneName).Get(fno - 1).Rotation)
 				}
-				quats[boneName][i] = bf.Rotation.GetQuaternion()
+				quats[boneName][i] = bf.Rotation
 			}
 		}
 	}
@@ -169,8 +169,8 @@ func appendCurveFrame(motion *vmd.VmdMotion, boneName string, startFno, endFno i
 	}
 
 	if quats != nil {
-		startBf.Rotation = mmath.NewRotationByQuaternion(quats[0])
-		endBf.Rotation = mmath.NewRotationByQuaternion(quats[len(quats)-1])
+		startBf.Rotation = quats[0]
+		endBf.Rotation = quats[len(quats)-1]
 
 		rotTs := make([]float64, len(quats))
 		for i, rot := range quats {

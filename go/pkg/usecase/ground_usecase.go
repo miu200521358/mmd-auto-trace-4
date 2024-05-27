@@ -156,12 +156,12 @@ func fixGroundFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdMot
 				ankleHQuat := mmath.NewMQuaternionFromAxisAngles(ankleHAxis, ankleHRad)
 
 				// 足首の向きを調整する角度
-				ankleQuat := ankleVQuat.Muled(ankleHQuat).Muled(motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation.SetQuaternion(ankleQuat)
+				motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation =
+					ankleVQuat.Muled(ankleHQuat).Muled(motion.BoneFrames.Get(ankleBoneName).Get(fno).Rotation)
 
 				// 足ＩＫの向きを調整する角度
-				legIkQuat := ankleVQuat.Muled(ankleHQuat).Muled(motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.GetQuaternion())
-				motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation.SetQuaternion(legIkQuat)
+				motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation =
+					ankleVQuat.Muled(ankleHQuat).Muled(motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation)
 			}
 		}
 

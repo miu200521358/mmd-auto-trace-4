@@ -70,17 +70,15 @@ func Rotate(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) 
 			// キャンセルボーン角度
 			cancelQuat := mmath.NewMQuaternion()
 			for _, cancelBoneName := range boneConfig.Cancels {
-				cancelQuat.Mul(rotMotion.BoneFrames.Get(cancelBoneName).Get(fno).Rotation.GetQuaternion())
+				cancelQuat.Mul(rotMotion.BoneFrames.Get(cancelBoneName).Get(fno).Rotation)
 			}
 
 			// 調整角度
 			invertQuat := mmath.NewMQuaternionFromDegrees(boneConfig.Invert.GetX(), boneConfig.Invert.GetY(), boneConfig.Invert.GetZ())
 
-			quat := invertQuat.Mul(cancelQuat.Invert()).Mul(motionQuat).Mul(boneQuat.Invert()).Normalize()
-
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)
-			bf.Rotation.SetQuaternion(quat)
+			bf.Rotation = invertQuat.Mul(cancelQuat.Invert()).Mul(motionQuat).Mul(boneQuat.Invert()).Normalize()
 
 			rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
 		}

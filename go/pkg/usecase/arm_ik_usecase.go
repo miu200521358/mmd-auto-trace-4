@@ -85,7 +85,7 @@ func convertArmIkMotion(
 		// 腕の捩りを除去する
 		_, armYZQuat := armOffDelta.GlobalRotation().SeparateTwistByAxis(armIkModel.Bones.GetByName(armBoneName).NormalizedLocalAxisX)
 		armBf := vmd.NewBoneFrame(fno)
-		armBf.Rotation = mmath.NewRotationByQuaternion(armYZQuat)
+		armBf.Rotation = armYZQuat
 		armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 		// ひじをローカルY軸に対して曲げる
@@ -93,7 +93,7 @@ func convertArmIkMotion(
 		elbowBf := vmd.NewBoneFrame(fno)
 		elbowQuat := mmath.NewMQuaternionFromAxisAngles(
 			armIkModel.Bones.GetByName(elbowBoneName).NormalizedLocalAxisY, elbowYZQuat.ToRadian())
-		elbowBf.Rotation = mmath.NewRotationByQuaternion(elbowQuat)
+		elbowBf.Rotation = elbowQuat
 		armIkMotion.AppendRegisteredBoneFrame(elbowBoneName, elbowBf)
 	}
 
@@ -150,16 +150,16 @@ func convertArmIkMotion(
 
 		// 腕を初期値として設定する
 		armBf := vmd.NewBoneFrame(fno)
-		armBf.Rotation.SetQuaternion(armOnDelta.GlobalRotation())
+		armBf.Rotation = armOnDelta.GlobalRotation()
 		armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 		// 腕捩りは初期値として設定する
 		armTwistBf := vmd.NewBoneFrame(fno)
-		armTwistBf.Rotation.SetQuaternion(armTwistOnDelta.GlobalRotation())
+		armTwistBf.Rotation = armTwistOnDelta.GlobalRotation()
 		armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
 
 		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f, armTwist: %v",
-			fno, direction, j, elbowDistance, wristDistance, keySum, armKey, armTwistBf.Rotation.GetDegreesMMD())
+			fno, direction, j, elbowDistance, wristDistance, keySum, armKey, armTwistBf.Rotation.ToMMDDegrees())
 
 		if keySum < armKey {
 			armKey = keySum
@@ -182,11 +182,11 @@ func convertArmIkMotion(
 
 	// FKの各キーフレに値を設定
 	armBf := vmd.NewBoneFrame(fno)
-	armBf.Rotation = mmath.NewRotationByQuaternion(armQuat)
+	armBf.Rotation = armQuat
 	armIkMotion.AppendRegisteredBoneFrame(armBoneName, armBf)
 
 	armTwistBf := vmd.NewBoneFrame(fno)
-	armTwistBf.Rotation = mmath.NewRotationByQuaternion(armTwistQuat)
+	armTwistBf.Rotation = armTwistQuat
 	armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
 
 }
