@@ -164,7 +164,6 @@ func fixGroundFootMotion(model *pmx.PmxModel, motion *vmd.VmdMotion) *vmd.VmdMot
 					ankleVQuat.Muled(ankleHQuat).Muled(motion.BoneFrames.Get(legIkBoneName).Get(fno).Rotation)
 			}
 		}
-
 	}
 
 	bar.Finish()

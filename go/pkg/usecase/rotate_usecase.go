@@ -78,7 +78,7 @@ func Rotate(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) 
 
 			// ボーンフレーム登録
 			bf := vmd.NewBoneFrame(fno)
-			bf.Rotation = invertQuat.Mul(cancelQuat.Invert()).Mul(motionQuat).Mul(boneQuat.Invert()).Normalize()
+			bf.Rotation = invertQuat.Mul(cancelQuat.Inverse()).Mul(motionQuat).Mul(boneQuat.Inverse()).Normalize()
 
 			rotMotion.AppendRegisteredBoneFrame(boneConfig.Name, bf)
 		}

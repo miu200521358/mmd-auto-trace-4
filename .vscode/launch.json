@@ -4,87 +4,87 @@
     // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "exec 4d-humans-track",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/exec_track.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "justMyCode": false,
-            "args": [
-                "video.source=/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4"
-                // "video.source=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
-                // "video.source=/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4",
-                // "video.source=inputs/snobbism_2255-2265.mp4",
-                // "video.source=inputs/buster_1167-1267.mp4",
-                // "video.output_dir=outputs",
-            ]
-        },
-        {
-            "name": "exec pkl2json",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/exec_pkl2json.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                // "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447/20240509_232722/"
-                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_104434"
-                // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/demo_snobbism_23_1500-1550.pkl"
-                // "outputs/results/demo_buster.pkl"
-                // "outputs/results/demo_snobbism_1080-1380.pkl"
-                // "outputs/results/demo_snobbism_2255-2265.pkl"
-                // "outputs/results/demo_buster_1167-1267.pkl"
-            ]
-        },
         // {
-        //     "name": "exec mediapipe",
+        //     "name": "exec 4d-humans-track",
         //     "type": "debugpy",
         //     "request": "launch",
-        //     "program": "${workspaceFolder}/py/exec_mediapipe.py",
+        //     "program": "${workspaceFolder}/py/exec_track.py",
         //     "console": "integratedTerminal",
         //     "cwd": "${workspaceFolder}",
+        //     "justMyCode": false,
         //     "args": [
-        //         "--video",
-        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
-        //         "--output_dir",
-        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
+        //         "video.source=/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps.mp4"
+        //         // "video.source=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_7000-.mp4"
+        //         // "video.source=/mnt/e/MMD_E/201805_auto/02/sugar/sugar.mp4",
+        //         // "video.source=inputs/snobbism_2255-2265.mp4",
+        //         // "video.source=inputs/buster_1167-1267.mp4",
+        //         // "video.output_dir=outputs",
         //     ]
         // },
         // {
-        //     "name": "exec osx",
+        //     "name": "exec pkl2json",
         //     "type": "debugpy",
         //     "request": "launch",
-        //     "program": "${workspaceFolder}/py/exec_osx.py",
+        //     "program": "${workspaceFolder}/py/exec_pkl2json.py",
         //     "console": "integratedTerminal",
         //     "cwd": "${workspaceFolder}",
         //     "args": [
-        //         "--video",
-        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
-        //         "--output_dir",
-        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+        //         // "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447/20240509_232722/"
+        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_104434"
+        //         // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/demo_snobbism_23_1500-1550.pkl"
+        //         // "outputs/results/demo_buster.pkl"
+        //         // "outputs/results/demo_snobbism_1080-1380.pkl"
+        //         // "outputs/results/demo_snobbism_2255-2265.pkl"
+        //         // "outputs/results/demo_buster_1167-1267.pkl"
         //     ]
         // },
-        {
-            "name": "exec smooth",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/py/exec_smooth.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_103406"
-                // "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447"
-                // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
-                // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
-                // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
-                // "outputs/results/demo_buster.pkl"
-                // "outputs/results/demo_snobbism_1080-1380.pkl"
-                // "outputs/results/demo_snobbism_2255-2265.pkl"
-                // "outputs/results/demo_buster_1167-1267.pkl"
-            ]
-        },
+        // // {
+        // //     "name": "exec mediapipe",
+        // //     "type": "debugpy",
+        // //     "request": "launch",
+        // //     "program": "${workspaceFolder}/py/exec_mediapipe.py",
+        // //     "console": "integratedTerminal",
+        // //     "cwd": "${workspaceFolder}",
+        // //     "args": [
+        // //         "--video",
+        // //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
+        // //         "--output_dir",
+        // //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
+        // //     ]
+        // // },
+        // // {
+        // //     "name": "exec osx",
+        // //     "type": "debugpy",
+        // //     "request": "launch",
+        // //     "program": "${workspaceFolder}/py/exec_osx.py",
+        // //     "console": "integratedTerminal",
+        // //     "cwd": "${workspaceFolder}",
+        // //     "args": [
+        // //         "--video",
+        // //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_0-100.mp4",
+        // //         "--output_dir",
+        // //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+        // //     ]
+        // // },
+        // {
+        //     "name": "exec smooth",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}/py/exec_smooth.py",
+        //     "console": "integratedTerminal",
+        //     "cwd": "${workspaceFolder}",
+        //     "args": [
+        //         "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_103406"
+        //         // "/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240425_170447"
+        //         // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
+        //         // "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
+        //         // "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
+        //         // "outputs/results/demo_buster.pkl"
+        //         // "outputs/results/demo_snobbism_1080-1380.pkl"
+        //         // "outputs/results/demo_snobbism_2255-2265.pkl"
+        //         // "outputs/results/demo_buster_1167-1267.pkl"
+        //     ]
+        // },
         {
             "name": "Launch mat4 cmd",
             "type": "go",
@@ -94,36 +94,36 @@
             "preLaunchTask": "go: mod tidy",
             "cwd": "${workspaceFolder}/go",
             "args": [
-                "-logLevel=DEBUG",
+                "-logLevel=INFO",
                 "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/04/addiction/addiction_mp4_20240517_164756",
-                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240517_140400",
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712/20240526_001356"
+                // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240517_140400",
+                "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712/20240527_123419"
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
                 // "-dirPath=/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
             ]
         },
-        {
-            "name": "Launch mat4 cmd2",
-            "type": "go",
-            "request": "launch",
-            "mode": "debug",
-            "program": "${workspaceFolder}/go/cmd2/main.go",
-            "preLaunchTask": "go: mod tidy",
-            "cwd": "${workspaceFolder}/go",
-            "args": [
-                // "-logLevel=DEBUG",
-                "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240512_015543/20240516_150558_2"
-                "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_110557",
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/0507_2"
-                // "-dirPath=/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
-            ]
-        },
+        // {
+        //     "name": "Launch mat4 cmd2",
+        //     "type": "go",
+        //     "request": "launch",
+        //     "mode": "debug",
+        //     "program": "${workspaceFolder}/go/cmd2/main.go",
+        //     "preLaunchTask": "go: mod tidy",
+        //     "cwd": "${workspaceFolder}/go",
+        //     "args": [
+        //         // "-logLevel=DEBUG",
+        //         "-modelPath=/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx",
+        //         // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
+        //         // "-dirPath=/mnt/e/MMD_E/201805_auto/01/sakura/sakura_20240512_015543/20240516_150558_2"
+        //         "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727/20240517_110557",
+        //         // "-dirPath=/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307_冒頭2",
+        //         // "-dirPath=/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744/0507_2"
+        //         // "-dirPath=/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
+        //     ]
+        // },
         // {
         //     "name": "exec ALL",
         //     "type": "debugpy",
