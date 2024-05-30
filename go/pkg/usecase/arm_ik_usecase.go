@@ -27,7 +27,6 @@ func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 	minFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMinFrame()
 	maxFrame := prevMotion.BoneFrames.Get(pmx.CENTER.String()).GetMaxFrame()
 
-	loopLimit := 100
 	bar := utils.NewProgressBar(maxFrame - minFrame)
 
 	armIkMotion := prevMotion.Copy().(*vmd.VmdMotion)
@@ -35,8 +34,8 @@ func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 	for fno := minFrame; fno <= maxFrame; fno++ {
 		bar.Increment()
 
-		convertArmIkMotion(prevMotion, armIkMotion, "右", fno, armIkModel, loopLimit)
-		convertArmIkMotion(prevMotion, armIkMotion, "左", fno, armIkModel, loopLimit)
+		convertArmIkMotion(prevMotion, armIkMotion, "右", fno, armIkModel)
+		convertArmIkMotion(prevMotion, armIkMotion, "左", fno, armIkModel)
 	}
 
 	armIkMotion.BoneFrames.Delete("左腕ＩＫ")
@@ -50,7 +49,7 @@ func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum
 }
 
 func convertArmIkMotion(
-	prevMotion, armIkMotion *vmd.VmdMotion, direction string, fno int, armIkModel *pmx.PmxModel, loopLimit int,
+	prevMotion, armIkMotion *vmd.VmdMotion, direction string, fno int, armIkModel *pmx.PmxModel,
 ) {
 	armBoneName := pmx.ARM.StringFromDirection(direction)
 	elbowBoneName := pmx.ELBOW.StringFromDirection(direction)
@@ -58,6 +57,8 @@ func convertArmIkMotion(
 	armTwistBoneName := pmx.ARM_TWIST.StringFromDirection(direction)
 	armIkBoneName := fmt.Sprintf("%s腕ＩＫ", direction)
 	armTwistIkBoneName := fmt.Sprintf("%s腕捩ＩＫ", direction)
+
+	loopLimit := 500
 
 	// IKなしの変化量を取得
 	armIkOffDeltas := prevMotion.BoneFrames.Deform(fno, armIkModel,
@@ -70,15 +71,15 @@ func convertArmIkMotion(
 	wristOffDelta := armIkOffDeltas.GetByName(wristBoneName)
 
 	{
-		// 腕ＩＫはひじの位置を基準とする
-		armIkBf := vmd.NewBoneFrame(fno)
-		armIkBf.Position = elbowOffDelta.GlobalPosition().Subed(armIkModel.Bones.GetByName(armIkBoneName).Position)
-		armIkMotion.AppendBoneFrame(armIkBoneName, armIkBf)
-
 		// 腕捩ＩＫは手首の位置を基準とする
 		armTwistIkBf := vmd.NewBoneFrame(fno)
-		armTwistIkBf.Position = wristOffDelta.GlobalPosition().Subed(armIkBf.Position).Subed(armIkModel.Bones.GetByName(armTwistIkBoneName).Position)
+		armTwistIkBf.Position = wristOffDelta.GlobalPosition().Subed(armIkModel.Bones.GetByName(armTwistIkBoneName).Position)
 		armIkMotion.AppendBoneFrame(armTwistIkBoneName, armTwistIkBf)
+
+		// 腕ＩＫはひじの位置を基準とする
+		armIkBf := vmd.NewBoneFrame(fno)
+		armIkBf.Position = elbowOffDelta.GlobalPosition().Subed(armTwistIkBf.Position).Subed(armIkModel.Bones.GetByName(armIkBoneName).Position)
+		armIkMotion.AppendBoneFrame(armIkBoneName, armIkBf)
 	}
 
 	{
@@ -133,7 +134,8 @@ func convertArmIkMotion(
 	var armIkOnDeltas *vmd.BoneDeltas
 	var armQuat *mmath.MQuaternion
 	var armTwistQuat *mmath.MQuaternion
-	armKey := math.MaxFloat64
+	elbowMinDistance := math.MaxFloat64
+	wristMinDistance := math.MaxFloat64
 	for j := range loopLimit {
 		// IKありの変化量を取得
 		armIkOnDeltas = armIkMotion.BoneFrames.Deform(fno, armIkModel,
@@ -146,8 +148,6 @@ func convertArmIkMotion(
 		elbowDistance := elbowOnDelta.GlobalPosition().Distance(elbowOffDelta.GlobalPosition())
 		wristDistance := wristOnDelta.GlobalPosition().Distance(wristOffDelta.GlobalPosition())
 
-		keySum := elbowDistance + wristDistance
-
 		// 腕を初期値として設定する
 		armBf := vmd.NewBoneFrame(fno)
 		armBf.Rotation = armOnDelta.GlobalRotation()
@@ -158,27 +158,28 @@ func convertArmIkMotion(
 		armTwistBf.Rotation = armTwistOnDelta.GlobalRotation()
 		armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
 
-		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f, armTwist: %v",
-			fno, direction, j, elbowDistance, wristDistance, keySum, armKey, armTwistBf.Rotation.ToMMDDegrees())
+		mlog.V("[Arm] Distance [%d][%s][%d] elbow: %f, wrist: %f, armTwist: %v",
+			fno, direction, j, elbowDistance, wristDistance, armTwistBf.Rotation.ToMMDDegrees())
 
-		if keySum < armKey {
-			armKey = keySum
+		if (elbowDistance <= elbowMinDistance && wristDistance <= wristMinDistance+0.01) ||
+			(elbowDistance <= elbowMinDistance+0.01 && wristDistance <= wristMinDistance) {
+
+			elbowMinDistance = elbowDistance
+			wristMinDistance = wristDistance
 			armQuat = armOnDelta.GlobalRotation()
 			armTwistQuat = armTwistOnDelta.GlobalRotation()
 
-			mlog.V("[Arm] Update IK [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-				fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
+			mlog.V("[Arm] Update IK [%d][%s][%d] elbow: %f, wrist: %f", fno, direction, j, elbowDistance, wristDistance)
 		}
 
-		if elbowDistance < 1e-2 && wristDistance < 1e-2 {
-			mlog.V("*** [Arm] Converged at [%d][%s][%d] elbow: %f, wrist: %f, keySum: %f, armKey: %f",
-				fno, direction, j, elbowDistance, wristDistance, keySum, armKey)
+		if elbowDistance < 0.01 && wristDistance < 0.01 {
+			mlog.V("*** [Arm] Converged at [%d][%s][%d] elbow: %f, wrist: %f", fno, direction, j, elbowDistance, wristDistance)
 			break
 		}
 	}
 
 	// 最も近いものを採用
-	mlog.V("[Arm] FIX Converged at [%d][%s] distance: %f", fno, direction, armKey)
+	mlog.V("[Arm] FIX Converged at [%d][%s] distance: %f", fno, direction, elbowMinDistance)
 
 	// FKの各キーフレに値を設定
 	armBf := vmd.NewBoneFrame(fno)
@@ -188,5 +189,13 @@ func convertArmIkMotion(
 	armTwistBf := vmd.NewBoneFrame(fno)
 	armTwistBf.Rotation = armTwistQuat
 	armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
+
+	if elbowMinDistance > 0.3 || wristMinDistance > 0.3 {
+		mlog.I("xxx [Arm] NO FIX Converged at [%d][%s] elbow: %f, wrist: %f", fno, direction, elbowMinDistance, wristMinDistance)
+
+		// 差が大きい場合、キーフレを削除する
+		armIkMotion.BoneFrames.Get(armBoneName).Delete(fno)
+		armIkMotion.BoneFrames.Get(armTwistBoneName).Delete(fno)
+	}
 
 }

@@ -64,11 +64,11 @@ func fixGroundMotion(motion *vmd.VmdMotion) *vmd.VmdMotion {
 		}
 
 		newLeftY = motion.BoneFrames.Get(pmx.LEG_IK.Left()).Get(fno).Position.GetY() - frameGroundY
-		if newLeftY < 0.2 {
+		if newLeftY < 0.1 {
 			newLeftY = 0.0
 		}
 		newRightY = motion.BoneFrames.Get(pmx.LEG_IK.Right()).Get(fno).Position.GetY() - frameGroundY
-		if newRightY < 0.2 {
+		if newRightY < 0.1 {
 			newRightY = 0.0
 		}
 
