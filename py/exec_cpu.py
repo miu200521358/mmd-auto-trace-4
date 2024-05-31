@@ -31,7 +31,7 @@ if __name__ == "__main__":
     smooth_json_paths = glob(os.path.join(output_dir_path, "*_smooth.json"))
     if not smooth_json_paths or len(smooth_json_paths) < len(original_json_paths):
         # まだスムージング実行終わっていない場合、実行
-        exec_smooth.smooth(output_dir_path)
+        exec_smooth.smooth(output_dir_path, limit_minutes)
 
         print("smoothing done!")
         sys.exit()
