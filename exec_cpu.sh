@@ -5,8 +5,9 @@ clear
 model_path="/mnt/c/MMD/mmd-auto-trace-4/data/pmx/v4_trace_model.pmx"
 
 output_dirs=(
+    "/mnt/e/MMD_E/201805_auto/02/baka/baka_mp4_20240531_223747"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240511_210727"
-    "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
+    # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_20240425_015712"
     # "/mnt/e/MMD_E/201805_auto/03/night/night_20240425_015629"
     # "/mnt/e/MMD_E/201805_auto/04/addiction/addiction_mp4_20240517_164756"
     # "/mnt/e/MMD_E/201805_auto/01/heart/heart_full5_20240425_015022"
@@ -16,7 +17,7 @@ output_dirs=(
     # "/mnt/e/MMD_E/201805_auto/02/baka/baka_20240425_015515"
     # "/mnt/e/MMD_E/201805_auto/03/bbf/bbf_20240503_200532"
     # "/mnt/e/MMD_E/201805_auto/04/charles/charles_20240425_020048/results"
-    # "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps_20240511_161108/20240511_184004"
+    # "/mnt/e/MMD_E/201805_auto/misozi/ashi/input_24fps_20240517_020541"
     # "/mnt/e/MMD_E/201805_auto/01/snobbism/snobbism_23_1500-1550_20240425_015744"
     # "/mnt/e/MMD_E/201805_auto/02/buster/buster_20240425_015307"
 )

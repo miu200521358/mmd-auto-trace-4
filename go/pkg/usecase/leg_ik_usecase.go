@@ -13,7 +13,7 @@ import (
 )
 
 func ConvertLegIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
-	mlog.I("[%d/%d] Convert Leg Ik ...", motionNum, allNum)
+	mlog.D("[%d/%d] Convert Leg Ik ...", motionNum, allNum)
 
 	pr := &pmx.PmxReader{}
 
@@ -97,7 +97,7 @@ func convertLegIkMotion(
 	// 		motion.AppendRegisteredBoneFrame(boneName, bf)
 	// 	}
 	// 	vmd.Write(motion)
-	// 	mlog.SetLevel(mlog.IK_VERBOSE)
+	// 	mlog.SetLevel(mlog.DK_VERBOSE)
 	// } else {
 	// 	mlog.SetLevel(mlog.DEBUG)
 	// }
@@ -144,7 +144,7 @@ func convertLegIkMotion(
 	hipTwistBf := vmd.NewBoneFrame(fno)
 	legIkMotion.AppendBoneFrame(hipTwistBoneName, hipTwistBf)
 
-	// if mlog.IsVerbose() {
+	// if mlog.DsVerbose() {
 	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_0.vmd", -1)
 	// 	err := vmd.Write(legIkMotion)
 	// 	if err != nil {
@@ -167,7 +167,7 @@ func convertLegIkMotion(
 	// 		motion.AppendRegisteredBoneFrame(boneName, bf)
 	// 	}
 	// 	vmd.Write(motion)
-	// 	mlog.SetLevel(mlog.IK_VERBOSE)
+	// 	mlog.SetLevel(mlog.DK_VERBOSE)
 	// } else {
 	// 	mlog.SetLevel(mlog.DEBUG)
 	// }
@@ -229,7 +229,7 @@ legLoop:
 	mlog.V("[Leg] FIX Converged at [%d][%s] knee: %f, ankle: %f", fno, direction, kneeMinDistance, ankleMinDistance)
 
 	if kneeMinDistance > 0.3 || ankleMinDistance > 0.3 {
-		mlog.I("xxx [Leg] NO FIX Converged at [%d][%s] knee: %f, ankle: %f", fno, direction, kneeMinDistance, ankleMinDistance)
+		mlog.D("xxx [Leg] NO FIX Converged at [%d][%s] knee: %f, ankle: %f", fno, direction, kneeMinDistance, ankleMinDistance)
 
 		// 差が大きい場合、キーフレを削除する
 		legIkMotion.BoneFrames.Get(legBoneName).Delete(fno)
@@ -242,7 +242,7 @@ legLoop:
 	// 足首の位置の差分を取得
 	ankleDiffPos := legOnDeltas.GetByName(ankleBoneName).GlobalPosition().Subed(legIkOffDeltas.GetByName(ankleBoneName).GlobalPosition())
 
-	// if mlog.IsVerbose() {
+	// if mlog.DsVerbose() {
 	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "wrist.vmd", direction+"_leg_ik_1.vmd", -1)
 	// 	err := vmd.Write(legIkMotion)
 	// 	if err != nil {
@@ -250,9 +250,9 @@ legLoop:
 	// 	}
 	// }
 
-	// mlog.SetLevel(mlog.IK_VERBOSE)
+	// mlog.SetLevel(mlog.DK_VERBOSE)
 
-	// if mlog.IsIkVerbose() {
+	// if mlog.DsIkVerbose() {
 	// 	legIkMotion.Path = strings.Replace(prevMotion.Path, "2_rotate.vmd", direction+"_leg_ik_2.vmd", -1)
 	// 	err := vmd.Write(legIkMotion)
 	// 	if err != nil {
@@ -342,7 +342,7 @@ ankleLoop:
 	mlog.V("[Toe] FIX Converged at [%d][%s] toe: %f, toeSmall: %f, heel: %f", fno, direction, toeMinDistance, toeSmallMinDistance, heelMinDistance)
 
 	if toeMinDistance > 0.3 || toeSmallMinDistance > 0.3 || heelMinDistance > 0.3 {
-		mlog.I("xxx [Toe] NO FIX Converged at [%d][%s] toe: %f, toeSmall: %f, heel: %f", fno, direction, toeMinDistance, toeSmallMinDistance, heelMinDistance)
+		mlog.D("xxx [Toe] NO FIX Converged at [%d][%s] toe: %f, toeSmall: %f, heel: %f", fno, direction, toeMinDistance, toeSmallMinDistance, heelMinDistance)
 
 		// 差が大きい場合、キーフレを削除する
 		legIkMotion.BoneFrames.Get(ankleBoneName).Delete(fno)

@@ -13,7 +13,7 @@ import (
 )
 
 func ConvertArmIk(prevMotion *vmd.VmdMotion, modelPath string, motionNum, allNum int) *vmd.VmdMotion {
-	mlog.I("[%d/%d] Convert Arm Ik ...", motionNum, allNum)
+	mlog.D("[%d/%d] Convert Arm Ik ...", motionNum, allNum)
 
 	pr := &pmx.PmxReader{}
 
@@ -98,7 +98,7 @@ func convertArmIkMotion(
 		armIkMotion.AppendRegisteredBoneFrame(elbowBoneName, elbowBf)
 	}
 
-	// if mlog.IsIkVerbose() {
+	// if mlog.DsIkVerbose() {
 	// 	dirPath := fmt.Sprintf("%s/IK_step", filepath.Dir(armIkModel.Path))
 
 	// 	{
@@ -191,7 +191,7 @@ func convertArmIkMotion(
 	armIkMotion.AppendRegisteredBoneFrame(armTwistBoneName, armTwistBf)
 
 	if elbowMinDistance > 0.3 || wristMinDistance > 0.3 {
-		mlog.I("xxx [Arm] NO FIX Converged at [%d][%s] elbow: %f, wrist: %f", fno, direction, elbowMinDistance, wristMinDistance)
+		mlog.D("xxx [Arm] NO FIX Converged at [%d][%s] elbow: %f, wrist: %f", fno, direction, elbowMinDistance, wristMinDistance)
 
 		// 差が大きい場合、キーフレを削除する
 		armIkMotion.BoneFrames.Get(armBoneName).Delete(fno)
