@@ -1,9 +1,23 @@
-mediapipe==0.10.0
-Babel==2.12.1
-numpy-quaternion==2023.0.3
-bezier==2023.7.28
-PyOpenGL==3.1.7
-Pillow==10.0.0
-pykalman==0.9.7
+# 4D-Humans
+webdataset
+numpy
+pytorch-lightning
+smplx==0.1.28
+pyrender
+opencv-python
+yacs
+scikit-image
+einops
+timm
+dill
+pandas
+PyOpenGL-accelerate
+git+https://github.com/miu200521358/PHALP.git
+git+https://github.com/mattloper/chumpy
+git+https://github.com/miu200521358/4D-Humans.git
 
+# mlib
+Babel==2.12.1
+mediapipe==0.10.0
+pykalman==0.9.7
 
