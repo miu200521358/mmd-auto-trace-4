@@ -20,6 +20,5 @@ protobuf==4.21.6
 
 # mlib
 Babel==2.13.1
-mediapipe==0.10.5
 pykalman==0.9.7
 
