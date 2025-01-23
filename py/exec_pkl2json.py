@@ -133,13 +133,13 @@ def convert(all_lib_data: list[dict], output_dir_path):
                     all_data[key][time]["global_3d_joints"] = {}
                     for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                         all_data[key][time]["global_3d_joints"][jname] = {
-                            "x": joint[0] + all_data[key][time]["camera"]["x"],
-                            "y": -(
+                            "x": float(joint[0] + all_data[key][time]["camera"]["x"]),
+                            "y": float(-(
                                 joint[1] + all_data[key][time]["camera"]["y"]
-                            ),
-                            "z": joint[2]
+                            )),
+                            "z": float(joint[2]
                             + (all_data[key][time]["camera"]["z"] - start_z)
-                            * 0.05,
+                            * 0.05),
                         }
 
                 if t < len(v1["2d_joints"]):
