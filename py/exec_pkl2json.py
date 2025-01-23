@@ -114,9 +114,9 @@ def convert(all_lib_data: list[dict], output_dir_path):
                 if t < len(v1["camera"]):
                     cam_pos = v1["camera"][t].astype(np.float64).tolist()
                     all_data[key][time]["camera"] = {
-                        "x": cam_pos[0],
-                        "y": -cam_pos[1],
-                        "z": cam_pos[2],
+                        "x": float(cam_pos[0]),
+                        "y": float(-cam_pos[1]),
+                        "z": float(cam_pos[2]),
                     }
 
                 if t < len(v1["3d_joints"]):
@@ -125,9 +125,9 @@ def convert(all_lib_data: list[dict], output_dir_path):
                     all_data[key][time]["3d_joints"] = {}
                     for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                         all_data[key][time]["3d_joints"][jname] = {
-                            "x": joint[0],
-                            "y": -joint[1],
-                            "z": joint[2],
+                            "x": float(joint[0]),
+                            "y": float(-joint[1]),
+                            "z": float(joint[2]),
                         }
 
                     all_data[key][time]["global_3d_joints"] = {}
@@ -150,8 +150,8 @@ def convert(all_lib_data: list[dict], output_dir_path):
                     all_data[key][time]["2d_joints"] = {}
                     for i, (joint, jname) in enumerate(zip(joints, JOINT_NAMES)):
                         all_data[key][time]["2d_joints"][jname] = {
-                            "x": joint[0],
-                            "y": joint[1],
+                            "x": float(joint[0]),
+                            "y": float(joint[1]),
                         }
 
         # 終わったら最後のキーを保持
