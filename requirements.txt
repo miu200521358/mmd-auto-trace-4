@@ -3,7 +3,7 @@ webdataset
 numpy
 torchmetrics
 lightning-utilities
-pytorch-lightning==2.4.0 --no-deps
+pytorch-lightning==2.4.0
 smplx==0.1.28
 pyrender
 opencv-python
